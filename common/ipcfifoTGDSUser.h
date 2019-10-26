@@ -29,18 +29,118 @@ USA
 #ifndef __specific_shared_h__
 #define __specific_shared_h__
 
+#include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
 #include "ipcfifoTGDS.h"
 #include "dswnifi.h"
 #include "utilsTGDS.h"
 
+
+#define VRAM_D		((s16*)0x06000000)
+#define SIWRAM		((s16*)0x037F8000)
+
+#define ARM9COMMAND_SUCCESS (uint32)(0xFFFFFF01)
+#define ARM9COMMAND_UPDATE_BUFFER (uint32)(0xFFFFFF02)
+#define ARM9COMMAND_SAVE_DATA (uint32)(0xFFFFFF03)
+#define ARM9COMMAND_TOUCHDOWN (uint32)(0xFFFFFF04)
+#define ARM9COMMAND_TOUCHMOVE (uint32)(0xFFFFFF05)
+#define ARM9COMMAND_TOUCHUP (uint32)(0xFFFFFF06)
+
+#define ARM7STATE_IDLE (uint32)(0xFFFFFF07)
+#define ARM7STATE_WAITING (uint32)(0xFFFFFF08)
+#define ARM7STATE_WAITCOPY (uint32)(0xFFFFFF09)
+
+#define ARM7COMMAND_START_SOUND (uint32)(0xFFFFFF10)
+#define ARM7COMMAND_STOP_SOUND (uint32)(0xFFFFFF11)
+#define ARM7COMMAND_SOUND_SETMULT (uint32)(0xFFFFFF12)
+#define ARM7COMMAND_SOUND_SETRATE (uint32)(0xFFFFFF13)
+#define ARM7COMMAND_SOUND_SETLEN (uint32)(0xFFFFFF14)
+#define ARM7COMMAND_SOUND_COPY (uint32)(0xFFFFFF15)
+#define ARM7COMMAND_SOUND_DEINTERLACE (uint32)(0xFFFFFF16)
+#define ARM7COMMAND_START_RECORDING (uint32)(0xFFFFFF17)
+#define ARM7COMMAND_STOP_RECORDING (uint32)(0xFFFFFF18)
+#define ARM7COMMAND_BOOT_GBAMP (uint32)(0xFFFFFF19)
+#define ARM7COMMAND_BOOT_SUPERCARD (uint32)(0xFFFFFF20)
+#define ARM7COMMAND_BOOT_MIGHTYMAX (uint32)(0xFFFFFF21)
+#define ARM7COMMAND_BOOT_CHISHM (uint32)(0xFFFFFF22)
+#define ARM7COMMAND_PSG_COMMAND (uint32)(0xFFFFFF23)
+#define ARM7COMMAND_SAVE_WIFI (uint32)(0xFFFFFF24)
+#define ARM7COMMAND_LOAD_WIFI (uint32)(0xFFFFFF25)
+#define ARM7COMMAND_PLAYCLICK (uint32)(0xFFFFFF26)
+
+#define BIT(n) (1 << (n))
+
+typedef struct sTransferSoundData {
 //---------------------------------------------------------------------------------
+const void *data;
+u32 len;
+u32 rate;
+u8 vol;
+u8 pan;
+u8 format;
+u8 PADDING;
+} TransferSoundData, * pTransferSoundData;
+
+
+//---------------------------------------------------------------------------------
+typedef struct sTransferSound {
+//---------------------------------------------------------------------------------
+TransferSoundData data[16];
+u8 count;
+u8 PADDING[3];
+} TransferSound, * pTransferSound;
+
+
+typedef struct
+{
+	s16 *arm9L;
+	s16 *arm9R;
+	
+	s16 *interlaced;
+	int channels;
+	u8 volume;
+	
+	u32 tX;
+	u32 tY;
+	
+	int psgChannel;
+	u32 cr;
+	u32 timer;
+	/*
+	//bugfix
+	int sendHeartbeat_arm9;
+	int sendHeartbeat_arm7;
+	int recvHeartbeat_arm9;
+	int recvHeartbeat_arm7;	
+	int vblankHeartbeat;
+	int timerHeartbeat;
+	int fullHeartbeat;
+	
+	int arbitraryCommand[17];*/
+} SoundRegion;
+
 struct sIPCSharedTGDSSpecific {
-//---------------------------------------------------------------------------------
 	uint32 frameCounter7;	//VBLANK counter7
 	uint32 frameCounter9;	//VBLANK counter9
+	pTransferSound soundData;	//when this TransferSound * is not NULL, its absorbed by the ARM7 Core.
 };
+
+#define soundIPC ((SoundRegion volatile *)(((u32)TGDSIPCUserStartAddress + sizeof(struct sIPCSharedTGDSSpecific)) ))
+
+//types used by DSOrganize
+typedef sint16 int16;
+
+#define VRAM_0        ((uint16*)0x6000000)
+#define VRAM_A        ((uint16*)0x6800000)
+#define VRAM_B        ((uint16*)0x6820000)
+#define VRAM_C        ((uint16*)0x6840000)
+//#define VRAM_D        ((uint16*)0x6860000)
+#define VRAM_E        ((uint16*)0x6880000)
+#define VRAM_F        ((uint16*)0x6890000)
+#define VRAM_G        ((uint16*)0x6894000)
+#define VRAM_H        ((uint16*)0x6898000)
+#define VRAM_I        ((uint16*)0x68A0000)
 
 #endif
 
@@ -51,6 +151,9 @@ extern "C" {
 //NOT weak symbols : the implementation of these is project-defined (here)
 extern void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
+
+extern TransferSound * getSoundRegion();
+extern void setSoundRegion(TransferSound * sndRegion);
 
 #ifdef __cplusplus
 }

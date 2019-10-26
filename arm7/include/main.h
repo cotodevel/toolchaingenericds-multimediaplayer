@@ -32,6 +32,30 @@ extern "C" {
 #endif
 
 extern int main(int _argc, sint8 **_argv);
+extern s16 *strpcmL0;
+extern s16 *strpcmL1;
+extern s16 *strpcmR0;
+extern s16 *strpcmR1;
+
+extern int lastL;
+extern int lastR;
+
+extern int multRate;
+extern int pollCount; //start with a read
+
+extern u32 sndCursor;
+extern u32 micBufLoc;
+extern u32 sampleLen;
+extern int sndRate;
+
+extern void mallocData(int size);
+extern void freeData();
+extern void startSound(int sampleRate, const void* data, u32 bytes, u8 channel, u8 vol,  u8 pan, u8 format);
+extern s32 getFreeSoundChannel();
+extern void setSwapChannel();
+extern void SetupSound();
+extern void StopSound();
+extern void TIMER1Handler();
 
 #ifdef __cplusplus
 }

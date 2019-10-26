@@ -57,11 +57,15 @@ export TARGET_LIBRARY_FILE_9	=	lib$(TARGET_LIBRARY_NAME_9).a
 
 #####################################################ARM7#####################################################
 
-export DIRS_ARM7_SRC = source/	\
+export DIRS_ARM7_SRC = build/	\
+			data/	\
+			source/	\
 			source/interrupts/	\
 			../common/
 			
-export DIRS_ARM7_HEADER = source/	\
+export DIRS_ARM7_HEADER = build/	\
+			data/	\
+			source/	\
 			source/interrupts/	\
 			include/	\
 			../common/	\
