@@ -22,148 +22,23 @@ USA
 #include "dsregs_asm.h"
 #include "typedefsTGDS.h"
 
-#include "devoptab_devices.h"
-#include "fatfslayerTGDS.h"
-#include "usrsettingsTGDS.h"
-#include "exceptionTGDS.h"
-#include "keypadTGDS.h"
 #include "fileHandleTGDS.h"
 #include "dswnifi_lib.h"
+#include "keypadTGDS.h"
+#include "sound.h"
+#include "misc.h"
 
 //C++ part
-#include <iostream>
-#include <fstream>
-#include <list>
-#include <vector>
-#include <cmath>
-#include <cstdlib>
-#include <cstdio>
-#include <iterator>
-
 using namespace std;
+#include <cstdlib>
+#include <iostream>
+#include <vector>
 
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
-
-//test1
-//default class instance
-class cl {
-  int i; // private by default
-public:
-  int get_i();
-  void put_i(int j);
-};
-
-int cl::get_i()
-{
-  return i;
-}
-
-void cl::put_i(int j)
-{
-  i = j;
-}
-
-//test2
-//constructor example
-// Class to represent a box
-class Box
-{
-  public:
-    int length;
-    int breadth;
-    int height;
-
-    // Constructor
-    Box(int lengthValue, int breadthValue, int heightValue)
-    {
-      printf("Box constructor called");
-      length = lengthValue;
-      breadth = breadthValue;
-      height = heightValue;
-    }
-
-    // Function to calculate the volume of a box
-    int volume()
-    {
-      return length * breadth * height;
-    }
-};
-
-//test 3
-//class copy
-class myclass {
-  int *p;
-public:
-  myclass(int i);
-  ~myclass();
-  int getval() { return *p; }
-};
-
-myclass::myclass(int i)
-{
-  printf("Allocating p");
-  p = new int;
-  if(!p) {
-    printf("Allocation failure.");
-    exit(1); // exit program if out of memory
-  }
-  *p = i;
-}
-
-myclass::~myclass()
-{
-  printf("Freeing p");
-  delete p;
-}
-
-// when this function is called, the copy constructor is called
-void display(myclass ob)
-{
-	printf("%d",ob.getval());
-}
-
-
-//test4
-class myclass2 {
-  int *p;
-public:
-  myclass2(int i);
-  ~myclass2();
-  int getval() { return *p; }
-};
-
-myclass2::myclass2(int i)
-{
-	printf("Allocating p");
-	p = new int;
-	if(!p) {
-		printf("Allocation failure.");
-		exit(1); // exit program if out of memory
-	}
-	*p = i;
-}
-
-// use destructor to free memory
-myclass2::~myclass2()
-{
-  printf("Freeing p");
-  delete p;
-}
-
-void display2(myclass2 &ob)
-{
-	printf("%d",ob.getval());
-}
 
 string ToStr( char c ) {
    return string( 1, c );
 }
-
-std::string getDldiDefaultPath(){
-	std::string dldiOut = string((char*)getfatfsPath( (sint8*)string(dldi_tryingInterface() + string(".dldi")).c_str() ));
-	return dldiOut;
-}
-
 
 void menuShow(){
 	clrscr();
@@ -171,22 +46,6 @@ void menuShow(){
 	printf("Start: File Browser -> Press A to play .AAC ");
 	printf("B: Stop audio playback ");
 	printf("Select: this menu");
-}
-
-vector<string> splitCustom(string str, string token){
-    vector<string>result;
-    while(str.size()){
-        int index = str.find(token);
-        if(index != (int)string::npos){
-            result.push_back(str.substr(0,index));
-            str = str.substr(index+token.size());
-            if(str.size()==0)result.push_back(str);
-        }else{
-            result.push_back(str);
-            str = "";
-        }
-    }
-    return result;
 }
 
 
@@ -207,6 +66,7 @@ std::string parsefileNameTGDS(std::string fileName){
 	}
 	return fileName;
 }
+
 bool ShowBrowser(char * Path){
 	while((keysPressed() & KEY_START) || (keysPressed() & KEY_A) || (keysPressed() & KEY_B)){
 		scanKeys();
@@ -368,9 +228,20 @@ int main(int _argc, sint8 **_argv) {
 	switch_dswnifi_mode(dswifi_idlemode);
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
 	
-	//custom Handler
+	//Init sound
+	enableVBlank(); // initialize vblank irq
+	setGenericSound(11025, 127, 64, 1);
+	initComplexSound(); // initialize sound variables
+	
 	menuShow();
 	
+	//let's try playing a WAV
+	FILE * fhWav = fopen("0:/DSOrganize/startup.wav", "r");
+	fclose(fhWav);
+	
+	loadWavToMemory();
+	loadSound("0:/DSOrganize/startup.wav");
+		
 	while (1){
 		scanKeys();
 		
@@ -383,10 +254,7 @@ int main(int _argc, sint8 **_argv) {
 				//navigating DIRs here...
 			}
 			
-			
 			//Audio playback here....
-			
-			
 			
 			while(keysPressed() & KEY_START){
 				scanKeys();
@@ -402,6 +270,10 @@ int main(int _argc, sint8 **_argv) {
 			//Audio stop here....
 			
 		}
+		
+		updateStreamLoop();
+		updateStreamLoop();
+		updateStreamLoop();
 		
 		IRQVBlankWait();
 	}

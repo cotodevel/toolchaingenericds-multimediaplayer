@@ -57,6 +57,7 @@ static inline s16 checkClipping(int data)
 #include <stdbool.h>
 #include "main.h"
 #include "wifi_arm9.h"
+#include "sound.h"
 
 #endif
 
@@ -351,7 +352,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		}	
 		break;
 		case ARM9COMMAND_SAVE_DATA:{
-			copyChunk();
+			//copyChunk();
 		}
 		break;
 		#endif

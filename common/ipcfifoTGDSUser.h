@@ -130,7 +130,9 @@ struct sIPCSharedTGDSSpecific {
 
 //types used by DSOrganize
 typedef sint16 int16;
-
+#define UNION_CAST(x, destType) \
+   (((union {__typeof__(x) a; destType b;})x).b)
+   
 #define VRAM_0        ((uint16*)0x6000000)
 #define VRAM_A        ((uint16*)0x6800000)
 #define VRAM_B        ((uint16*)0x6820000)

@@ -21,7 +21,7 @@
 #ToolchainGenericDS specific: 
 #Non FPIC Code: Use Makefiles from either TGDS, or custom
 export SOURCE_MAKEFILE7 = default
-export SOURCE_MAKEFILE9 = default
+export SOURCE_MAKEFILE9 = custom
 
 #FPIC code is always default TGDS Makefile
 
@@ -75,10 +75,26 @@ export DIRS_ARM7_HEADER = build/	\
 export DIRS_ARM9_SRC = source/	\
 			source/interrupts/	\
 			source/gui/	\
+			source/aac/	\
+			source/aac/pub/	\
+			source/aac/real/	\
+			source/aac/real/asm/	\
+			source/libffmpegFLAC/	\
+			source/libffmpegFLAC/src/	\
+			source/mp4ff/	\
+			source/mad/	\
 			../common/
 			
 export DIRS_ARM9_HEADER = include/	\
 			source/gui/	\
+			source/aac/	\
+			source/aac/pub/	\
+			source/aac/real/	\
+			source/aac/real/asm/	\
+			source/libffmpegFLAC/	\
+			source/libffmpegFLAC/src/	\
+			source/mp4ff/	\
+			source/mad/	\
 			../common/	\
 			../$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/include/
 
