@@ -151,15 +151,17 @@ bool ShowBrowser(char * Path){
 			break;
 		}
 		
+		//file chosen
+		else if( (pressed&KEY_A) && (internalName.at(k)->type == FT_FILE) ){
+			break;
+		}
+		
 		//reload DIR (backward)
 		else if(pressed&KEY_B){
 			reloadDirB = true;
 			break;
 		}
 		
-		else if(pressed&KEY_START){
-			break;
-		}
 		
 		// Show cursor
 		printfCoords(0, k, "*");
@@ -169,8 +171,10 @@ bool ShowBrowser(char * Path){
 		while(!(pressed&KEY_DOWN) && !(pressed&KEY_UP) && !(pressed&KEY_START) && !(pressed&KEY_A) && !(pressed&KEY_B)){
 			scanKeys();
 			pressed = keysPressed();
+			updateStreamLoop();
 		}
 		lastVal = k;
+		updateStreamLoop();
 	}
 	
 	//enter a dir
@@ -186,24 +190,25 @@ bool ShowBrowser(char * Path){
 		return true;
 	}
 	
-	if(internalName.at(k)->type == FT_DIR){
-		sprintf((char*)curChosenBrowseFile,"%s",internalName.at(k)->fd_namefullPath);
-	}
-	else{
-		sprintf((char*)curChosenBrowseFile,"%s",internalName.at(k)->fd_namefullPath);
-	}
-	
+	sprintf((char*)curChosenBrowseFile,"%s",internalName.at(k)->fd_namefullPath);
 	clrscr();
 	printf("                                   ");
 	if(internalName.at(k)->type == FT_DIR){
-		printf("you chose Dir:%s",curChosenBrowseFile);
+		//printf("you chose Dir:%s",curChosenBrowseFile);
 	}
 	else{
-		printf("you chose File:%s",curChosenBrowseFile);
+		//printf("you chose File:%s",curChosenBrowseFile);
+		bool success = loadSound(curChosenBrowseFile);			
+		while(!success)	
+		{
+			//getNextSoundInternal(false);
+			success = loadSound(curChosenBrowseFile);
+		}
 	}
 	return false;
 }
 
+__attribute__((section(".itcm")))
 int main(int _argc, sint8 **_argv) {
 	
 	/*			TGDS 1.5 Standard ARM9 Init code start	*/
@@ -236,12 +241,9 @@ int main(int _argc, sint8 **_argv) {
 	menuShow();
 	
 	//let's try playing a WAV
-	FILE * fhWav = fopen("0:/DSOrganize/startup.wav", "r");
-	fclose(fhWav);
+	//loadWavToMemory();
+	//loadSound("0:/DSOrganize/startup.wav");
 	
-	loadWavToMemory();
-	loadSound("0:/DSOrganize/startup.wav");
-		
 	while (1){
 		scanKeys();
 		
@@ -253,8 +255,6 @@ int main(int _argc, sint8 **_argv) {
 			while( ShowBrowser((char *)startPath) == true ){
 				//navigating DIRs here...
 			}
-			
-			//Audio playback here....
 			
 			while(keysPressed() & KEY_START){
 				scanKeys();
@@ -268,12 +268,16 @@ int main(int _argc, sint8 **_argv) {
 		
 		if (keysPressed() & KEY_B){
 			//Audio stop here....
-			
+			closeSound();
 		}
 		
+		//Audio playback here....
 		updateStreamLoop();
 		updateStreamLoop();
 		updateStreamLoop();
+		updateStreamLoop();
+		
+		checkEndSound();
 		
 		IRQVBlankWait();
 	}

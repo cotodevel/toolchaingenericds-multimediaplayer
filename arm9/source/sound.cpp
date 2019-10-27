@@ -43,6 +43,9 @@
 #include "mad.h"
 #include "flac.h"
 #include "aacdec.h"
+#include "main.h"
+
+static bool soundLoaded = false;
 	
 static bool canSend = false;
 sndData soundData;
@@ -181,7 +184,6 @@ static int gbsOldTrack;
 
 void SendArm7Command(u32 command, u32 data);
 void stopSound();
-extern void updateStream();
 void copyRemainingData();
 void fillMadBuffer();
 void fillMadBufferStream();
@@ -237,6 +239,7 @@ void freeData()
 	rBuffer = NULL;
 }
 
+__attribute__((section(".itcm")))
 void swapData()
 {
 	m_SIWRAM = 1 - m_SIWRAM;
@@ -361,6 +364,7 @@ void circularCopy(void *dst, void *src, int copySize, int *position, int bufferS
 }
 */
 
+__attribute__((section(".itcm")))
 void swapAndSend(u32 type)
 {
 	swapData();
@@ -368,15 +372,9 @@ void swapAndSend(u32 type)
 }
 
 
-// update function
-__attribute__((section(".itcm")))
-void updateStreamLoop()
-{
-	updateStream();
-}
 
 __attribute__((section(".itcm")))
-void updateStream()
+static void updateStream()
 {	
 	if(!updateRequested)
 	{
@@ -694,14 +692,18 @@ void updateStream()
 	//checkKeys();
 }
 
+// update function
+__attribute__((section(".itcm")))
+void updateStreamLoop()
+{
+	updateStream();
+}
 
 //----------------------
 // sound streaming stuff
 //----------------------
 
-#ifdef ARM9
 __attribute__((section(".itcm")))
-#endif
 void SendArm7Command(u32 command, u32 data){
 	SendFIFOWords((uint32)command, (uint32)data);
 }
@@ -785,6 +787,7 @@ void allocateStreamBuffer()
 // sound stream wrapper
 //---------------------
 
+__attribute__((section(".itcm")))
 void freeSound()
 {
 	stopSound();
@@ -3618,6 +3621,8 @@ void closeSound()
 	
 	//if(isWIFIConnected())
 	//	disconnectWifi();
+	
+	soundLoaded = false;
 }
 
 int getState()
@@ -3744,3 +3749,78 @@ char *gbsMeta(int which)
 	return 0;
 }
 */
+
+
+void checkEndSound()
+{
+	
+	if(soundLoaded == false)
+	{
+		/*
+		char ext[256];
+		char tmp[256];
+		
+		strcpy(tmp,getFileName());
+		separateExtension(tmp,ext);
+		strlwr(ext);
+		
+		if(strcmp(ext,".pls") == 0 || strcmp(ext,".m3u") == 0)
+		{	
+			sndMode = TYPE_PLS;
+			if(loadPlaylist(getFileName(), &curPlaylist))
+			{
+				loadSound(curPlaylist.urlEntry[0].data);
+				plsPos = 0;
+			}
+			else
+			{
+				destroyRandomList();
+				exitSound(0,0);
+				return;
+			}
+		}
+		else
+		{
+		*/
+			//sndMode = TYPE_NORMAL;
+			
+		//}
+		
+		//sampleWidth = (getSoundLength() / 236);
+		soundLoaded = true;
+	}
+	
+	/*
+	firstTime = false;
+	
+	if(getState() == STATE_STOPPED || getState() == STATE_UNLOADED)
+	{
+		if(sndMode == TYPE_NORMAL)
+		{
+			if(soundMode == SOUND_ONESHOT)
+			{
+				exitSound(0,0);
+			}
+			else
+			{
+				getNextSoundInternal(true);
+			}
+		}
+		if(sndMode == TYPE_PLS)
+		{
+			if(!queued)
+			{
+				if(plsPos == curPlaylist.numEntries - 1)
+					plsPos = 0;
+				else
+					plsPos++;
+			}
+			
+			loadSound(curPlaylist.urlEntry[plsPos].data);
+
+			queued = false;
+		}		
+	}
+	*/
+
+}

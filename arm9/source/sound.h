@@ -193,7 +193,6 @@ extern char *strlwr(char *str);
 
 extern void initComplexSound();
 extern void setSoundInterrupt();
-extern void updateStream();
 
 // playback
 extern bool loadSound(char *fName);
@@ -247,8 +246,9 @@ extern int playGenericSound(const void* data, u32 length);
 extern void setGenericSound( u32 rate, u8 vol, u8 pan, u8 format);
 extern bool updateRequested;
 extern sndData soundData;
-extern void updateStream();
 extern void updateStreamLoop();
+
+extern void checkEndSound();
 
 #ifdef __cplusplus
 }

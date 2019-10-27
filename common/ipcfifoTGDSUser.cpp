@@ -348,7 +348,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			}
 			
 			// call immediately if the format needs it
-			updateStream();
+			updateStreamLoop();
 		}	
 		break;
 		case ARM9COMMAND_SAVE_DATA:{

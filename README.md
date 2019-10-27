@@ -8,11 +8,19 @@ After compiling, run the example in NDS.
 
 Project Specific description: 
 
-What it does: 
-Start: Choose a file from a given directory, press A to play: AAC files.
+How to use:
+
+1)
+DLDI patch the ToolchainGenericDS-audioplayer.nds in /release folder (NTR mode only)
+
+2)
+Start: Choose a file from a given directory, press A to play: WAV/AAC files.
 B: Stop audio playback.
 Select: This menu screen
 
 /release folder has the latest binary precompiled for your convenience.
+
+
+Many thanks to DSOrganize and it's author(s), since the audio stream code was taken from there... except there is no memory issues this time to play audio files at all!!!!
 
 Coto
