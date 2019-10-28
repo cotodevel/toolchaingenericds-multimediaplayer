@@ -8,8 +8,10 @@ After compiling, run the example in NDS.
 
 Project Specific description: 
 
-How to use:
+TGDS Audio Player, supported formats are:
+-	WAV/MP3/AAC/Ogg/FLAC/NSF/SPC/GBS/+ others working.  Streaming mp3, ogg and acc is stripped since it´s 2019 and the DS does not support HTTPS (TLS1.2+)
 
+Set up:
 1)
 DLDI patch the ToolchainGenericDS-audioplayer.nds in /release folder (NTR mode only)
 

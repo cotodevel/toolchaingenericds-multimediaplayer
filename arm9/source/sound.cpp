@@ -23,19 +23,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-//#include <ivorbiscodec.h>
-//#include <ivorbisfile.h>
-//#include <spc.h>
-//#include "mikmod_build.h"
-//#include "sid.h"
-//#include "nsf.h"
-//#include "gme.h"
-//#include "mixer68.h"
+#include <ivorbiscodec.h>
+#include <ivorbisfile.h>
+#include <spc.h>
+#include "mikmod_build.h"
+#include "sid.h"
+#include "nsf.h"
+#include "gme.h"
+#include "mixer68.h"
 #include "mp4ff.h"
 #include "misc.h"
-//#include "wifi.h"
+#include "http.h"
 #include "sound.h"
-//#include "id3.h"
+#include "id3.h"
 #include "ipcfifoTGDSUser.h"
 #include "videoTGDS.h"
 #include "InterruptsARMCores_h.h"
@@ -45,7 +45,11 @@
 #include "aacdec.h"
 #include "main.h"
 
+//Handles current file playback status
 static bool soundLoaded = false;
+
+
+ID3V1_TYPE id3Data;
 	
 static bool canSend = false;
 sndData soundData;
@@ -56,23 +60,23 @@ static bool seekSpecial = false;
 bool updateRequested = false;
 static int sndLen = 0;
 static int seekUpdate = -1;
-//extern ID3V1_TYPE id3Data;
+extern ID3V1_TYPE id3Data;
 
 // sound out
 s16 *lBuffer = NULL;
 s16 *rBuffer = NULL;
-
-static int bufCursor;
-static int bytesLeft = 0;
-static s16 *bytesLeftBuf = NULL;
-static int maxBytes = 0;
-
 
 // wav
 static bool memoryLoad = false;
 static char *memoryContents = NULL;
 static u32 memoryPos = 0;
 static u32 memorySize = 0;
+	
+// mikmod
+static MODULE *module = NULL;
+static bool madFinished = false;
+static int sCursor = 0;
+bool allowEQ = true;
 
 // mp3
 struct mad_stream Stream;
@@ -80,21 +84,17 @@ struct mad_frame Frame;
 struct mad_synth Synth;
 static mad_timer_t Timer;
 static unsigned char *mp3Buf = NULL;
-static bool madFinished = false;
-	
-// mikmod
-/*
-static MODULE *module = NULL;
-static int sCursor = 0;
-bool allowEQ = true;
+static int bufCursor;
+static int bytesLeft = 0;
+static s16 *bytesLeftBuf = NULL;
+static int maxBytes = 0;
 
 // ogg
 static OggVorbis_File vf;
 static int current_section;
-*/
 
 // streaming
-//URL_TYPE curSite;
+URL_TYPE curSite;
 char *tmpMeta = NULL;
 int streamMode = 0;
 int s_socket;
@@ -105,26 +105,11 @@ int s_retries = 0;
 int s_count = 0;
 int s_metaCount = 0;
 int icyCopy = 0;
-//size_t oggStreamLoc = 0;
-//ICY_HEADER curIcy;
+size_t oggStreamLoc = 0;
+ICY_HEADER curIcy;
 bool streamOpened = false;
 static int tmpAmount = 0;
 static int recAmount = 0;
-
-static u16 scale(mad_fixed_t sample)
-{
-	/* round */
-	sample += (1L << (MAD_F_FRACBITS - 16));
-
-	/* clip */
-	if (sample >= MAD_F_ONE)
-		sample = MAD_F_ONE - 1;
-	else if (sample < -MAD_F_ONE)
-		sample = -MAD_F_ONE;
-
-	/* quantize */
-	return sample >> (MAD_F_FRACBITS + 1 - 16);
-}
 
 // aac
 static HAACDecoder *hAACDecoder;
@@ -148,7 +133,6 @@ static int32_t *decoded0 = NULL;
 static int32_t *decoded1 = NULL;
 static bool flacFinished = false;
 
-/*
 //sid
 static char *sidfile = NULL;
 static u32 sidLength = 0;
@@ -178,7 +162,6 @@ static Music_Emu* emu;
 static track_info_t info;
 static int gbsTrack;
 static int gbsOldTrack;
-*/
 
 // arm7 code, etc
 
@@ -203,6 +186,13 @@ void sndhDecode();
 void gbsDecode();
 void mp3Decode();
 void (*wavDecode)() = NULL;
+
+int getSIDTrack();
+int getSIDTotalTracks();
+int getGBSTrack();
+int getGBSTotalTracks();
+char *gbsMeta(int which);
+
 
 // alternate malloc stuff
 static int m_SIWRAM = 0;
@@ -274,7 +264,6 @@ void swapData()
 
 void parseSongTitle()
 {
-	/*
 	char *tmpLower = (char *)trackMalloc(strlen(tmpMeta) + 1, "tmp buffer for lowercase");
 	strcpy(tmpLower, tmpMeta);
 	strlwr(tmpLower);
@@ -313,10 +302,8 @@ void parseSongTitle()
 	}
 	
 	trackFree(tmpLower);
-	*/
 }
 
-/*
 __attribute__((section(".itcm")))
 void circularCopy(void *dst, void *src, int copySize, int *position, int bufferSize)
 {
@@ -362,7 +349,6 @@ void circularCopy(void *dst, void *src, int copySize, int *position, int bufferS
 		}
 	}
 }
-*/
 
 __attribute__((section(".itcm")))
 void swapAndSend(u32 type)
@@ -371,8 +357,7 @@ void swapAndSend(u32 type)
 	SendArm7Command(type,0);
 }
 
-
-
+// update function
 __attribute__((section(".itcm")))
 static void updateStream()
 {	
@@ -412,6 +397,7 @@ static void updateStream()
 		return;
 	}
 	
+	//checkKeys();
 	
 	switch(soundData.sourceFmt)
 	{
@@ -430,7 +416,6 @@ static void updateStream()
 			}
 		}
 		break;
-		/*
 		case SRC_MIKMOD:
 		{
 			//checkKeys();
@@ -540,7 +525,6 @@ static void updateStream()
 			}
 		}
 		break;
-		*/
 		case SRC_AAC:
 		case SRC_STREAM_AAC:{
 			bool isSeek = (seekUpdate >= 0);
@@ -624,10 +608,10 @@ static void updateStream()
 			
 			flacFinished = false;
 			
-			////checkKeys();
+			//checkKeys();
 			copyRemainingData();
 			decodeFlacFrame();
-			////checkKeys();
+			//checkKeys();
 			
 			soundData.loc = ftell(soundData.filePointer);
 			
@@ -636,7 +620,6 @@ static void updateStream()
 			
 		}
 		break;
-		/*
 		case SRC_SID:{
 			soundIPC->channels = 1;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
@@ -686,22 +669,20 @@ static void updateStream()
 			//checkKeys();
 		}
 		break;
-		*/
 	}
 	
 	//checkKeys();
 }
 
-// update function
+//----------------------
+// sound streaming stuff
+//----------------------
+
 __attribute__((section(".itcm")))
 void updateStreamLoop()
 {
 	updateStream();
 }
-
-//----------------------
-// sound streaming stuff
-//----------------------
 
 __attribute__((section(".itcm")))
 void SendArm7Command(u32 command, u32 data){
@@ -723,10 +704,10 @@ void initComplexSound()
 	soundData.filePointer = NULL;
 	soundIPC->volume = 4;
 	
-	//MikMod_RegisterAllDrivers();
-	//MikMod_RegisterAllLoaders();
+	MikMod_RegisterAllDrivers();
+	MikMod_RegisterAllLoaders();
 	
-	VRAMBLOCK_SETBANK_D(VRAM_D_0x06000000_ARM7);	//give arm7 vram bank d to play with
+	VRAMBLOCK_SETBANK_D(VRAM_D_0x06000000_ARM7);	//give arm7 vram bank d (extend +128K RAM)
 }
 
 void setSoundFrequency(u32 freq)
@@ -795,7 +776,6 @@ void freeSound()
 	
 	switch(soundData.sourceFmt)
 	{
-		
 		case SRC_WAV:
 			if(memoryLoad)
 			{	
@@ -808,7 +788,6 @@ void freeSound()
 			}
 			
 			break;
-		/*
 		case SRC_MIKMOD:
 			if(module)
 			{
@@ -865,7 +844,6 @@ void freeSound()
 			fclose(soundData.filePointer);
 			}
 			break;
-		*/
 		case SRC_FLAC:
 			fclose(soundData.filePointer);			
 			soundData.filePointer = NULL;
@@ -887,7 +865,6 @@ void freeSound()
 			bytesLeftBuf = NULL;
 			
 			break;
-		/*
 		case SRC_STREAM_MP3:
 			freeStreamBuffer();
 				
@@ -938,7 +915,6 @@ void freeSound()
 			streamMode = STREAM_TRYNEXT;
 			
 			break;
-		*/
 		case SRC_AAC:				
 			fclose(soundData.filePointer);
 			
@@ -954,7 +930,6 @@ void freeSound()
 			aacReadBuf = NULL;			
 			
 			break;
-		/*
 		case SRC_SID:
 			if(sidfile)
 				trackFree(sidfile);
@@ -993,7 +968,6 @@ void freeSound()
 		case SRC_GBS:
 			gme_delete(emu);
 			break;
-		*/
 	}
 	
 	soundData.filePointer = NULL;	
@@ -1118,7 +1092,136 @@ void seekFlac()
 	}
 }
 
-u32 getWavData(void *outLoc, int amount, FILE *df)
+void sidDecode()
+{
+	s16 *tBuffer = lBuffer;
+	
+	nSamplesRendered = 0;
+	while (nSamplesRendered < SID_OUT_SIZE)
+	{
+		if (nSamplesToRender == 0)
+		{
+			cpuJSR(sid_play_addr, 0);
+			
+			// Find out if cia timing is used and how many samples
+			// have to be calculated for each cpujsr
+			int nRefreshCIA = sidGetCIA();	
+			if ((nRefreshCIA==0) || (sid_song_speed == 0)) 
+				nRefreshCIA = 20000;
+			nSamplesPerCall = sidGetMixFreq()*nRefreshCIA/1000000;
+			
+			nSamplesToRender = nSamplesPerCall;
+		}
+		if (nSamplesRendered + nSamplesToRender > SID_OUT_SIZE)
+		{
+			synth_render(tBuffer+nSamplesRendered, SID_OUT_SIZE-nSamplesRendered);
+			nSamplesToRender -= SID_OUT_SIZE-nSamplesRendered;
+			nSamplesRendered = SID_OUT_SIZE;
+		}
+		else
+		{
+			synth_render(tBuffer+nSamplesRendered, nSamplesToRender);
+			nSamplesRendered += nSamplesToRender;
+			nSamplesToRender = 0;
+		} 
+	}
+}
+
+char *sidMeta(int which)
+{
+	return sidfile + SID_META_LOC + (which << 5);
+}
+
+void mp3Decode()
+{	
+	madFinished = false;
+	
+	copyRemainingData();
+	
+	while(!madFinished)
+	{	
+		fillMadBuffer();
+		decodeMadBuffer(1);
+		//checkKeys();
+	}
+}
+
+void nsfDecode()
+{
+	if(inTrack || isSwitching)
+		return;
+	
+	inTrack = true;
+	
+	uint8_t *tBuffer = (uint8_t *)lBuffer;
+	
+    GetSamples(&tBuffer[0],NSF_OUT_SIZE/4);
+	//checkKeys();
+    GetSamples(&tBuffer[NSF_OUT_SIZE/4],NSF_OUT_SIZE/4);
+	//checkKeys();
+	GetSamples(&tBuffer[NSF_OUT_SIZE/2],NSF_OUT_SIZE/4);
+	//checkKeys();
+    GetSamples(&tBuffer[3*NSF_OUT_SIZE/4],NSF_OUT_SIZE/4);
+	
+	inTrack = false;
+}
+
+void spcDecode()
+{
+	spcPlay(lBuffer, rBuffer);
+	//checkKeys();
+	spcPlay(lBuffer + (SPC_OUT_SIZE >> 2), rBuffer + (SPC_OUT_SIZE >> 2));
+	//checkKeys();
+	spcPlay(lBuffer + (SPC_OUT_SIZE >> 1), rBuffer + (SPC_OUT_SIZE >> 1));
+	//checkKeys();
+	spcPlay(lBuffer + ((SPC_OUT_SIZE >> 2) * 3), rBuffer + ((SPC_OUT_SIZE >> 2) * 3));
+}
+
+void sndhDecode()
+{
+	int code = api68_process(sc68, lBuffer, SNDH_OUT_SIZE);
+	
+	if(code & API68_END) 
+	{
+		cutOff = true;
+	}
+}
+
+void gbsDecode()
+{
+	gme_play(emu, GBS_OUT_SIZE, lBuffer);
+	//checkKeys();
+	gme_play(emu, GBS_OUT_SIZE, lBuffer + GBS_OUT_SIZE);
+	
+	// check for change track
+	if(gbsTrack != gbsOldTrack)
+	{
+		//checkKeys();
+		gme_start_track(emu, gbsTrack);
+		gme_track_info(emu, &info, gbsTrack);
+		
+		gbsOldTrack = gbsTrack;
+	}	
+}
+
+void *sndhMalloc(unsigned int t)
+{
+	return safeMalloc(t);
+}
+
+int getSNDHTrack()
+{
+	int curTrack = api68_play(sc68, -1, 0);
+	
+	return curTrack = 0 ? 1 : curTrack;
+}
+
+int getSNDHTotalTracks()
+{
+	return sndhTracks = 0 ? 1 : sndhTracks;
+}
+
+u32 getWavData(void *outLoc, int amount, FILE *fh)
 {
 	if(memoryLoad)
 	{
@@ -1136,7 +1239,7 @@ u32 getWavData(void *outLoc, int amount, FILE *df)
 	}
 	else
 	{
-		return fread(outLoc, 1, amount, df);
+		return fread(outLoc, 1, amount, fh);
 	}
 }
 
@@ -1305,133 +1408,6 @@ void wavDecode32Bit()
 	trackFree(tmpData);
 }
 
-/*
-void sidDecode()
-{
-	s16 *tBuffer = lBuffer;
-	
-	nSamplesRendered = 0;
-	while (nSamplesRendered < SID_OUT_SIZE)
-	{
-		if (nSamplesToRender == 0)
-		{
-			cpuJSR(sid_play_addr, 0);
-			
-			// Find out if cia timing is used and how many samples
-			// have to be calculated for each cpujsr
-			int nRefreshCIA = sidGetCIA();	
-			if ((nRefreshCIA==0) || (sid_song_speed == 0)) 
-				nRefreshCIA = 20000;
-			nSamplesPerCall = sidGetMixFreq()*nRefreshCIA/1000000;
-			
-			nSamplesToRender = nSamplesPerCall;
-		}
-		if (nSamplesRendered + nSamplesToRender > SID_OUT_SIZE)
-		{
-			synth_render(tBuffer+nSamplesRendered, SID_OUT_SIZE-nSamplesRendered);
-			nSamplesToRender -= SID_OUT_SIZE-nSamplesRendered;
-			nSamplesRendered = SID_OUT_SIZE;
-		}
-		else
-		{
-			synth_render(tBuffer+nSamplesRendered, nSamplesToRender);
-			nSamplesRendered += nSamplesToRender;
-			nSamplesToRender = 0;
-		} 
-	}
-}
-
-char *sidMeta(int which)
-{
-	return sidfile + SID_META_LOC + (which << 5);
-}
-
-void mp3Decode(){
-	madFinished = false;
-	copyRemainingData();
-	while(!madFinished)
-	{	
-		fillMadBuffer();
-		decodeMadBuffer(1);
-		//checkKeys();
-	}
-}
-
-void nsfDecode()
-{
-	if(inTrack || isSwitching)
-		return;
-	
-	inTrack = true;
-	
-	uint8_t *tBuffer = (uint8_t *)lBuffer;
-	
-    GetSamples(&tBuffer[0],NSF_OUT_SIZE/4);
-	//checkKeys();
-    GetSamples(&tBuffer[NSF_OUT_SIZE/4],NSF_OUT_SIZE/4);
-	//checkKeys();
-	GetSamples(&tBuffer[NSF_OUT_SIZE/2],NSF_OUT_SIZE/4);
-	//checkKeys();
-    GetSamples(&tBuffer[3*NSF_OUT_SIZE/4],NSF_OUT_SIZE/4);
-	
-	inTrack = false;
-}
-
-void spcDecode()
-{
-	spcPlay(lBuffer, rBuffer);
-	//checkKeys();
-	spcPlay(lBuffer + (SPC_OUT_SIZE >> 2), rBuffer + (SPC_OUT_SIZE >> 2));
-	//checkKeys();
-	spcPlay(lBuffer + (SPC_OUT_SIZE >> 1), rBuffer + (SPC_OUT_SIZE >> 1));
-	//checkKeys();
-	spcPlay(lBuffer + ((SPC_OUT_SIZE >> 2) * 3), rBuffer + ((SPC_OUT_SIZE >> 2) * 3));
-}
-
-void sndhDecode()
-{
-	int code = api68_process(sc68, lBuffer, SNDH_OUT_SIZE);
-	
-	if(code & API68_END) 
-	{
-		cutOff = true;
-	}
-}
-
-void gbsDecode()
-{
-	gme_play(emu, GBS_OUT_SIZE, lBuffer);
-	//checkKeys();
-	gme_play(emu, GBS_OUT_SIZE, lBuffer + GBS_OUT_SIZE);
-	
-	// check for change track
-	if(gbsTrack != gbsOldTrack)
-	{
-		//checkKeys();
-		gme_start_track(emu, gbsTrack);
-		gme_track_info(emu, &info, gbsTrack);
-		
-		gbsOldTrack = gbsTrack;
-	}	
-}
-
-void *sndhMalloc(unsigned int t)
-{
-	return safeMalloc(t);
-}
-
-int getSNDHTrack()
-{
-	int curTrack = api68_play(sc68, -1, 0);
-	
-	return curTrack = 0 ? 1 : curTrack;
-}
-
-int getSNDHTotalTracks()
-{
-	return sndhTracks = 0 ? 1 : sndhTracks;
-}
-
 void fillMadBuffer()
 {
 	if(cutOff)
@@ -1561,9 +1537,21 @@ void fillMadBufferStream()
 		}
 	}
 }
-*/
 
+static inline u16 scale(mad_fixed_t sample)
+{
+	/* round */
+	sample += (1L << (MAD_F_FRACBITS - 16));
 
+	/* clip */
+	if (sample >= MAD_F_ONE)
+		sample = MAD_F_ONE - 1;
+	else if (sample < -MAD_F_ONE)
+		sample = -MAD_F_ONE;
+
+	/* quantize */
+	return sample >> (MAD_F_FRACBITS + 1 - 16);
+}
 
 __attribute__((section(".itcm")))
 void copyData()
@@ -1715,7 +1703,6 @@ void copyRemainingData()
 	}
 }
 
-/*
 __attribute__((section(".itcm")))
 void decodeMadBuffer(int mode)
 {	
@@ -1816,7 +1803,6 @@ void decodeMadBufferStream(int mode)
 		copyData();
 	}
 }
-*/
 
 __attribute__((section(".itcm")))
 static int FillReadBuffer(unsigned char *readBuf, unsigned char *readPtr, int bufSize, int bytesLeft)
@@ -1943,7 +1929,6 @@ uint32_t aac_seek_callback(void *user_data, uint64_t position)
 	return fseek((FILE*)user_data, position, SEEK_SET);
 }
 
-/*
 // callbacks for ogg vorbis, craftily snuck from moonshell source because
 // I was far too lazy to write them myself....yet I ended up modifying them
 // all ....
@@ -2052,18 +2037,17 @@ long callbacks_tell_func_stream(void *datasource)
 {
 	return oggStreamLoc;
 }
-*/
 
 // main sound init routine
 
 void setLoop()
 {
-	//module->wrap = 1;
+	module->wrap = 1;
 }
 
 void clearLoop()
 {
-	//module->wrap = 0;
+	module->wrap = 0;
 }
 
 bool loadSound(char *fName)
@@ -2082,6 +2066,7 @@ bool loadSound(char *fName)
 	seekUpdate = -1;
 	
 	// try this first to prevent false positives with other streams
+	
 	/*
 	if(isURL(fName))
 	{	
@@ -2095,12 +2080,12 @@ bool loadSound(char *fName)
 		separateExtension(tmpName, ext);
 		strlwr(ext);
 		
-		//if(strcmp(ext, ".ogg") == 0)
-		//	soundData.sourceFmt = SRC_STREAM_OGG;
-		if(strcmp(ext, ".aac") == 0)
+		if(strcmp(ext, ".ogg") == 0)
+			soundData.sourceFmt = SRC_STREAM_OGG;
+		else if(strcmp(ext, ".aac") == 0)
 			soundData.sourceFmt = SRC_STREAM_AAC;		
-		//else
-		//	soundData.sourceFmt = SRC_STREAM_MP3;
+		else
+			soundData.sourceFmt = SRC_STREAM_MP3;
 		
 		soundData.bufLoc = 0;
 		
@@ -2122,6 +2107,7 @@ bool loadSound(char *fName)
 		return true;
 	}
 	*/
+
 	if(strcmp(ext,".wav") == 0)
 	{
 		// wav file!
@@ -2131,10 +2117,8 @@ bool loadSound(char *fName)
 		
 		wavFormatChunk headerChunk;
 		char header[13];
-		FILE *fp = NULL;
-		if(FAT_FileExists((char*)fName) == FT_FILE){
-			fp = fopen(fName, "r");	
-		}
+		
+		FILE *fp = fopen(fName, "r");
 		fread(header, 1, 12, fp);
 		
 		header[12] = 0;
@@ -2225,7 +2209,7 @@ bool loadSound(char *fName)
 		}
 		
 		uint len = 0;
-		fread(&len, 1, sizeof(len),fp);
+		fread(&len, 1, sizeof(len), fp);
 		
 		soundData.len = len;
 		soundData.loc = 0;
@@ -2264,7 +2248,6 @@ bool loadSound(char *fName)
 		return true;
 	}
 	
-	/*
 	if(strcmp(ext, ".it") == 0  || strcmp(ext, ".mod") == 0 || strcmp(ext, ".s3m") == 0 || strcmp(ext, ".xm") == 0)
 	{
 		// tracker file!
@@ -2308,7 +2291,8 @@ bool loadSound(char *fName)
 	
 	if(strcmp(ext, ".mp3") == 0 || strcmp(ext, ".mp2") == 0 || strcmp(ext, ".mpa") == 0)
 	{
-		// mp3 file	
+		// mp3 file
+		
 		soundData.sourceFmt = SRC_MP3;
 		soundData.bufLoc = 0;
 		
@@ -2317,10 +2301,7 @@ bool loadSound(char *fName)
 		mad_synth_init(&Synth);
 		mad_timer_reset(&Timer);
 		
-		FILE *fp = NULL;
-		if(FAT_FileExists((char*)fName) == FT_FILE){
-			fp = fopen(fName, "r");
-		}
+		FILE *fp = fopen(fName, "r");
 		soundData.filePointer = fp;
 		
 		getID3V1(fp, &id3Data);
@@ -2384,7 +2365,7 @@ bool loadSound(char *fName)
 		bytesLeft = 0;
 		bytesLeftBuf = NULL;
 		
-		mp3Decode();//process header frame
+		mp3Decode();	//process header frame
 		startSound();
 		return true;
 	}
@@ -2395,10 +2376,8 @@ bool loadSound(char *fName)
 		
 		soundData.sourceFmt = SRC_OGG;
 		soundData.bufLoc = 0;
-		FILE *fp = NULL;
-		if(FAT_FileExists((char*)fName) == FT_FILE){
-			fp=fopen(fName, "r");
-		}
+		
+		FILE *fp = fopen(fName, "r");
 		soundData.filePointer = fp;
 		
 		ov_callbacks oggCallBacks = {callbacks_read_func, callbacks_seek_func, callbacks_close_func, callbacks_tell_func};
@@ -2436,7 +2415,6 @@ bool loadSound(char *fName)
 		
 		return true;
 	}
-	*/
 	
 	if(strcmp(ext, ".aac") == 0)
 	{
@@ -2449,10 +2427,7 @@ bool loadSound(char *fName)
 		if (!hAACDecoder)
 			return false;
 		
-		FILE *fp = NULL;
-		if(FAT_FileExists((char*)fName) == FT_FILE){
-			fp = fopen(fName, "r");
-		}
+		FILE *fp = fopen(fName, "r");
 		soundData.filePointer = fp;
 		
 		aacReadBuf = (unsigned char *)trackMalloc(AAC_READBUF_SIZE, "aac read stream");
@@ -2531,10 +2506,7 @@ bool loadSound(char *fName)
 		if (!hAACDecoder)
 			return false;
 			
-		FILE *fp = NULL;
-		if(FAT_FileExists((char*)fName) == FT_FILE){
-			fp=fopen(fName, "r");
-		}
+		FILE *fp = fopen(fName, "r");
 		soundData.filePointer = fp;
 		
 		aacReadBuf = (unsigned char *)trackMalloc(AAC_READBUF_SIZE * 2, "aac read stream");
@@ -2706,7 +2678,6 @@ bool loadSound(char *fName)
 		return true;
 	}
 	
-	/*
 	if(strcmp(ext, ".sid") == 0)
 	{
 		// sid audio file
@@ -2714,10 +2685,7 @@ bool loadSound(char *fName)
 		soundData.sourceFmt = SRC_SID;
 		soundData.bufLoc = 0;
 		
-		FILE *df = NULL;
-		if(FAT_FileExists((char*)fName) == FT_FILE){
-			df= fopen(fName,"r");
-		}
+		FILE *df = fopen(fName,"r");
 		sidLength = flength(df);
 		
 		sidfile = (char *)trackMalloc(sidLength, "sid file temporary");
@@ -2764,10 +2732,7 @@ bool loadSound(char *fName)
 		
 		soundData.sourceFmt = SRC_NSF;
 		soundData.bufLoc = 0;
-		FILE *df = NULL;
-		if(FAT_FileExists((char*)fName) == FT_FILE){
-			df=fopen(fName,"r");
-		}
+		FILE *df = fopen(fName,"r");
 		nsfLength = flength(df);
 		
 		nsffile = (uint8_t *)trackMalloc(nsfLength, "nsf file temporary");
@@ -2826,10 +2791,8 @@ bool loadSound(char *fName)
 		
 		soundData.sourceFmt = SRC_SPC;
 		soundData.bufLoc = 0;
-		FILE *df = NULL;
-		if(FAT_FileExists((char*)fName) == FT_FILE){
-			df=fopen(fName,"r");
-		}
+		
+		FILE *df = fopen(fName,"r");
 		spcLength = flength(df);
 		
 		spcfile = (uint8_t *)trackMalloc(spcLength, "spc file temporary");
@@ -2861,10 +2824,8 @@ bool loadSound(char *fName)
 		
 		soundData.sourceFmt = SRC_SNDH;
 		soundData.bufLoc = 0;
-		FILE *df = NULL;
-		if(FAT_FileExists((char*)fName) == FT_FILE){
-			df=fopen(fName,"r");
-		}
+		
+		FILE *df = fopen(fName,"r");
 		sndhLength = flength(df);
 		
 		sndhfile = (uint8_t *)trackMalloc(sndhLength, "sndh file temporary");
@@ -2949,14 +2910,12 @@ bool loadSound(char *fName)
 		
 		return true;
 	}
-	*/
 	
 	return false;
 }
 
 void soundPrevTrack(int x, int y)
 {
-	/*
 	switch(soundData.sourceFmt)
 	{
 		case SRC_NSF:			
@@ -3002,18 +2961,17 @@ void soundPrevTrack(int x, int y)
 		break;
 		case SRC_GBS:
 		{
-			if(getGBSTrack() - 1 < 1)
+			if(getGBSTrack() - 1 < 1){
 				return;
+			}
 			gbsTrack--;
 		}
 		break;
-	}
-	*/
+	}	
 }
 
 void soundNextTrack(int x, int y)
 {
-	/*
 	switch(soundData.sourceFmt)
 	{
 		case SRC_NSF:			
@@ -3067,10 +3025,8 @@ void soundNextTrack(int x, int y)
 		}
 		break;
 	}
-	*/
 }
 
-/*
 void getSNDHMeta(api68_music_info_t *info)
 {
 	api68_music_info(sc68, info, -1, 0);
@@ -3205,8 +3161,6 @@ void checkStream() // check if we have recieved anything yet
 	}
 }
 
-*/
-
 void recieveStream(int amount) // recieves an amount if > 0, does nothing if = 0, recieves until nothing left if < 0
 {		
 	if(amount == 0)
@@ -3235,7 +3189,7 @@ void recieveStream(int amount) // recieves an amount if > 0, does nothing if = 0
 		{
 			recAmount += i;
 			
-			//circularCopy(s_buffer, tcpTemp, i, &s_cursor, STREAM_BUFFER_SIZE);	//no streaming
+			circularCopy(s_buffer, tcpTemp, i, &s_cursor, STREAM_BUFFER_SIZE);
 			x += i;
 		}
 		else
@@ -3262,8 +3216,8 @@ bool amountLeftOver()
 	// Exit if we aren't supposed to be here
 	switch(soundData.sourceFmt)
 	{
-		//case SRC_STREAM_MP3:
-		//case SRC_STREAM_OGG:
+		case SRC_STREAM_MP3:
+		case SRC_STREAM_OGG:
 		case SRC_STREAM_AAC:
 			break;
 		default:
@@ -3282,7 +3236,6 @@ bool amountLeftOver()
 	return true;
 }
 
-/*
 void startStreamAudio()
 {
 	switch(soundData.sourceFmt)
@@ -3440,9 +3393,10 @@ void startStreamAudio()
 		}
 	}
 }
-
+	
 void doCurrentStatus()
 {
+	/*
 	switch(streamMode)
 	{
 		case STREAM_DISCONNECTED: // start connecting
@@ -3508,6 +3462,7 @@ void doCurrentStatus()
 			// pretty self explanatory
 			break;
 	}
+	*/
 }
 
 ICY_HEADER *getStreamData()
@@ -3521,7 +3476,6 @@ int getCurrentStatus()
 	
 	return streamMode;
 }
-*/
 
 int getSourceFmt()
 {
@@ -3588,7 +3542,6 @@ void setSoundLoc(u32 loc)
 			soundData.loc = loc & (~((WAV_READ_SIZE * 2) - 1));
 			fseek(soundData.filePointer, (s32)(soundData.loc + soundData.dataOffset), SEEK_CUR);
 			break;
-		/*
 		case SRC_MIKMOD:
 			if(loc < soundData.len)
 			{
@@ -3601,7 +3554,6 @@ void setSoundLoc(u32 loc)
 			
 			fseek(soundData.filePointer, soundData.loc, 0);
 			break;
-		*/
 		case SRC_FLAC:
 			seekUpdate = loc;
 			fseek(soundData.filePointer, seekUpdate, 0);
@@ -3619,9 +3571,8 @@ void closeSound()
 {	
 	freeSound();
 	
-	//if(isWIFIConnected())
-	//	disconnectWifi();
-	
+	if(isWIFIConnected())
+		disconnectWifi();
 	soundLoaded = false;
 }
 
@@ -3711,7 +3662,6 @@ void setGenericSound( u32 rate, u8 vol, u8 pan, u8 format) {
 	SndDat.format	= format;
 }
 
-/*
 int getSIDTrack()
 {
 	return sid_subSong + 1;
@@ -3748,7 +3698,6 @@ char *gbsMeta(int which)
 	
 	return 0;
 }
-*/
 
 
 void checkEndSound()

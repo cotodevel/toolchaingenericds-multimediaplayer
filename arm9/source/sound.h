@@ -22,9 +22,10 @@
 
 #include "ipcfifoTGDSUser.h"
 #include <aacdec.h>
-//#include "fatwrapper.h"
-//#include "http.h"
-//#include "api68.h"
+#include "misc.h"
+#include "http.h"
+#include "api68.h"
+#include "id3.h"
 
 enum {
 	SRC_NONE,
@@ -108,7 +109,7 @@ enum {
 #define SIWRAM1 ((s16 *)0x037FC000)
 
 // mikmod
-//#include "drv_nos.h"
+#include "drv_nos.h"
 
 typedef struct 
 {
@@ -136,7 +137,6 @@ typedef struct
 	u32 dataLen;
 	int mp3SampleRate;
 } sndData;
-
 
 // sound stuff
 
@@ -185,11 +185,15 @@ typedef struct
 
 #endif
 
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 extern char *strlwr(char *str);
+
+extern ID3V1_TYPE id3Data;
 
 extern void initComplexSound();
 extern void setSoundInterrupt();

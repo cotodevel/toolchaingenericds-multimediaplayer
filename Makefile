@@ -83,6 +83,20 @@ export DIRS_ARM9_SRC = source/	\
 			source/libffmpegFLAC/src/	\
 			source/mp4ff/	\
 			source/mad/	\
+			source/mikmod/	\
+			source/mikmod/drivers/	\
+			source/mikmod/include/	\
+			source/mikmod/loaders/	\
+			source/mikmod/mmio/	\
+			source/mikmod/playercode/	\
+			source/emulated/	\
+			source/emulated/libspc/	\
+			source/emulated/api68/	\
+			source/emulated/emu68/	\
+			source/emulated/file68/	\
+			source/emulated/io68/	\
+			source/emulated/gbs/	\
+			source/tremor/	\
 			../common/
 			
 export DIRS_ARM9_HEADER = include/	\
@@ -95,6 +109,20 @@ export DIRS_ARM9_HEADER = include/	\
 			source/libffmpegFLAC/src/	\
 			source/mp4ff/	\
 			source/mad/	\
+			source/mikmod/	\
+			source/mikmod/drivers/	\
+			source/mikmod/include/	\
+			source/mikmod/loaders/	\
+			source/mikmod/mmio/	\
+			source/mikmod/playercode/	\
+			source/emulated/	\
+			source/emulated/libspc/	\
+			source/emulated/api68/	\
+			source/emulated/emu68/	\
+			source/emulated/file68/	\
+			source/emulated/io68/	\
+			source/emulated/gbs/	\
+			source/tremor/	\
 			../common/	\
 			../$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/include/
 

@@ -38,7 +38,7 @@ USA
 #include "main.h"
 #include "wifi_arm7.h"
 #include "spifwTGDS.h"
-#include "click_raw_out.h"
+#include "click_raw.h"
 
 static inline s16 checkClipping(int data)
 {

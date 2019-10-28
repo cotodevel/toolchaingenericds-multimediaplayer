@@ -18,21 +18,22 @@ USA
 
 */
 
+#include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
-#include "typedefsTGDS.h"
 
 #include "fileHandleTGDS.h"
 #include "dswnifi_lib.h"
 #include "keypadTGDS.h"
-#include "sound.h"
 #include "misc.h"
+#include "sound.h"
 
 //C++ part
 using namespace std;
 #include <cstdlib>
-#include <iostream>
 #include <vector>
+#include <iostream>
+
 
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 
@@ -43,7 +44,10 @@ string ToStr( char c ) {
 void menuShow(){
 	clrscr();
 	printf("                              ");
-	printf("Start: File Browser -> Press A to play .AAC ");
+	printf("Supported Formats: WAV/MP3/AAC/Ogg");
+	printf("/FLAC/NSF/SPC/GBS/+ others");
+	printf("                              ");
+	printf("Start: File Browser -> Press A to play audio.");
 	printf("B: Stop audio playback ");
 	printf("Select: this menu");
 }

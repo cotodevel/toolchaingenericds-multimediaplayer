@@ -28,15 +28,10 @@ USA
 #ifdef __cplusplus
 //C++ part
 using namespace std;
-#include <iostream>
-#include <fstream>
-#include <list>
-#include <vector>
-#include <cmath>
 #include <cstdlib>
-#include <cstdio>
+#include <vector>
+#include <iostream>
 #endif
-
 
 #endif
 
