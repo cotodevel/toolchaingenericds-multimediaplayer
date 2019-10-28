@@ -18,6 +18,7 @@ USA
 
 */
 
+#include <stdlib.h>
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
@@ -34,6 +35,7 @@ using namespace std;
 #include <vector>
 #include <iostream>
 
+static vector<string> songLst;
 
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 
@@ -47,9 +49,10 @@ void menuShow(){
 	printf("Supported Formats: WAV/MP3/AAC/Ogg");
 	printf("/FLAC/NSF/SPC/GBS/+ others");
 	printf("                              ");
-	printf("Start: File Browser -> Press A to play audio.");
-	printf("B: Stop audio playback ");
-	printf("Select: this menu");
+	printf("(Start): File Browser -> (A) to play audio file");
+	printf("(R): Random audio file playback ");
+	printf("(B): Stop audio playback ");
+	printf("(Select): this menu");
 }
 
 
@@ -81,6 +84,8 @@ bool ShowBrowser(char * Path){
 	sprintf(fname,"%s",Path);
 	int j = 0, k =0;
     
+	//OK, use the new CWD and build the playlist
+	songLst.clear();
 	int retf = FAT_FindFirstFile(fname);
 	while(retf != FT_NONE){
 		struct FileClass * fileClassInst = NULL;
@@ -94,6 +99,9 @@ bool ShowBrowser(char * Path){
 		else if(retf == FT_FILE){
 			fileClassInst = getFileClassFromList(LastFileEntry); 
 			std::string outFileName = string(fileClassInst->fd_namefullPath);
+			
+			songLst.push_back(outFileName);
+			
 			sprintf(fileClassInst->fd_namefullPath,"%s",parsefileNameTGDS(outFileName).c_str());
 		}
 		internalName.push_back(fileClassInst);
@@ -201,8 +209,7 @@ bool ShowBrowser(char * Path){
 		//printf("you chose Dir:%s",curChosenBrowseFile);
 	}
 	else{
-		//printf("you chose File:%s",curChosenBrowseFile);
-		bool success = loadSound(curChosenBrowseFile);			
+		bool success = loadSound(curChosenBrowseFile);
 		while(!success)	
 		{
 			//getNextSoundInternal(false);
@@ -273,6 +280,24 @@ int main(int _argc, sint8 **_argv) {
 		if (keysPressed() & KEY_B){
 			//Audio stop here....
 			closeSound();
+		}
+		
+		if (keysPressed() & KEY_R){
+			//Play Random song from current folder
+			int lstSize = songLst.size();
+			if(lstSize > 0){
+				closeSound();
+				IRQVBlankWait();
+				
+				//pick one and play
+				int randFile = rand() % (lstSize+1);
+				strcpy(curChosenBrowseFile, (const char *)songLst.at(randFile).c_str());
+				bool success = loadSound((char*)curChosenBrowseFile);
+				while(!success)	
+				{
+					success = loadSound((char*)curChosenBrowseFile);
+				}
+			}
 		}
 		
 		//Audio playback here....
