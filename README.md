@@ -16,7 +16,7 @@ Set up:
 DLDI patch the ToolchainGenericDS-audioplayer.nds in /release folder (NTR mode only)
 
 2)
-Start: Choose a file from a given directory, press A to play: WAV/AAC files.
+Start: Choose a file from a given directory, use D-PAD UP or D-PAD DOWN to scroll up/down files in the directory, press A to play: audio files.
 B: Stop audio playback.
 Select: This menu screen
 

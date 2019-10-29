@@ -116,16 +116,6 @@ bool ShowBrowser(char * Path){
 	
 	//actual file lister
 	clrscr();
-	while(j < internalName.size() ){
-		std::string strDirFileName = string(internalName.at(j)->fd_namefullPath);		
-		if(internalName.at(j)->type == FT_DIR){
-			printfCoords(0, j, "--- %s%s",strDirFileName.c_str(),"<dir>");
-		}
-		else{
-			printfCoords(0, j, "--- %s",strDirFileName.c_str());
-		}
-		j++;
-	}
 	
 	j = 1;
 	pressed = 0 ;
@@ -134,16 +124,58 @@ bool ShowBrowser(char * Path){
 	bool reloadDirB = false;
 	std::string newDir = std::string("");
 	
+	#define itemsShown (int)(15)
+	int curjoffset = 0;
+	int itemRead=1;
+	
 	while(1){
+		
+		int itemsToLoad = (internalName.size() - curjoffset);
+		
+		//check if remaining items are enough
+		if(itemsToLoad > itemsShown){
+			itemsToLoad = itemsShown;
+		}
+		
+		while(itemRead < itemsToLoad ){
+			std::string strDirFileName = string(internalName.at(itemRead+curjoffset)->fd_namefullPath);		
+			if(internalName.at(itemRead+curjoffset)->type == FT_DIR){
+				printfCoords(0, itemRead, "--- %s%s",strDirFileName.c_str(),"<dir>");
+			}
+			else{
+				printfCoords(0, itemRead, "--- %s",strDirFileName.c_str());
+			}
+			itemRead++;
+		}
+		
 		scanKeys();
 		pressed = keysPressed();
-		if (pressed&KEY_DOWN && (j < (internalName.size() - 1) ) ){
+		if (pressed&KEY_DOWN && (j < (itemsToLoad - 1) ) ){
 			j++;
 			while(pressed&KEY_DOWN){
 				scanKeys();
 				pressed = keysPressed();
 			}
 		}
+		
+		//downwards: means we need to reload new screen
+		else if(pressed&KEY_DOWN && (j >= (itemsToLoad - 1) ) && ((internalName.size() - curjoffset - itemRead) > 0) ){
+			
+			//list only the remaining items
+			clrscr();
+			
+			curjoffset = (curjoffset + itemsToLoad - 1);
+			itemRead = 1;
+			j = 1;
+			
+			scanKeys();
+			pressed = keysPressed();
+			while(pressed&KEY_DOWN){
+				scanKeys();
+				pressed = keysPressed();
+			}
+		}
+		
 		if (pressed&KEY_UP && (j > 1)) {
 			j--;
 			while(pressed&KEY_UP){
@@ -152,15 +184,33 @@ bool ShowBrowser(char * Path){
 			}
 		}
 		
+		//upwards: means we need to reload new screen
+		else if (pressed&KEY_UP && (j <= 1) && (curjoffset > 0) ) {
+			//list only the remaining items
+			clrscr();
+			
+			curjoffset--;
+			itemRead = 1;
+			j = 1;
+			
+			scanKeys();
+			pressed = keysPressed();
+			while(pressed&KEY_UP){
+				scanKeys();
+				pressed = keysPressed();
+			}
+		}
+		
+		
 		//reload DIR (forward)
-		if( (pressed&KEY_A) && (internalName.at(j)->type == FT_DIR) ){
-			newDir = string(internalName.at(j)->fd_namefullPath);
+		if( (pressed&KEY_A) && (internalName.at(j+curjoffset)->type == FT_DIR) ){
+			newDir = string(internalName.at(j+curjoffset)->fd_namefullPath);
 			reloadDirA = true;
 			break;
 		}
 		
 		//file chosen
-		else if( (pressed&KEY_A) && (internalName.at(j)->type == FT_FILE) ){
+		else if( (pressed&KEY_A) && (internalName.at(j+curjoffset)->type == FT_FILE) ){
 			break;
 		}
 		
@@ -175,17 +225,13 @@ bool ShowBrowser(char * Path){
 		if(lastVal != j){
 			printfCoords(0, lastVal, " ");	//clean old
 		}
-		while(!(pressed&KEY_DOWN) && !(pressed&KEY_UP) && !(pressed&KEY_START) && !(pressed&KEY_A) && !(pressed&KEY_B)){
-			scanKeys();
-			pressed = keysPressed();
-			updateStreamLoop();
-		}
 		lastVal = j;
 		updateStreamLoop();
 	}
 	
 	//enter a dir
 	if(reloadDirA == true){
+		internalName.clear();
 		enterDir((char*)newDir.c_str());
 		return true;
 	}
@@ -197,10 +243,10 @@ bool ShowBrowser(char * Path){
 		return true;
 	}
 	
-	sprintf((char*)curChosenBrowseFile,"%s",internalName.at(j)->fd_namefullPath);
+	sprintf((char*)curChosenBrowseFile,"%s",internalName.at(j+curjoffset)->fd_namefullPath);
 	clrscr();
 	printf("                                   ");
-	if(internalName.at(j)->type == FT_DIR){
+	if(internalName.at(j+curjoffset)->type == FT_DIR){
 		//printf("you chose Dir:%s",curChosenBrowseFile);
 	}
 	else{
