@@ -80,12 +80,16 @@ bool ShowBrowser(char * Path){
 	}
 	int pressed = 0;
 	vector<struct FileClass *> internalName;
+	struct FileClass filStub;
 	char fname[256];
 	sprintf(fname,"%s",Path);
-	int j = 0, k =0;
+	int j = 1;
     
 	//OK, use the new CWD and build the playlist
 	songLst.clear();
+	songLst.push_back("stub");
+	internalName.push_back(&filStub);
+	
 	int retf = FAT_FindFirstFile(fname);
 	while(retf != FT_NONE){
 		struct FileClass * fileClassInst = NULL;
@@ -108,48 +112,40 @@ bool ShowBrowser(char * Path){
 		
 		//more file/dir objects?
 		retf = FAT_FindNextFile(fname);
-		j++;
 	}
 	
 	//actual file lister
 	clrscr();
-	while(k < j ){
-		std::string strDirFileName = string(internalName.at(k)->fd_namefullPath);		
-		/*
-		if(strlen(getTGDSCurrentWorkingDirectory()) == 1){
-			strDirFileName.erase(0,1);	//trim the starting "/"
-		}
-		*/
-		if(internalName.at(k)->type == FT_DIR){
-			printfCoords(0, k, "--- %s%s",strDirFileName.c_str(),"<dir>");
+	while(j < internalName.size() ){
+		std::string strDirFileName = string(internalName.at(j)->fd_namefullPath);		
+		if(internalName.at(j)->type == FT_DIR){
+			printfCoords(0, j, "--- %s%s",strDirFileName.c_str(),"<dir>");
 		}
 		else{
-			printfCoords(0, k, "--- %s",strDirFileName.c_str());
+			printfCoords(0, j, "--- %s",strDirFileName.c_str());
 		}
-		k++;
+		j++;
 	}
 	
+	j = 1;
 	pressed = 0 ;
-	k = 0;
 	int lastVal = 0;
-	
 	bool reloadDirA = false;
 	bool reloadDirB = false;
-	
 	std::string newDir = std::string("");
 	
 	while(1){
 		scanKeys();
 		pressed = keysPressed();
-		if (pressed&KEY_DOWN && k < (j - 1) ){
-			k++;
+		if (pressed&KEY_DOWN && (j < (internalName.size() - 1) ) ){
+			j++;
 			while(pressed&KEY_DOWN){
 				scanKeys();
 				pressed = keysPressed();
 			}
 		}
-		if (pressed&KEY_UP && k != 0) {
-			k--;
+		if (pressed&KEY_UP && (j > 1)) {
+			j--;
 			while(pressed&KEY_UP){
 				scanKeys();
 				pressed = keysPressed();
@@ -157,14 +153,14 @@ bool ShowBrowser(char * Path){
 		}
 		
 		//reload DIR (forward)
-		if( (pressed&KEY_A) && (internalName.at(k)->type == FT_DIR) ){
-			newDir = string(internalName.at(k)->fd_namefullPath);
+		if( (pressed&KEY_A) && (internalName.at(j)->type == FT_DIR) ){
+			newDir = string(internalName.at(j)->fd_namefullPath);
 			reloadDirA = true;
 			break;
 		}
 		
 		//file chosen
-		else if( (pressed&KEY_A) && (internalName.at(k)->type == FT_FILE) ){
+		else if( (pressed&KEY_A) && (internalName.at(j)->type == FT_FILE) ){
 			break;
 		}
 		
@@ -174,10 +170,9 @@ bool ShowBrowser(char * Path){
 			break;
 		}
 		
-		
 		// Show cursor
-		printfCoords(0, k, "*");
-		if(lastVal != k){
+		printfCoords(0, j, "*");
+		if(lastVal != j){
 			printfCoords(0, lastVal, " ");	//clean old
 		}
 		while(!(pressed&KEY_DOWN) && !(pressed&KEY_UP) && !(pressed&KEY_START) && !(pressed&KEY_A) && !(pressed&KEY_B)){
@@ -185,7 +180,7 @@ bool ShowBrowser(char * Path){
 			pressed = keysPressed();
 			updateStreamLoop();
 		}
-		lastVal = k;
+		lastVal = j;
 		updateStreamLoop();
 	}
 	
@@ -202,19 +197,14 @@ bool ShowBrowser(char * Path){
 		return true;
 	}
 	
-	sprintf((char*)curChosenBrowseFile,"%s",internalName.at(k)->fd_namefullPath);
+	sprintf((char*)curChosenBrowseFile,"%s",internalName.at(j)->fd_namefullPath);
 	clrscr();
 	printf("                                   ");
-	if(internalName.at(k)->type == FT_DIR){
+	if(internalName.at(j)->type == FT_DIR){
 		//printf("you chose Dir:%s",curChosenBrowseFile);
 	}
 	else{
-		bool success = loadSound(curChosenBrowseFile);
-		while(!success)	
-		{
-			//getNextSoundInternal(false);
-			success = loadSound(curChosenBrowseFile);
-		}
+		loadSound(curChosenBrowseFile);
 	}
 	return false;
 }
@@ -251,10 +241,6 @@ int main(int _argc, sint8 **_argv) {
 	
 	menuShow();
 	
-	//let's try playing a WAV
-	//loadWavToMemory();
-	//loadSound("0:/DSOrganize/startup.wav");
-	
 	while (1){
 		scanKeys();
 		
@@ -285,7 +271,7 @@ int main(int _argc, sint8 **_argv) {
 		if (keysPressed() & KEY_R){
 			//Play Random song from current folder
 			int lstSize = songLst.size();
-			if(lstSize > 0){
+			if(lstSize > 1){
 				closeSound();
 				IRQVBlankWait();
 				
@@ -293,10 +279,6 @@ int main(int _argc, sint8 **_argv) {
 				int randFile = rand() % (lstSize+1);
 				strcpy(curChosenBrowseFile, (const char *)songLst.at(randFile).c_str());
 				bool success = loadSound((char*)curChosenBrowseFile);
-				while(!success)	
-				{
-					success = loadSound((char*)curChosenBrowseFile);
-				}
 			}
 		}
 		
@@ -305,9 +287,7 @@ int main(int _argc, sint8 **_argv) {
 		updateStreamLoop();
 		updateStreamLoop();
 		updateStreamLoop();
-		
-		checkEndSound();
-		
+		checkEndSound();	
 		IRQVBlankWait();
 	}
 	
