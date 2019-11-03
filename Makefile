@@ -21,7 +21,7 @@
 #ToolchainGenericDS specific: 
 #Non FPIC Code: Use Makefiles from either TGDS, or custom
 export SOURCE_MAKEFILE7 = default
-export SOURCE_MAKEFILE9 = custom
+export SOURCE_MAKEFILE9 = default
 
 #FPIC code is always default TGDS Makefile
 
@@ -97,6 +97,7 @@ export DIRS_ARM9_SRC = source/	\
 			source/emulated/io68/	\
 			source/emulated/gbs/	\
 			source/tremor/	\
+			source/opus/	\
 			../common/
 			
 export DIRS_ARM9_HEADER = include/	\
@@ -123,6 +124,7 @@ export DIRS_ARM9_HEADER = include/	\
 			source/emulated/io68/	\
 			source/emulated/gbs/	\
 			source/tremor/	\
+			source/opus/	\
 			../common/	\
 			../$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/include/
 
