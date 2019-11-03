@@ -254,6 +254,8 @@ extern void updateStreamLoop();
 
 extern void checkEndSound();
 
+extern bool soundLoaded;
+
 #ifdef __cplusplus
 }
 #endif

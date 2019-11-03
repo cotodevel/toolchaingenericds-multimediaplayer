@@ -46,8 +46,7 @@
 #include "main.h"
 
 //Handles current file playback status
-static bool soundLoaded = false;
-
+bool soundLoaded = false;
 
 ID3V1_TYPE id3Data;
 	
@@ -3736,7 +3735,6 @@ void checkEndSound()
 		//}
 		
 		//sampleWidth = (getSoundLength() / 236);
-		soundLoaded = true;
 	}
 	
 	/*

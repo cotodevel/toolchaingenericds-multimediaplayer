@@ -53,6 +53,12 @@ void menuShow(){
 	printf("(R): Random audio file playback ");
 	printf("(B): Stop audio playback ");
 	printf("(Select): this menu");
+	if(soundLoaded == false){
+		printf("Playback: Stopped.");
+	}
+	else{
+		printf("Playing: %s", curChosenBrowseFile);
+	}
 }
 
 
@@ -250,7 +256,7 @@ bool ShowBrowser(char * Path){
 		//printf("you chose Dir:%s",curChosenBrowseFile);
 	}
 	else{
-		loadSound(curChosenBrowseFile);
+		soundLoaded = loadSound(curChosenBrowseFile);
 	}
 	return false;
 }
@@ -299,19 +305,23 @@ int main(int _argc, sint8 **_argv) {
 				//navigating DIRs here...
 			}
 			
+			scanKeys();
 			while(keysPressed() & KEY_START){
 				scanKeys();
 			}
 			menuShow();
 		}
 		
-		if (keysPressed() & KEY_SELECT){
-			menuShow();
-		}
-		
 		if (keysPressed() & KEY_B){
 			//Audio stop here....
 			closeSound();
+			
+			menuShow();
+			
+			scanKeys();
+			while(keysPressed() & KEY_B){
+				scanKeys();
+			}
 		}
 		
 		if (keysPressed() & KEY_R){
@@ -319,12 +329,18 @@ int main(int _argc, sint8 **_argv) {
 			int lstSize = songLst.size();
 			if(lstSize > 1){
 				closeSound();
-				IRQVBlankWait();
 				
 				//pick one and play
 				int randFile = rand() % (lstSize+1);
 				strcpy(curChosenBrowseFile, (const char *)songLst.at(randFile).c_str());
-				bool success = loadSound((char*)curChosenBrowseFile);
+				soundLoaded = loadSound((char*)curChosenBrowseFile);
+				menuShow();
+				
+				scanKeys();
+				while(keysPressed() & KEY_R){
+					scanKeys();
+				}
+			
 			}
 		}
 		
@@ -333,7 +349,6 @@ int main(int _argc, sint8 **_argv) {
 		updateStreamLoop();
 		updateStreamLoop();
 		updateStreamLoop();
-		checkEndSound();	
 		IRQVBlankWait();
 	}
 	
