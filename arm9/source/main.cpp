@@ -18,25 +18,23 @@ USA
 
 */
 
-#include <stdlib.h>
+#include "main.h"
+
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
 
-#include "fileHandleTGDS.h"
-#include "dswnifi_lib.h"
-#include "keypadTGDS.h"
+#include "gui_console_connector.h"
 #include "misc.h"
 #include "sound.h"
+#include "dswnifi_lib.h"
 
 //C++ part
 using namespace std;
-#include <cstdlib>
+#include <string>
 #include <vector>
-#include <iostream>
 
 static vector<string> songLst;
-
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 
 string ToStr( char c ) {
