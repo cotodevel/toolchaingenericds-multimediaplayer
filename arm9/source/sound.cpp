@@ -781,10 +781,7 @@ void freeSound()
 				safeFree(memoryContents);
 				memoryLoad = false;
 			}
-			else
-			{
-				fclose(soundData.filePointer);
-			}
+			
 			
 			break;
 		case SRC_MIKMOD:
@@ -800,8 +797,6 @@ void freeSound()
 			
 			break;
 		case SRC_MP3:			
-			fclose(soundData.filePointer);
-			
 			if(mp3Buf)
 				trackFree(mp3Buf);
 				
@@ -810,7 +805,7 @@ void freeSound()
 			
 			mad_synth_finish(&Synth);
 			mad_frame_finish(&Frame);
-			mad_stream_finish(&Stream);
+			mad_stream_finish(&Stream);	
 			
 			mp3Buf = NULL;
 			bytesLeftBuf = NULL;
@@ -838,14 +833,11 @@ void freeSound()
 			
 			break;
 		case SRC_OGG:{
-			bool closeOGGFileHandleInternally = false;	//no, can't close the filehandle here through callbacks. Close it through the DRAGON_xxxx library
-			ov_clear(&vf, closeOGGFileHandleInternally);
-			fclose(soundData.filePointer);
+				bool closeOGGFileHandleInternally = false;	//no, can't close the filehandle here through callbacks. Close it through the DRAGON_xxxx library
+				ov_clear(&vf, closeOGGFileHandleInternally);
 			}
 			break;
 		case SRC_FLAC:
-			fclose(soundData.filePointer);			
-			soundData.filePointer = NULL;
 			
 			if(flacInBuf)
 				trackFree(flacInBuf);			
@@ -914,8 +906,7 @@ void freeSound()
 			streamMode = STREAM_TRYNEXT;
 			
 			break;
-		case SRC_AAC:				
-			fclose(soundData.filePointer);
+		case SRC_AAC:
 			
 			if(!isRawAAC && mp4file)
 				mp4ff_close(mp4file);
@@ -969,8 +960,12 @@ void freeSound()
 			break;
 	}
 	
-	soundData.filePointer = NULL;	
-	soundData.sourceFmt = SRC_NONE;
+	if(soundData.filePointer != NULL){
+		fclose(soundData.filePointer);
+		soundData.filePointer = NULL;	
+		soundData.sourceFmt = SRC_NONE;	
+	}
+	
 }
 
 void yield()

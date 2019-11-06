@@ -36,7 +36,7 @@ using namespace std;
 
 static vector<string> songLst;
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
-
+static bool pendingPlay = false;
 string ToStr( char c ) {
    return string( 1, c );
 }
@@ -83,7 +83,7 @@ bool ShowBrowser(char * Path){
 		scanKeys();
 	}
 	int pressed = 0;
-	vector<struct FileClass *> internalName;
+	vector<struct FileClass *> internalName;	//required to handle FILE/DIR types from TGDS FS quick and easy
 	struct FileClass filStub;
 	char fname[256];
 	sprintf(fname,"%s",Path);
@@ -91,7 +91,6 @@ bool ShowBrowser(char * Path){
     
 	//OK, use the new CWD and build the playlist
 	songLst.clear();
-	songLst.push_back("stub");
 	internalName.push_back(&filStub);
 	
 	int retf = FAT_FindFirstFile(fname);
@@ -108,7 +107,7 @@ bool ShowBrowser(char * Path){
 			fileClassInst = getFileClassFromList(LastFileEntry); 
 			std::string outFileName = string(fileClassInst->fd_namefullPath);
 			
-			songLst.push_back(outFileName);
+			songLst.push_back(string(fname));
 			
 			sprintf(fileClassInst->fd_namefullPath,"%s",parsefileNameTGDS(outFileName).c_str());
 		}
@@ -254,7 +253,7 @@ bool ShowBrowser(char * Path){
 		//printf("you chose Dir:%s",curChosenBrowseFile);
 	}
 	else{
-		soundLoaded = loadSound(curChosenBrowseFile);
+		pendingPlay = true;
 	}
 	return false;
 }
@@ -285,13 +284,19 @@ int main(int _argc, sint8 **_argv) {
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
 	
 	//Init sound
-	enableVBlank(); // initialize vblank irq
+	disableVBlank();
 	setGenericSound(11025, 127, 64, 1);
 	initComplexSound(); // initialize sound variables
 	
 	menuShow();
 	
 	while (1){
+		if(pendingPlay == true){
+			soundLoaded = loadSound((char*)curChosenBrowseFile);
+			pendingPlay = false;
+			menuShow();
+		}
+		
 		scanKeys();
 		
 		if (keysPressed() & KEY_START){
@@ -307,7 +312,7 @@ int main(int _argc, sint8 **_argv) {
 			while(keysPressed() & KEY_START){
 				scanKeys();
 			}
-			menuShow();
+			
 		}
 		
 		if (keysPressed() & KEY_B){
@@ -325,14 +330,13 @@ int main(int _argc, sint8 **_argv) {
 		if (keysPressed() & KEY_R){
 			//Play Random song from current folder
 			int lstSize = songLst.size();
-			if(lstSize > 1){
+			if(lstSize > 0){
 				closeSound();
 				
 				//pick one and play
-				int randFile = rand() % (lstSize+1);
+				int randFile = rand() % lstSize;
 				strcpy(curChosenBrowseFile, (const char *)songLst.at(randFile).c_str());
-				soundLoaded = loadSound((char*)curChosenBrowseFile);
-				menuShow();
+				pendingPlay = true;
 				
 				scanKeys();
 				while(keysPressed() & KEY_R){
@@ -343,11 +347,8 @@ int main(int _argc, sint8 **_argv) {
 		}
 		
 		//Audio playback here....
-		updateStreamLoop();
-		updateStreamLoop();
-		updateStreamLoop();
-		updateStreamLoop();
-		IRQVBlankWait();
+		updateStreamLoop();	//runs once per hblank line
+		IRQWait(IRQ_HBLANK);
 	}
 	
 	return 0;

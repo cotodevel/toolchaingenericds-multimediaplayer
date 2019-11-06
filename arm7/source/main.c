@@ -195,7 +195,7 @@ int main(int _argc, sint8 **_argv) {
 	
     while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQVBlankWait();
+		IRQWait(IRQ_HBLANK);
 	}
    
 	return 0;
