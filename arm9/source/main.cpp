@@ -179,7 +179,43 @@ bool ShowBrowser(char * Path){
 			}
 		}
 		
-		if (pressed&KEY_UP && (j > 1)) {
+		//LEFT, reload new screen
+		else if(pressed&KEY_LEFT && ((curjoffset - itemsToLoad) > 0) ){
+			
+			//list only the remaining items
+			clrscr();
+			
+			curjoffset = (curjoffset - itemsToLoad - 1);
+			itemRead = 1;
+			j = 1;
+			
+			scanKeys();
+			pressed = keysPressed();
+			while(pressed&KEY_LEFT){
+				scanKeys();
+				pressed = keysPressed();
+			}
+		}
+		
+		//RIGHT, reload new screen
+		else if(pressed&KEY_RIGHT && ((internalName.size() - curjoffset - itemsToLoad) > 0) ){
+			
+			//list only the remaining items
+			clrscr();
+			
+			curjoffset = (curjoffset + itemsToLoad - 1);
+			itemRead = 1;
+			j = 1;
+			
+			scanKeys();
+			pressed = keysPressed();
+			while(pressed&KEY_RIGHT){
+				scanKeys();
+				pressed = keysPressed();
+			}
+		}
+		
+		else if (pressed&KEY_UP && (j > 1)) {
 			j--;
 			while(pressed&KEY_UP){
 				scanKeys();
@@ -204,9 +240,8 @@ bool ShowBrowser(char * Path){
 			}
 		}
 		
-		
 		//reload DIR (forward)
-		if( (pressed&KEY_A) && (internalName.at(j+curjoffset)->type == FT_DIR) ){
+		else if( (pressed&KEY_A) && (internalName.at(j+curjoffset)->type == FT_DIR) ){
 			newDir = string(internalName.at(j+curjoffset)->fd_namefullPath);
 			reloadDirA = true;
 			break;

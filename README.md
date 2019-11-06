@@ -16,9 +16,14 @@ Set up:
 DLDI patch the ToolchainGenericDS-audioplayer.nds in /release folder (NTR mode only)
 
 2)
-Start: Choose a file from a given directory, use D-PAD UP or D-PAD DOWN to scroll up/down files in the directory, press A to play: audio files.
-B: Stop audio playback.
-Select: This menu screen
+Start: 	Choose a file from a given directory, use D-PAD UP or D-PAD DOWN to scroll up/down files in the directory, 
+		or D-PAD LEFT or D-PAD RIGHT to navigate directories faster, press A to play: audio files.
+
+B: 		
+		Stop audio playback.
+
+Select: 
+		This menu screen
 
 /release folder has the latest binary precompiled for your convenience.
 
