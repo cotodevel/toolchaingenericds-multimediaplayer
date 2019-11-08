@@ -37,6 +37,7 @@ using namespace std;
 static vector<string> songLst;
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 static bool pendingPlay = false;
+static int lastRand = 0;
 string ToStr( char c ) {
    return string( 1, c );
 }
@@ -293,6 +294,10 @@ bool ShowBrowser(char * Path){
 	return false;
 }
 
+static inline int getRand(int size){
+	return (rand() % size);
+}
+
 __attribute__((section(".itcm")))
 int main(int _argc, sint8 **_argv) {
 	
@@ -369,7 +374,11 @@ int main(int _argc, sint8 **_argv) {
 				closeSound();
 				
 				//pick one and play
-				int randFile = rand() % lstSize;
+				int randFile = -1;
+				while( (randFile = getRand(lstSize)) == lastRand){
+					
+				}
+				
 				strcpy(curChosenBrowseFile, (const char *)songLst.at(randFile).c_str());
 				pendingPlay = true;
 				
@@ -377,7 +386,7 @@ int main(int _argc, sint8 **_argv) {
 				while(keysPressed() & KEY_R){
 					scanKeys();
 				}
-			
+				lastRand = randFile;
 			}
 		}
 		
