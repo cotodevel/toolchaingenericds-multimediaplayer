@@ -33,6 +33,9 @@ USA
 using namespace std;
 #include <string>
 #include <vector>
+#include <algorithm>
+
+#define oldSongsToRemember (int)(10)
 
 static vector<string> songLst;
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
@@ -41,6 +44,7 @@ string ToStr( char c ) {
    return string( 1, c );
 }
 
+
 void menuShow(){
 	clrscr();
 	printf("                              ");
@@ -48,6 +52,7 @@ void menuShow(){
 	printf("/FLAC/NSF/SPC/GBS/+ others");
 	printf("                              ");
 	printf("(Start): File Browser -> (A) to play audio file");
+	printf("(L): Recent Playlist ");
 	printf("(R): Random audio file playback ");
 	printf("(B): Stop audio playback ");
 	printf("(Select): this menu");
@@ -331,6 +336,8 @@ int main(int _argc, sint8 **_argv) {
 	disableVBlank();
 	setGenericSound(11025, 127, 64, 1);
 	initComplexSound(); // initialize sound variables
+	vector<string> oldSongLst;
+	oldSongLst.clear();
 	
 	menuShow();
 	bool pendingPlay = false;
@@ -344,6 +351,38 @@ int main(int _argc, sint8 **_argv) {
 		}
 		
 		scanKeys();
+		
+		if (keysPressed() & KEY_L){
+			int oldLstSize = oldSongLst.size();
+			if(oldLstSize > 0){
+				strcpy(curChosenBrowseFile, (const char *)oldSongLst.at(oldLstSize - 1).c_str());
+				oldSongLst.pop_back();
+				
+				//remember the old song's index
+				std::vector<string>::iterator it = std::find(oldSongLst.begin(), oldSongLst.end(), string(curChosenBrowseFile));
+				int index = std::distance(oldSongLst.begin(), it);
+				lastRand = index;
+				
+				pendingPlay = true;
+			}
+			else{
+				clrscr();
+				printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
+				printfCoords(0, 7, "Press (A).");
+				
+				scanKeys();
+				while(!(keysPressed() & KEY_A)){
+					scanKeys();
+					IRQWait(IRQ_HBLANK);
+				}
+				menuShow();
+			}
+			scanKeys();
+			while(keysPressed() & KEY_L){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
+		}
 		
 		if (keysPressed() & KEY_START){
 			
@@ -399,6 +438,15 @@ int main(int _argc, sint8 **_argv) {
 				int randFile = -1;
 				while( (randFile = getRand(lstSize)) == lastRand){
 					
+				}
+				
+				//remember playlist as long the audio file is unique. (for L button)
+				int oldPlsSize = oldSongLst.size();
+				if( (oldPlsSize > 0) && ((oldSongLst.at(oldPlsSize -1).compare(string(curChosenBrowseFile))) != 0) ){
+					oldSongLst.push_back(string(curChosenBrowseFile));
+				}
+				else if (oldPlsSize == 0){
+					oldSongLst.push_back(string(curChosenBrowseFile));
 				}
 				
 				strcpy(curChosenBrowseFile, (const char *)songLst.at(randFile).c_str());

@@ -22,6 +22,10 @@ Start: 	Choose a file from a given directory, use D-PAD UP or D-PAD DOWN to scro
 B: 		
 		Stop audio playback.
 
+L:      Recent Playlist
+
+R:		Audio playback of any random audio file from the current folder
+
 Select: 
 		This menu screen
 
