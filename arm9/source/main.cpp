@@ -36,8 +36,7 @@ using namespace std;
 
 static vector<string> songLst;
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
-static bool pendingPlay = false;
-static int lastRand = 0;
+
 string ToStr( char c ) {
    return string( 1, c );
 }
@@ -60,7 +59,6 @@ void menuShow(){
 	}
 }
 
-
 std::string parseDirNameTGDS(std::string dirName){
 	if ((dirName.at(0) == '/') && (dirName.at(1) == '/')) {
 		dirName.erase(0,1);	//trim the starting / if it has one
@@ -79,9 +77,10 @@ std::string parsefileNameTGDS(std::string fileName){
 	return fileName;
 }
 
-bool ShowBrowser(char * Path){
+bool ShowBrowser(char * Path, bool & pendingPlay){
 	while((keysPressed() & KEY_START) || (keysPressed() & KEY_A) || (keysPressed() & KEY_B)){
 		scanKeys();
+		IRQWait(IRQ_HBLANK);
 	}
 	int pressed = 0;
 	vector<struct FileClass *> internalName;	//required to handle FILE/DIR types from TGDS FS quick and easy
@@ -159,6 +158,7 @@ bool ShowBrowser(char * Path){
 			while(pressed&KEY_DOWN){
 				scanKeys();
 				pressed = keysPressed();
+				IRQWait(IRQ_HBLANK);
 			}
 		}
 		
@@ -177,6 +177,7 @@ bool ShowBrowser(char * Path){
 			while(pressed&KEY_DOWN){
 				scanKeys();
 				pressed = keysPressed();
+				IRQWait(IRQ_HBLANK);
 			}
 		}
 		
@@ -195,6 +196,7 @@ bool ShowBrowser(char * Path){
 			while(pressed&KEY_LEFT){
 				scanKeys();
 				pressed = keysPressed();
+				IRQWait(IRQ_HBLANK);
 			}
 		}
 		
@@ -213,6 +215,7 @@ bool ShowBrowser(char * Path){
 			while(pressed&KEY_RIGHT){
 				scanKeys();
 				pressed = keysPressed();
+				IRQWait(IRQ_HBLANK);
 			}
 		}
 		
@@ -221,6 +224,7 @@ bool ShowBrowser(char * Path){
 			while(pressed&KEY_UP){
 				scanKeys();
 				pressed = keysPressed();
+				IRQWait(IRQ_HBLANK);
 			}
 		}
 		
@@ -238,6 +242,7 @@ bool ShowBrowser(char * Path){
 			while(pressed&KEY_UP){
 				scanKeys();
 				pressed = keysPressed();
+				IRQWait(IRQ_HBLANK);
 			}
 		}
 		
@@ -265,7 +270,6 @@ bool ShowBrowser(char * Path){
 			printfCoords(0, lastVal, " ");	//clean old
 		}
 		lastVal = j;
-		updateStreamLoop();
 	}
 	
 	//enter a dir
@@ -329,7 +333,9 @@ int main(int _argc, sint8 **_argv) {
 	initComplexSound(); // initialize sound variables
 	
 	menuShow();
-	
+	bool pendingPlay = false;
+	int lastRand = 0;
+
 	while (1){
 		if(pendingPlay == true){
 			soundLoaded = loadSound((char*)curChosenBrowseFile);
@@ -341,16 +347,31 @@ int main(int _argc, sint8 **_argv) {
 		
 		if (keysPressed() & KEY_START){
 			
-			//as long you keep using directories ShowBrowser will be true
-			char startPath[MAX_TGDSFILENAME_LENGTH+1];
-			sprintf(startPath,"%s","/");
-			while( ShowBrowser((char *)startPath) == true ){
-				//navigating DIRs here...
-			}
-			
-			scanKeys();
-			while(keysPressed() & KEY_START){
+			if(soundLoaded == false){
+				//as long you keep using directories ShowBrowser will be true
+				char startPath[MAX_TGDSFILENAME_LENGTH+1];
+				sprintf(startPath,"%s","/");
+				while( ShowBrowser((char *)startPath, pendingPlay) == true ){
+					//navigating DIRs here...
+				}
+				
 				scanKeys();
+				while(keysPressed() & KEY_START){
+					scanKeys();
+					IRQWait(IRQ_HBLANK);
+				}
+			}
+			else{
+				clrscr();
+				printfCoords(0, 6, "Please stop audio playback before listing files. ");
+				printfCoords(0, 7, "Press (A).");
+				
+				scanKeys();
+				while(!(keysPressed() & KEY_A)){
+					scanKeys();
+					IRQWait(IRQ_HBLANK);
+				}
+				menuShow();
 			}
 			
 		}
@@ -364,6 +385,7 @@ int main(int _argc, sint8 **_argv) {
 			scanKeys();
 			while(keysPressed() & KEY_B){
 				scanKeys();
+				IRQWait(IRQ_HBLANK);
 			}
 		}
 		
@@ -385,6 +407,7 @@ int main(int _argc, sint8 **_argv) {
 				scanKeys();
 				while(keysPressed() & KEY_R){
 					scanKeys();
+					IRQWait(IRQ_HBLANK);
 				}
 				lastRand = randFile;
 			}
