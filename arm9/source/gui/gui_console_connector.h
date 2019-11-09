@@ -49,12 +49,12 @@ extern "C" {
 ////////[Default Console implementation is selected, thus stubs are implemented here]////////
 
 //Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
-extern ConsoleInstance * getProjectSpecificVRAMSetup();
+extern ConsoleInstance * DEFAULT_CONSOLE_ENGINE_A_VRAMSETUP();
 
 //Custom console VRAM layout setup
 
 //1) VRAM Layout
-extern bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst);
+extern ConsoleInstance * getProjectSpecificVRAMSetup();
 
 #ifdef __cplusplus
 }

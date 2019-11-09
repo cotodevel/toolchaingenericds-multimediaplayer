@@ -20,6 +20,7 @@ USA
 //This file abstracts specific TGDS console code which allows for easy DS console setup.
 
 #include "gui_console_connector.h"
+#include "consoleTGDS.h"
 
 ////////[For custom Console implementation]:////////
 //You need to override :
@@ -40,20 +41,61 @@ USA
 	//GUI_init(project_specific_console);
 
 
-
-
-
-	////////[Default Console implementation is selected, thus stubs are implemented here]////////
+	////////[Custom Console implementation]////////
 
 
 //Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
 ConsoleInstance * getProjectSpecificVRAMSetup(){
-	return NULL;
+	return DEFAULT_CONSOLE_ENGINE_A_VRAMSETUP();
 }
 
 
-//2) Uses subEngine: VRAM Layout -> Console Setup
+//Generic console (uses VRAM block C,VRAM block D for ARM7) on MAIN Engine/Engine A.
+
+//1) VRAM Layout
+ConsoleInstance * DEFAULT_CONSOLE_ENGINE_A_VRAMSETUP(){
+	ConsoleInstance * CustomSessionConsoleInst = (ConsoleInstance *)(&CustomConsole);
+	memset (CustomSessionConsoleInst, 0, sizeof(ConsoleInstance));
+	vramSetup * vramSetupInst = (vramSetup *)&CustomSessionConsoleInst->thisVRAMSetupConsole;
+	
+	vramSetupInst->vramBankSetupInst[VRAM_A_INDEX].vrambankCR = VRAM_A_0x06000000_ENGINE_A_BG;	//console here
+	vramSetupInst->vramBankSetupInst[VRAM_A_INDEX].enabled = true;
+	
+	vramSetupInst->vramBankSetupInst[VRAM_C_INDEX].vrambankCR = VRAM_C_0x06200000_ENGINE_B_BG;	//NDS BMP rgb15 mode + keyboard
+	vramSetupInst->vramBankSetupInst[VRAM_C_INDEX].enabled = true;
+	
+	return CustomSessionConsoleInst;
+}
+
+
+
+//2) Uses mainEngine: VRAM Layout -> Console Setup
 bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst){
+	
+	//Set mainEngine
+	SetEngineConsole(mainEngine,ConsoleInstanceInst);
+	
+	//Set mainEngine properties
+	ConsoleInstanceInst->ConsoleEngineStatus.ENGINE_DISPCNT	=	(uint32)(MODE_5_2D | DISPLAY_BG3_ACTIVE );
+	
+	// BG3: FrameBuffer : 64(TILE:4) - 128 Kb
+	ConsoleInstanceInst->ConsoleEngineStatus.EngineBGS[3].BGNUM = 3;
+	ConsoleInstanceInst->ConsoleEngineStatus.EngineBGS[3].REGBGCNT = BG_BMP_BASE(4) | BG_BMP8_256x256 | BG_PRIORITY_1;
+	
+	GUI.DSFrameBuffer = (uint16 *)BG_BMP_RAM(4);	//0x06000000
+	
+	REG_BG3X = 0;
+	REG_BG3Y = 0;
+	REG_BG3PA = 1 << 8;
+	REG_BG3PB = 0;
+	REG_BG3PC = 0;
+	REG_BG3PD = 1 << 8;
+	
+	BG_PALETTE[0] = RGB15(0,0,0);			//back-ground tile color
+	BG_PALETTE[255] = RGB15(31,31,31);		//tile color
+	
 	UpdateConsoleSettings(ConsoleInstanceInst);
+	
+	SWAP_LCDS();	//this custom console setting moves the console to top screen, thus, move it back
 	return true;
 }
