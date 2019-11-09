@@ -111,10 +111,59 @@ bool ShowBrowser(char * Path, bool & pendingPlay){
 		else if(retf == FT_FILE){
 			fileClassInst = getFileClassFromList(LastFileEntry); 
 			std::string outFileName = string(fileClassInst->fd_namefullPath);
-			
-			songLst.push_back(string(fname));
-			
 			sprintf(fileClassInst->fd_namefullPath,"%s",parsefileNameTGDS(outFileName).c_str());
+			
+			//current playlist only allows known audio formats
+			char tmpName[256+1];
+			char ext[256+1];
+			
+			strcpy(tmpName, fname);	
+			separateExtension(tmpName, ext);
+			strlwr(ext);
+			
+			if(
+				(strcmp(ext,".wav") == 0)
+				||
+				(strcmp(ext,".it") == 0)
+				||
+				(strcmp(ext,".mod") == 0)
+				||
+				(strcmp(ext,".s3m") == 0)
+				||
+				(strcmp(ext,".xm") == 0)
+				||
+				(strcmp(ext,".mp3") == 0)
+				||
+				(strcmp(ext,".mp2") == 0)
+				||
+				(strcmp(ext,".mpa") == 0)
+				||
+				(strcmp(ext,".ogg") == 0)
+				||
+				(strcmp(ext,".aac") == 0)
+				||
+				(strcmp(ext,".m4a") == 0)
+				||
+				(strcmp(ext,".m4b") == 0)
+				||
+				(strcmp(ext,".flac") == 0)
+				||
+				(strcmp(ext,".sid") == 0)
+				||
+				(strcmp(ext,".nsf") == 0)
+				||
+				(strcmp(ext,".spc") == 0)
+				||
+				(strcmp(ext,".sndh") == 0)
+				||
+				(strcmp(ext,".snd") == 0)
+				||
+				(strcmp(ext,".sc68") == 0)
+				||
+				(strcmp(ext,".gbs") == 0)
+			){
+				songLst.push_back(string(fileClassInst->fd_namefullPath));
+			}
 		}
 		internalName.push_back(fileClassInst);
 		
@@ -437,7 +486,9 @@ int main(int _argc, sint8 **_argv) {
 				//pick one and play
 				int randFile = -1;
 				while( (randFile = getRand(lstSize)) == lastRand){
-					
+					if(lstSize == 1){
+						break;	//means rand() will loop forever here because the random number will always be 0
+					}
 				}
 				
 				//remember playlist as long the audio file is unique. (for L button)
