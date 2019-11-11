@@ -35,6 +35,7 @@ extern "C" {
 extern int main(int _argc, sint8 **_argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 extern bool ShowBrowser(char * Path);
+extern void handleInput();
 
 #ifdef __cplusplus
 }

@@ -45,6 +45,176 @@ string ToStr( char c ) {
    return string( 1, c );
 }
 
+#define SCREENWIDTH  (256)
+#define SCREENHEIGHT (192)
+#define COLOR(r,g,b)  ((r) | (g)<<5 | (b)<<10)
+
+static inline void setPixel(int row, int col, u16 color) {
+    #define OFFSET(r,c,w) ((r)*(w)+(c))
+	#define VRAM_C            ((u16*)0x06200000)
+	#define PIXEL_ENABLE (1<<15)
+	VRAM_C[OFFSET(row, col, SCREENWIDTH)] = color | PIXEL_ENABLE;
+}
+
+static inline int mandelbrot(double real, double imag) {
+	int limit = 100;
+	double zReal = real;
+	double zImag = imag;
+
+	for (int i = 0; i < limit; ++i) {
+		double r2 = zReal * zReal;
+		double i2 = zImag * zImag;
+		
+		if (r2 + i2 > 4.0) return i;
+
+		zImag = 2.0 * zReal * zImag + imag;
+		zReal = r2 - i2 + real;
+	}
+	return limit;
+}
+
+static inline void draw(double x_start, double x_fin, double y_start, double y_fin) {
+	
+	int width = SCREENWIDTH; //number of characters fitting horizontally on my screen 
+	int heigth = SCREENHEIGHT; //number of characters fitting vertically on my screen
+	double dx = (x_fin - x_start)/(width-1);
+	double dy = (y_fin - y_start)/(heigth-1);
+	
+	for (int i = 0; i < heigth; i++) {
+		for (int j = 0; j < width; j++) {
+			double x = x_start + j*dx; // current real value
+			double y = y_fin - i*dy; // current imaginary value
+			
+			int value = mandelbrot(x,y);
+			int r = 0;
+			int g = 0;
+			int b = 0;
+			
+			if (value == 100) { //cout << " ";
+			}
+			else if (value >= 99) {
+				//cout << red << char_;
+				r = 30;
+			}
+			else if (value >= 98) {
+				//cout << l_red << char_;
+				r = 30;
+				g = 10;
+				b = 10;
+			}
+			else if (value >= 96) {
+				//cout << orange << char_;
+				r = 31;
+				g = 11;
+				b = 2;
+			}
+			else if (value >= 94) {
+				//cout << yellow << char_;
+				r = 31;
+				g = 31;
+				b = 0;
+			}
+			else if (value >= 92) {
+				//cout << l_green << char_;
+				r = 27;
+				g = 31;
+				b = 19;
+			}
+			else if (value >= 90) {
+				//cout << green << char_;
+				g = 31;
+			}
+			else if (value >= 85) {
+				//cout << l_cyan << char_;
+				r = 25;
+				g = 31;
+				b = 31;
+			}
+			else if (value >= 80) {
+				//cout << cyan << char_;
+				r = 0;
+				g = 31;
+				b = 31;
+			}
+			else if (value >= 75) {
+				//cout << l_blue << char_;
+				r = 21;
+				g = 26;
+				b = 28;
+			}
+			else if (value >= 70) {
+				//cout << blue << char_;
+				b = 31;
+			}
+			else if (value >= 60) {
+				//cout << magenta << char_;
+				r = 31;
+				g = 0;
+				b = 31;
+			}
+			else {
+				//cout << l_magenta << char_;
+				r = 31;
+				g = 16;
+				b = 31;
+			}
+			VRAM_C[OFFSET(i, j, SCREENWIDTH)] = (u16)(COLOR(r,g,b) | PIXEL_ENABLE);
+		} // width == 256
+		handleInput();
+	}	
+}
+
+static inline int getRand(int size){
+	return (rand() % size);
+}
+
+static vector<string> oldSongLst;
+static bool pendingPlay = false;
+static int lastRand = 0;
+
+__attribute__((section(".itcm")))
+void drawMandel(double factor){
+	double center_x = -1.04082816210546;
+	double center_y = 0.3546341718848392;
+	int iter = 4;
+	int color_threshold = 25;
+	
+	double x_start = center_x - 1.5*factor;
+	double x_fin = center_x + 1.5*factor;
+	double y_start = center_y - factor;
+	double y_fin = center_y + factor;
+
+	//draw(x_start, x_fin, y_start, y_fin);
+	
+	for (int i = 0; i < iter; i++) {
+		factor = factor / 1.3;
+	
+		x_start = center_x - 1.5*factor;
+		x_fin = center_x + 1.5*factor;
+		y_start = center_y - factor;
+		y_fin = center_y + factor;
+		
+		if (i<color_threshold) {
+			//cout << "\033[2J\033[1;1H";
+			draw(x_start, x_fin, y_start, y_fin);
+			//std::this_thread::sleep_for(std::chrono::milliseconds(20));
+		}
+		else {
+			//cout << "\033[2J\033[1;1H";
+			//draw_deep(x_start, x_fin, y_start, y_fin);
+			//std::this_thread::sleep_for(std::chrono::milliseconds(20));
+		}
+	}
+
+	factor = factor / 1.5;
+	
+	x_start = center_x - 1.5*factor;
+	x_fin = center_x + 1.5*factor;
+	y_start = center_y - factor;
+	y_fin = center_y + factor;
+	//cout << "\033[2J\033[1;1H";
+	//draw_deep(x_start, x_fin, y_start, y_fin);
+}
 
 void menuShow(){
 	clrscr();
@@ -56,6 +226,7 @@ void menuShow(){
 	printf("(L): Recent Playlist ");
 	printf("(R): Random audio file playback ");
 	printf("(B): Stop audio playback ");
+	printf("(X): Mandelbrot demo ");
 	printf("(Select): this menu");
 	if(soundLoaded == false){
 		printf("Playback: Stopped.");
@@ -353,8 +524,147 @@ bool ShowBrowser(char * Path, bool & pendingPlay){
 	return false;
 }
 
-static inline int getRand(int size){
-	return (rand() % size);
+static bool drawMandelbrt = false;
+__attribute__((section(".itcm")))	
+void handleInput(){
+	if(pendingPlay == true){
+		soundLoaded = loadSound((char*)curChosenBrowseFile);
+		pendingPlay = false;
+		menuShow();
+		drawMandelbrt = false;
+	}
+	
+	scanKeys();
+	
+	if (keysPressed() & KEY_L){
+		int oldLstSize = oldSongLst.size();
+		if(oldLstSize > 0){
+			strcpy(curChosenBrowseFile, (const char *)oldSongLst.at(oldLstSize - 1).c_str());
+			oldSongLst.pop_back();
+			
+			//remember the old song's index
+			std::vector<string>::iterator it = std::find(oldSongLst.begin(), oldSongLst.end(), string(curChosenBrowseFile));
+			int index = std::distance(oldSongLst.begin(), it);
+			lastRand = index;
+			
+			pendingPlay = true;
+		}
+		else{
+			clrscr();
+			printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
+			printfCoords(0, 7, "Press (A).");
+			
+			scanKeys();
+			while(!(keysPressed() & KEY_A)){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
+			menuShow();
+		}
+		scanKeys();
+		while(keysPressed() & KEY_L){
+			scanKeys();
+			IRQWait(IRQ_HBLANK);
+		}
+	}
+	
+	if (keysPressed() & KEY_START){
+		
+		if(soundLoaded == false){
+			//as long you keep using directories ShowBrowser will be true
+			char startPath[MAX_TGDSFILENAME_LENGTH+1];
+			sprintf(startPath,"%s","/");
+			while( ShowBrowser((char *)startPath, pendingPlay) == true ){
+				//navigating DIRs here...
+			}
+			
+			scanKeys();
+			while(keysPressed() & KEY_START){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
+		}
+		else{
+			clrscr();
+			printfCoords(0, 6, "Please stop audio playback before listing files. ");
+			printfCoords(0, 7, "Press (A).");
+			
+			scanKeys();
+			while(!(keysPressed() & KEY_A)){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
+			menuShow();
+		}
+		
+	}
+	
+	if (keysPressed() & KEY_B){
+		//Audio stop here....
+		closeSound();
+		
+		menuShow();
+		
+		scanKeys();
+		while(keysPressed() & KEY_B){
+			scanKeys();
+			IRQWait(IRQ_HBLANK);
+		}
+	}
+	
+	if (keysPressed() & KEY_X){
+		if(drawMandelbrt == false){
+			drawMandelbrt = true;
+			double factor = 1.0; 
+			drawMandel(factor);
+			renderFBMode3SubEngine((u16*)&TGDSLogoNDSSize[0], (int)TGDSLOGONDSSIZE_WIDTH,(int)TGDSLOGONDSSIZE_HEIGHT);
+		}
+		
+		scanKeys();
+		while(keysPressed() & KEY_X){
+			scanKeys();
+			IRQWait(IRQ_HBLANK);
+		}
+	}
+	
+	if (keysPressed() & KEY_R){
+		//Play Random song from current folder
+		int lstSize = songLst.size();
+		if(lstSize > 0){
+			closeSound();
+			
+			//pick one and play
+			int randFile = -1;
+			while( (randFile = getRand(lstSize)) == lastRand){
+				if(lstSize == 1){
+					break;	//means rand() will loop forever here because the random number will always be 0
+				}
+			}
+			
+			//remember playlist as long the audio file is unique. (for L button)
+			int oldPlsSize = oldSongLst.size();
+			if( (oldPlsSize > 0) && ((oldSongLst.at(oldPlsSize -1).compare(string(curChosenBrowseFile))) != 0) ){
+				oldSongLst.push_back(string(curChosenBrowseFile));
+			}
+			else if (oldPlsSize == 0){
+				oldSongLst.push_back(string(curChosenBrowseFile));
+			}
+			
+			strcpy(curChosenBrowseFile, (const char *)songLst.at(randFile).c_str());
+			pendingPlay = true;
+			
+			scanKeys();
+			while(keysPressed() & KEY_R){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
+			lastRand = randFile;
+		}
+	}
+	
+	//Audio playback here....
+	updateStreamLoop();	//runs once per hblank line
+	
 }
 
 __attribute__((section(".itcm")))
@@ -390,135 +700,13 @@ int main(int _argc, sint8 **_argv) {
 	disableVBlank();
 	setGenericSound(11025, 127, 64, 1);
 	initComplexSound(); // initialize sound variables
-	vector<string> oldSongLst;
 	oldSongLst.clear();
 	
 	menuShow();
-	bool pendingPlay = false;
-	int lastRand = 0;
+	
 
 	while (1){
-		if(pendingPlay == true){
-			soundLoaded = loadSound((char*)curChosenBrowseFile);
-			pendingPlay = false;
-			menuShow();
-		}
-		
-		scanKeys();
-		
-		if (keysPressed() & KEY_L){
-			int oldLstSize = oldSongLst.size();
-			if(oldLstSize > 0){
-				strcpy(curChosenBrowseFile, (const char *)oldSongLst.at(oldLstSize - 1).c_str());
-				oldSongLst.pop_back();
-				
-				//remember the old song's index
-				std::vector<string>::iterator it = std::find(oldSongLst.begin(), oldSongLst.end(), string(curChosenBrowseFile));
-				int index = std::distance(oldSongLst.begin(), it);
-				lastRand = index;
-				
-				pendingPlay = true;
-			}
-			else{
-				clrscr();
-				printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
-				printfCoords(0, 7, "Press (A).");
-				
-				scanKeys();
-				while(!(keysPressed() & KEY_A)){
-					scanKeys();
-					IRQWait(IRQ_HBLANK);
-				}
-				menuShow();
-			}
-			scanKeys();
-			while(keysPressed() & KEY_L){
-				scanKeys();
-				IRQWait(IRQ_HBLANK);
-			}
-		}
-		
-		if (keysPressed() & KEY_START){
-			
-			if(soundLoaded == false){
-				//as long you keep using directories ShowBrowser will be true
-				char startPath[MAX_TGDSFILENAME_LENGTH+1];
-				sprintf(startPath,"%s","/");
-				while( ShowBrowser((char *)startPath, pendingPlay) == true ){
-					//navigating DIRs here...
-				}
-				
-				scanKeys();
-				while(keysPressed() & KEY_START){
-					scanKeys();
-					IRQWait(IRQ_HBLANK);
-				}
-			}
-			else{
-				clrscr();
-				printfCoords(0, 6, "Please stop audio playback before listing files. ");
-				printfCoords(0, 7, "Press (A).");
-				
-				scanKeys();
-				while(!(keysPressed() & KEY_A)){
-					scanKeys();
-					IRQWait(IRQ_HBLANK);
-				}
-				menuShow();
-			}
-			
-		}
-		
-		if (keysPressed() & KEY_B){
-			//Audio stop here....
-			closeSound();
-			
-			menuShow();
-			
-			scanKeys();
-			while(keysPressed() & KEY_B){
-				scanKeys();
-				IRQWait(IRQ_HBLANK);
-			}
-		}
-		
-		if (keysPressed() & KEY_R){
-			//Play Random song from current folder
-			int lstSize = songLst.size();
-			if(lstSize > 0){
-				closeSound();
-				
-				//pick one and play
-				int randFile = -1;
-				while( (randFile = getRand(lstSize)) == lastRand){
-					if(lstSize == 1){
-						break;	//means rand() will loop forever here because the random number will always be 0
-					}
-				}
-				
-				//remember playlist as long the audio file is unique. (for L button)
-				int oldPlsSize = oldSongLst.size();
-				if( (oldPlsSize > 0) && ((oldSongLst.at(oldPlsSize -1).compare(string(curChosenBrowseFile))) != 0) ){
-					oldSongLst.push_back(string(curChosenBrowseFile));
-				}
-				else if (oldPlsSize == 0){
-					oldSongLst.push_back(string(curChosenBrowseFile));
-				}
-				
-				strcpy(curChosenBrowseFile, (const char *)songLst.at(randFile).c_str());
-				pendingPlay = true;
-				
-				scanKeys();
-				while(keysPressed() & KEY_R){
-					scanKeys();
-					IRQWait(IRQ_HBLANK);
-				}
-				lastRand = randFile;
-			}
-		}
-		
-		//Audio playback here....
-		updateStreamLoop();	//runs once per hblank line
+		handleInput();
 		IRQWait(IRQ_HBLANK);
 	}
 	

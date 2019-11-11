@@ -23,6 +23,7 @@ USA
 #include "interrupts.h"
 #include "biosTGDS.h"
 #include "ipcfifoTGDSUser.h"
+#include "spifwTGDS.h"
 
 //User Handler Definitions
 #ifdef ARM9
@@ -97,6 +98,7 @@ __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void screenLidHasOpenedhandlerUser(){
+	setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);	//both lit screens
 	isArm7ClosedLid = false;
 }
 
