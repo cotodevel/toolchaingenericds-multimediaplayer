@@ -25,6 +25,12 @@ USA
 #include "dsregs.h"
 #include "limitsTGDS.h"
 
+struct rgbMandel{
+	int r;
+	int g;
+	int b;
+};
+
 #endif
 
 
