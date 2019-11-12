@@ -31,6 +31,19 @@ struct rgbMandel{
 	int b;
 };
 
+#define oldSongsToRemember (int)(10)
+
+#define SCREENWIDTH  (256)
+#define SCREENHEIGHT (192)
+#define COLOR(r,g,b)  ((r) | (g)<<5 | (b)<<10)
+#define OFFSET(r,c,w) ((r)*(w)+(c))
+#define VRAM_C            ((u16*)0x06200000)
+#define PIXEL_ENABLE (1<<15)
+
+static inline void setPixel(int row, int col, u16 color) {
+	VRAM_C[OFFSET(row, col, SCREENWIDTH)] = color | PIXEL_ENABLE;
+}
+
 #endif
 
 
@@ -40,7 +53,6 @@ extern "C" {
 
 extern int main(int _argc, sint8 **_argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
-extern bool ShowBrowser(char * Path);
 extern void handleInput();
 
 #ifdef __cplusplus
