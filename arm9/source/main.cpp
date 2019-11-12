@@ -31,14 +31,23 @@ USA
 #include "TGDSNDSLogo.h"
 
 //C++ part
-using namespace std;
-#include <string>
-#include <vector>
-#include <algorithm>
 #include "fileBrowse.hpp"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
 
 static vector<string> songLst;
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
+
+#define oldSongsToRemember (int)(10)
+
+#define SCREENWIDTH  (256)
+#define SCREENHEIGHT (192)
+#define COLOR(r,g,b)  ((r) | (g)<<5 | (b)<<10)
+#define OFFSET(r,c,w) ((r)*(w)+(c))
+#define VRAM_C            ((u16*)0x06200000)
+#define PIXEL_ENABLE (1<<15)
+
+static inline void setPixel(int row, int col, u16 color) {
+	VRAM_C[OFFSET(row, col, SCREENWIDTH)] = color | PIXEL_ENABLE;
+}
 
 //What the original mandelbrot code does: (the original I based this one), as a X/Y latitude-like orientation so it will rotate around its X and Y axis, by a given factor
 
