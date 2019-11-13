@@ -399,6 +399,12 @@ void menuShow(){
 }
 
 
+static inline std::string GetFileExtension(const std::string& FileName)
+{
+    if(FileName.find_last_of(".") != std::string::npos)
+        return FileName.substr(FileName.find_last_of(".")+1);
+    return "";
+}
 
 bool ShowBrowser(char * Path, bool & pendingPlay){	//custom filebrowser code required by TGDS-audioplayer. Code should be a copy + update from fileBrowse.hpp
 	while((keysPressed() & KEY_START) || (keysPressed() & KEY_A) || (keysPressed() & KEY_B)){
@@ -418,72 +424,65 @@ bool ShowBrowser(char * Path, bool & pendingPlay){	//custom filebrowser code req
 	
 	int retf = FAT_FindFirstFile(fname);
 	while(retf != FT_NONE){
-		struct FileClass * fileClassInst = NULL;
 		//directory?
 		if(retf == FT_DIR){
-			fileClassInst = getFileClassFromList(LastDirEntry);
-			std::string outDirName = string(fileClassInst->fd_namefullPath);
-			sprintf(fileClassInst->fd_namefullPath,"%s",parseDirNameTGDS(outDirName).c_str());
+			struct FileClass * fileClassInst = getFileClassFromList(LastDirEntry);
+			std::string outDirName = string(parseDirNameTGDS(fileClassInst->fd_namefullPath));
+			strcpy(fileClassInst->fd_namefullPath, outDirName.c_str());
+			internalName.push_back(fileClassInst);
 		}
 		//file?
 		else if(retf == FT_FILE){
-			fileClassInst = getFileClassFromList(LastFileEntry); 
-			std::string outFileName = string(fileClassInst->fd_namefullPath);
-			sprintf(fileClassInst->fd_namefullPath,"%s",parsefileNameTGDS(outFileName).c_str());
+			struct FileClass *fileClassInst = getFileClassFromList(LastFileEntry); 
+			std::string outFileName = parsefileNameTGDS(string(fileClassInst->fd_namefullPath));
+			strcpy(fileClassInst->fd_namefullPath, outFileName.c_str());
 			
-			//current playlist only allows known audio formats
-			char tmpName[256+1];
-			char ext[256+1];
-			
-			strcpy(tmpName, fname);	
-			separateExtension(tmpName, ext);
-			strlwr(ext);
-			
+			std::string ext = GetFileExtension(outFileName);
 			if(
-				(strcmp(ext,".wav") == 0)
+				(ext.compare(string("wav")) == 0)
 				||
-				(strcmp(ext,".it") == 0)
+				(ext.compare(string("it")) == 0)
 				||
-				(strcmp(ext,".mod") == 0)
+				(ext.compare(string("mod")) == 0)
 				||
-				(strcmp(ext,".s3m") == 0)
+				(ext.compare(string("s3m")) == 0)
 				||
-				(strcmp(ext,".xm") == 0)
+				(ext.compare(string("xm")) == 0)
 				||
-				(strcmp(ext,".mp3") == 0)
+				(ext.compare(string("mp3")) == 0)
 				||
-				(strcmp(ext,".mp2") == 0)
+				(ext.compare(string("mp2")) == 0)
 				||
-				(strcmp(ext,".mpa") == 0)
+				(ext.compare(string("mpa")) == 0)
 				||
-				(strcmp(ext,".ogg") == 0)
+				(ext.compare(string("ogg")) == 0)
 				||
-				(strcmp(ext,".aac") == 0)
+				(ext.compare(string("aac")) == 0)
 				||
-				(strcmp(ext,".m4a") == 0)
+				(ext.compare(string("m4a")) == 0)
 				||
-				(strcmp(ext,".m4b") == 0)
+				(ext.compare(string("m4b")) == 0)
 				||
-				(strcmp(ext,".flac") == 0)
+				(ext.compare(string("flac")) == 0)
 				||
-				(strcmp(ext,".sid") == 0)
+				(ext.compare(string("sid")) == 0)
 				||
-				(strcmp(ext,".nsf") == 0)
+				(ext.compare(string("nsf")) == 0)
 				||
-				(strcmp(ext,".spc") == 0)
+				(ext.compare(string("spc")) == 0)
 				||
-				(strcmp(ext,".sndh") == 0)
+				(ext.compare(string("sndh")) == 0)
 				||
-				(strcmp(ext,".snd") == 0)
+				(ext.compare(string("snd")) == 0)
 				||
-				(strcmp(ext,".sc68") == 0)
+				(ext.compare(string("sc68")) == 0)
 				||
-				(strcmp(ext,".gbs") == 0)
+				(ext.compare(string("gbs")) == 0)
 			){
-				songLst.push_back(string(fileClassInst->fd_namefullPath));
+				songLst.push_back(outFileName);
+				internalName.push_back(fileClassInst);
 			}
 		}
-		internalName.push_back(fileClassInst);
 		
 		//more file/dir objects?
 		retf = FAT_FindNextFile(fname);
