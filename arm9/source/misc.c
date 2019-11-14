@@ -84,8 +84,8 @@ u32 flength(FILE* fh){
 void separateExtension(char *str, char *ext)
 {
 	int x = 0;
-	
-	for(int y = strlen(str) - 1; y > 0; y--)
+	int y = 0;
+	for(y = strlen(str) - 1; y > 0; y--)
 	{
 		if(str[y] == '.')
 		{

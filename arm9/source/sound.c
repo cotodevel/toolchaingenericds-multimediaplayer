@@ -208,7 +208,8 @@ void mallocData(int size)
 	REG_SIWRAMCNT = 0; // arm9 owns both
 	
 	u32 *siTemp = (u32 *)SIWRAM0;
-	for(int i=0;i<0x2000;++i)
+	int i=0;
+	for(i=0;i<0x2000;++i)
 		siTemp[i] = 0;
 	
 	m_size = size;
@@ -990,8 +991,8 @@ void decodeFlacFrame()
         flacBLeft-=consumed;
 		
 		// actual copy
-		
-		for (int i=0;i<fc.blocksize && !flacFinished;++i) 
+		int i=0;
+		for (i=0;i<fc.blocksize && !flacFinished;++i) 
 		{
 			lBuffer[bufCursor] = decoded0[i]; // left sample
 			
@@ -1019,16 +1020,16 @@ void decodeFlacFrame()
 					{
 						bytesLeftBuf = (s16 *)trackMalloc(bytesLeft * 2, "temp flac holder");				
 						s16 *tBuf = bytesLeftBuf;
-						
-						for(int j=0;j<bytesLeft;++j)
+						int j=0;
+						for(j=0;j<bytesLeft;++j)
 							*tBuf++ = decoded0[i+j];
 					}
 					else
 					{
 						bytesLeftBuf = (s16 *)trackMalloc(bytesLeft * 4, "temp flac holder");				
 						s16 *tBuf = bytesLeftBuf;
-						
-						for(int j=0;j<bytesLeft;++j)
+						int j=0;
+						for(j=0;j<bytesLeft;++j)
 						{
 							*tBuf++ = decoded0[i+j];
 							*tBuf++ = decoded1[i+j];
@@ -1061,8 +1062,8 @@ void seekFlac()
 			cutOff = true;
 			return;
 		}	
-		
-		for(int i=0;i<flacBLeft-1;++i)
+		int i=0;
+		for(i=0;i<flacBLeft-1;++i)
 		{
 			if(flacInBuf[i] == 0xFF)
 			{
@@ -1257,7 +1258,8 @@ void wavDecode8Bit()
 	
 	if(soundData.channels == 2)
 	{
-		for(uint i=0;i<(WAV_READ_SIZE << 1);i+=2)
+		uint i=0;
+		for(i=0;i<(WAV_READ_SIZE << 1);i+=2)
 		{
 			lData[i] = (s8Data[i] - 128);
 			rData[i] = (s8Data[i + 1] - 128);
@@ -1265,7 +1267,8 @@ void wavDecode8Bit()
 	}
 	else
 	{
-		for(uint i=0,j=0;i<(WAV_READ_SIZE << 1);i+=2,++j)
+		uint i=0,j=0;
+		for(i=0,j=0;i<(WAV_READ_SIZE << 1);i+=2,++j)
 		{
 			lData[i] = (s8Data[j] - 128);
 			rData[i] = lData[i];
@@ -1294,7 +1297,8 @@ void wavDecode16Bit()
 	
 	if(soundData.channels == 2)
 	{
-		for(uint i=0;i<WAV_READ_SIZE;++i)
+		uint i=0;
+		for(i=0;i<WAV_READ_SIZE;++i)
 		{					
 			lBuffer[i] = tmpData[i << 1];
 			rBuffer[i] = tmpData[(i << 1) | 1];
@@ -1302,7 +1306,8 @@ void wavDecode16Bit()
 	}
 	else
 	{
-		for(uint i=0;i<WAV_READ_SIZE;++i)
+		uint i=0;
+		for(i=0;i<WAV_READ_SIZE;++i)
 		{
 			lBuffer[i] = tmpData[i];
 			rBuffer[i] = tmpData[i];
@@ -1336,7 +1341,8 @@ void wavDecode24Bit()
 	
 	if(soundData.channels == 2)
 	{
-		for(uint i=0;i<WAV_READ_SIZE;++i)
+		uint i=0;
+		for(i=0;i<WAV_READ_SIZE;++i)
 		{					
 			tmpVal = (tmpData[1]) | ((tmpData[2]) << 8);
 			lBuffer[i] = *tmpSound;
@@ -1349,7 +1355,8 @@ void wavDecode24Bit()
 	}
 	else
 	{
-		for(uint i=0;i<WAV_READ_SIZE;++i)
+		uint i=0;
+		for(i=0;i<WAV_READ_SIZE;++i)
 		{	
 			tmpVal = (tmpData[1]) | ((tmpData[2]) << 8);
 			
@@ -1382,7 +1389,8 @@ void wavDecode32Bit()
 	
 	if(soundData.channels == 2)
 	{
-		for(uint i=0;i<WAV_READ_SIZE;++i)
+		uint i=0;
+		for(i=0;i<WAV_READ_SIZE;++i)
 		{					
 			lBuffer[i] = tmpData[(i << 2) + 1];
 			rBuffer[i] = tmpData[(i << 2) + 3];
@@ -1390,7 +1398,8 @@ void wavDecode32Bit()
 	}
 	else
 	{
-		for(uint i=0;i<WAV_READ_SIZE;++i)
+		uint i=0;
+		for(i=0;i<WAV_READ_SIZE;++i)
 		{
 			lBuffer[i] = tmpData[(i << 1) + 1];
 			rBuffer[i] = lBuffer[i];
@@ -1555,8 +1564,9 @@ void copyData()
 	
 	switch(soundData.channels)
 	{
-		case 1:
-			for(int lastPoint=0;lastPoint<Synth.pcm.length;lastPoint++)
+		case 1:{
+			int lastPoint=0;
+			for(lastPoint=0;lastPoint<Synth.pcm.length;lastPoint++)
 			{
 				u16 Sample;
 				
@@ -1580,17 +1590,19 @@ void copyData()
 						
 						bytesLeftBuf = (s16 *)trackMalloc(bytesLeft * 2, "temp mp3 holder");				
 						s16 *tBuf = bytesLeftBuf;
-						
-						for(int i=0;i<bytesLeft;++i)
+						int i=0;
+						for(i=0;i<bytesLeft;++i)
 							*tBuf++ = scale(Synth.pcm.samples[0][lastPoint + i]);
 					}
 					
 					return;
 				}
 			}
+		}
 			break;
-		case 2:
-			for(int lastPoint=0;lastPoint<Synth.pcm.length;lastPoint++)
+		case 2:{
+			int lastPoint=0;
+			for(lastPoint=0;lastPoint<Synth.pcm.length;lastPoint++)
 			{
 				u16 Sample;
 				
@@ -1616,8 +1628,8 @@ void copyData()
 						
 						bytesLeftBuf = (s16 *)trackMalloc(bytesLeft * 4, "temp mp3 holder");				
 						s16 *tBuf = bytesLeftBuf;
-						
-						for(int i=0;i<bytesLeft;++i)
+						int i=0;
+						for(i=0;i<bytesLeft;++i)
 						{
 							*tBuf++ = scale(Synth.pcm.samples[0][lastPoint + i]);
 							*tBuf++ = scale(Synth.pcm.samples[1][lastPoint + i]);
@@ -1627,6 +1639,7 @@ void copyData()
 					return;
 				}
 			}
+		}
 			break;
 	}
 	
@@ -1659,8 +1672,9 @@ void copyRemainingData()
 	
 	switch(soundData.channels)
 	{
-		case 1:
-			for(int i=0;i<max;i++)
+		case 1:{
+			int i=0;
+			for(i=0;i<max;i++)
 			{
 				u16 Sample;
 				
@@ -1670,9 +1684,11 @@ void copyRemainingData()
 				
 				bufCursor++;
 			}
+		}
 			break;
-		case 2:
-			for(int i=0;i<max;i++)
+		case 2:{
+			int i=0;
+			for(i=0;i<max;i++)
 			{
 				u16 Sample;
 				
@@ -1684,6 +1700,7 @@ void copyRemainingData()
 				
 				bufCursor++;
 			}
+		}
 			break;
 	}
 	
