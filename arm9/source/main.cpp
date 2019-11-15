@@ -480,8 +480,9 @@ bool ShowBrowser(char * Path, bool & pendingPlay){	//custom filebrowser code req
 				(ext.compare(string("gbs")) == 0)
 			){
 				songLst.push_back(outFileName);
-				internalName.push_back(fileClassInst);
 			}
+			
+			internalName.push_back(fileClassInst);
 		}
 		
 		//more file/dir objects?
