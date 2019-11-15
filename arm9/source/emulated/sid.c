@@ -1140,19 +1140,20 @@ void cpuJSR(unsigned short npc, unsigned char na)
 void c64Init(int nSampleRate)
 {        
     synth_init(nSampleRate);
-	if(!memory)
+	if(!memory){
 		memory = safeMalloc(65536);
-    memset(memory, 0, sizeof(memory));
+    }
+	memset(memory, 0, 65536);
   
     cpuReset();    
 }
 
 void c64Close()
 {
-	if(memory)
+	if(memory != NULL){
 		safeFree(memory);
-	
-	memory = NULL;
+		memory = NULL;
+	}
 }
 
 unsigned short LoadSIDFromMemory(void *pSidData, unsigned short *load_addr,unsigned short *init_addr, unsigned short *play_addr, unsigned char *subsongs, unsigned char *startsong, unsigned char *speed, unsigned short size)
@@ -1180,7 +1181,7 @@ unsigned short LoadSIDFromMemory(void *pSidData, unsigned short *load_addr,unsig
     
     *speed = pData[0x15];
     
-    memset(memory, 0, sizeof(memory));
+    memset(memory, 0, sizeof(*memory));
     memcpy(&memory[*load_addr], &pData[data_file_offset+2], size-(data_file_offset+2));
     
     if (*play_addr == 0)

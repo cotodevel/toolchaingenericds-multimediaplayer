@@ -202,7 +202,7 @@ void report(char *in){
 }
 
 int getbyte(ogg_reference *or,int position){
-  while(or && position>=or->length){
+  while((or!=NULL) && (position>=or->length)){
     position-=or->length;
     or=or->next;
     if(or==NULL){

@@ -187,7 +187,7 @@ void getOggInfo(OggVorbis_File *vf, ID3V1_TYPE *id3)
 	if(comment != NULL)
 	{
 		strncpy(id3->genreStr, comment, 60);
-		id3->genreStr[60] = 0;
+		id3->genreStr[59] = 0;
 		stripCRLF(id3->genreStr);
 		id3->present = true;
 	}
@@ -195,13 +195,12 @@ void getOggInfo(OggVorbis_File *vf, ID3V1_TYPE *id3)
 
 void getGenre(int g, char *str)
 {
-	FILE *fp = NULL;
-	if(FAT_FileExists((const char*)"genre.dat") == FT_FILE){
-		fp = fopen("genre.dat", "r");
+	FILE *fp = fopen("genre.dat", "r");
+	if(fp != NULL){
+		fseek(fp, (g * 60), SEEK_SET);
+		fread(str, 1, 60, fp);
+		fclose(fp);
 	}
-	fseek(fp, (g * 60), SEEK_SET);
-	fread(str, 1, 60, fp);
-	fclose(fp);
 }
 /*
 void outputGenresToFile()

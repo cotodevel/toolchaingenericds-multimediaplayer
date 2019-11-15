@@ -390,7 +390,7 @@ static void _positionB(oggbyte_buffer *b,int pos){
 
 static void _positionF(oggbyte_buffer *b,int pos){
   /* scan forward for position */
-  while(pos>=b->end){
+  while( (b != NULL) &&(pos>=b->end)){
     /* just seek forward */
     b->pos+=b->ref->length;
     b->ref=b->ref->next;
@@ -400,6 +400,9 @@ static void _positionF(oggbyte_buffer *b,int pos){
 }
 
 static int oggbyte_init(oggbyte_buffer *b,ogg_reference *or){
+  if(!b){
+	return -1;
+  }
   memset(b,0,sizeof(*b));
   if(or){
     b->ref=b->baseref=or;
