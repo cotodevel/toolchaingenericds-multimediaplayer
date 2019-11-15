@@ -99,7 +99,6 @@ export DIRS_ARM9_SRC = source/	\
 			source/emulated/io68/	\
 			source/emulated/gbs/	\
 			source/tremor/	\
-			source/opus/	\
 			../common/	\
 			../common/templateCode/
 			
@@ -127,7 +126,6 @@ export DIRS_ARM9_HEADER = include/	\
 			source/emulated/io68/	\
 			source/emulated/gbs/	\
 			source/tremor/	\
-			source/opus/	\
 			../common/	\
 			../common/templateCode/	\
 			../$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/include/
