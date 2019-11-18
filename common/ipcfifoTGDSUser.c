@@ -329,6 +329,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			// (these formats are generally decoded faster)
 			switch(soundData.sourceFmt)
 			{
+				/*
 				case SRC_MP3:
 					// mono sounds are slower than stereo for some reason
 					// so we force them to update faster
@@ -336,9 +337,10 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 						return;
 					
 					break;
+				*/
 				case SRC_WAV:
 				case SRC_FLAC:
-				case SRC_STREAM_MP3:
+				//case SRC_STREAM_MP3:
 				case SRC_STREAM_AAC:
 				case SRC_SID:
 					// these will be played next time it hits in the main screen

@@ -9,7 +9,7 @@ After compiling, run the example in NDS.
 Project Specific description: 
 
 TGDS Audio Player, supported formats are:
--	WAV/MP3/AAC/Ogg/FLAC/NSF/SPC/GBS/+ others working.  Streaming mp3, ogg and acc is stripped since it´s 2019 and the DS does not support HTTPS (TLS1.2+)
+-	WAV/AAC/Ogg/FLAC/NSF/SPC/GBS/+ others working.  Streaming mp3, ogg and acc is stripped since it´s 2019 and the DS does not support HTTPS (TLS1.2+)
 
 Set up:
 1)
@@ -31,7 +31,11 @@ Select:
 
 /release folder has the latest binary precompiled for your convenience.
 
-
+Notes:
 Many thanks to DSOrganize and it's author(s), since the audio stream code was taken from there... except there is no memory issues this time to play audio files at all!!!!
+
+
+MP3 Support was removed because MAD library is so buggy and literally the only one needing POLLING instead of interrupts to perform frame decoding. I will look for alternatives.. and if everything goes well, MP3 support
+will be restored.
 
 Coto

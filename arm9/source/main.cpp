@@ -381,7 +381,7 @@ void drawMandel(float factor){
 void menuShow(){
 	clrscr();
 	printf("                              ");
-	printf("Supported Formats: WAV/MP3/AAC/Ogg");
+	printf("Supported Formats: WAV/AAC/Ogg");
 	printf("/FLAC/NSF/SPC/GBS/+ others");
 	printf("                              ");
 	printf("(Start): File Browser -> (A) to play audio file");
@@ -449,8 +449,8 @@ bool ShowBrowser(char * Path, bool & pendingPlay){	//custom filebrowser code req
 				||
 				(ext.compare(string("xm")) == 0)
 				||
-				(ext.compare(string("mp3")) == 0)
-				||
+				//(ext.compare(string("mp3")) == 0)
+				//||
 				(ext.compare(string("mp2")) == 0)
 				||
 				(ext.compare(string("mpa")) == 0)
