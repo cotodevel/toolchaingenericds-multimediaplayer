@@ -62,7 +62,8 @@ export DIRS_ARM7_SRC = build/	\
 			source/	\
 			source/interrupts/	\
 			../common/	\
-			../common/templateCode/
+			../common/templateCode/source	\
+			../common/templateCode/data	
 			
 export DIRS_ARM7_HEADER = build/	\
 			data/	\
@@ -70,11 +71,14 @@ export DIRS_ARM7_HEADER = build/	\
 			source/interrupts/	\
 			include/	\
 			../common/	\
-			../common/templateCode/	\
+			../common/templateCode/source	\
+			../common/templateCode/data	\
+			build/	\
 			../$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/include/
 #####################################################ARM9#####################################################
 
-export DIRS_ARM9_SRC = source/	\
+export DIRS_ARM9_SRC = data/	\
+			source/	\
 			source/interrupts/	\
 			source/gui/	\
 			source/aac/	\
@@ -100,9 +104,12 @@ export DIRS_ARM9_SRC = source/	\
 			source/emulated/gbs/	\
 			source/tremor/	\
 			../common/	\
-			../common/templateCode/
+			../common/templateCode/source	\
+			../common/templateCode/data	
 			
-export DIRS_ARM9_HEADER = include/	\
+export DIRS_ARM9_HEADER = data/	\
+			build/	\
+			include/	\
 			source/gui/	\
 			source/aac/	\
 			source/aac/pub/	\
@@ -127,7 +134,8 @@ export DIRS_ARM9_HEADER = include/	\
 			source/emulated/gbs/	\
 			source/tremor/	\
 			../common/	\
-			../common/templateCode/	\
+			../common/templateCode/source	\
+			../common/templateCode/data	\
 			../$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/include/
 
 # Build Target(s)	(both processors here)

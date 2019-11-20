@@ -28,7 +28,7 @@ USA
 #include "misc.h"
 #include "sound.h"
 #include "dswnifi_lib.h"
-#include "TGDSNDSLogo.h"
+#include "TGDSLogoLZSSCompressed.h"
 
 //C++ part
 #include "fileBrowse.hpp"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
@@ -762,7 +762,8 @@ void handleInput(){
 			drawMandelbrt = true;
 			float factor = 1.0; 
 			drawMandel(factor);
-			renderFBMode3SubEngine((u16*)&TGDSLogoNDSSize[0], (int)TGDSLOGONDSSIZE_WIDTH,(int)TGDSLOGONDSSIZE_HEIGHT);
+			//render TGDSLogo from a LZSS compressed file
+			RenderTGDSLogoSubEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
 		}
 		
 		scanKeys();
@@ -837,9 +838,8 @@ int main(int _argc, sint8 **_argv) {
 	switch_dswnifi_mode(dswifi_idlemode);
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
 	
-	//show TGDS logo
-	initFBModeSubEngine0x06200000();
-	renderFBMode3SubEngine((u16*)&TGDSLogoNDSSize[0], (int)TGDSLOGONDSSIZE_WIDTH,(int)TGDSLOGONDSSIZE_HEIGHT);
+	//render TGDSLogo from a LZSS compressed file
+	RenderTGDSLogoSubEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
 
 	//Init sound
 	disableVBlank();
