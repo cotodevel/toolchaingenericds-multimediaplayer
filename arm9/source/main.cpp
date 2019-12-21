@@ -698,10 +698,8 @@ void handleInput(){
 		else{
 			clrscr();
 			printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
-			printfCoords(0, 7, "Press (A).");
-			
 			scanKeys();
-			while(!(keysPressed() & KEY_A)){
+			while(keysPressed() & KEY_L){
 				scanKeys();
 				IRQWait(IRQ_HBLANK);
 			}
