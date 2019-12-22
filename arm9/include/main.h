@@ -42,6 +42,9 @@ extern "C" {
 extern int main(int _argc, sint8 **_argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 extern void handleInput();
+extern struct FileClassList * songfileClassListCtx;
+extern struct FileClassList * playlistfileClassListCtx;
+
 
 #ifdef __cplusplus
 }

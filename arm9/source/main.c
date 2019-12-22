@@ -30,10 +30,13 @@ USA
 #include "dswnifi_lib.h"
 #include "TGDSLogoLZSSCompressed.h"
 
-//C++ part
-#include "fileBrowse.hpp"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
+#include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
 
-static vector<string> songLst;
+//Create TGDS Dir API context
+struct FileClassList * songfileClassListCtx = NULL;
+struct FileClassList * playlistfileClassListCtx = NULL;
+
+//static vector<string> songLst;
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 
 #define oldSongsToRemember (int)(10)
@@ -67,7 +70,8 @@ static inline struct rgbMandel mandelbrot(float real, float imag) {
 	float dist = (((real - imag) * stepsAccess) * 3.14) / 360 * (real - imag);
 	struct rgbMandel rgb = { ((31 - (dist*0.5)) / 360) * stepsAccess , ((31 - (dist*0.3)) / 360) * stepsAccess , ((31 - (dist*0.1)) / 360) * stepsAccess };
 	
-	for (int i = 0; i < value; ++i) {
+	int i = 0;
+	for (i = 0; i < value; ++i) {
 		float r2 = zReal * zReal;
 		float i2 = zImag * zImag;
 		if (r2 + i2 > 4.0) { 
@@ -227,9 +231,11 @@ static inline void draw(float x_start, float x_fin, float y_start, float y_fin) 
 	float dy = (y_fin - y_start)/(heigth-1);
 	
 	//stable
-	for (int i = 0; i < heigth; i++) {
+	int i = 0;
+	for (i = 0; i < heigth; i++) {
 		float y = y_fin - i*dy; // current imaginary value
-		for (int j = 0; j < width; j+=40) {
+		int j = 0;
+		for (j = 0; j < width; j+=40) {
 			
 			float x0 = x_start + (j+0)*dx; // current real value
 			float x1 = x_start + (j+1)*dx; // current real value
@@ -352,7 +358,7 @@ static inline int getRand(int size){
 	return (rand() % size);
 }
 
-static vector<string> oldSongLst;
+//static vector<string> oldSongLst;
 static bool pendingPlay = false;
 static int lastRand = 0;
 
@@ -368,7 +374,8 @@ void drawMandel(float factor){
 	float y_fin = center_y + factor;
 	draw(x_start, x_fin, y_start, y_fin);
 	
-	for (int i = 0; i < iter; i++) {
+	int i = 0;
+	for (i = 0; i < iter; i++) {
 		factor = factor / 1.3;
 		x_start = center_x - 1.5*factor;
 		x_fin = center_x + 1.5*factor;
@@ -398,14 +405,16 @@ void menuShow(){
 	}
 }
 
-
+/*
 static inline std::string GetFileExtension(const std::string& FileName)
 {
     if(FileName.find_last_of(".") != std::string::npos)
         return FileName.substr(FileName.find_last_of(".")+1);
     return "";
 }
+*/
 
+/*
 bool ShowBrowser(char * Path, bool & pendingPlay){	//custom filebrowser code required by TGDS-audioplayer. Code should be a copy + update from fileBrowse.hpp
 	while((keysPressed() & KEY_START) || (keysPressed() & KEY_A) || (keysPressed() & KEY_B)){
 		scanKeys();
@@ -669,6 +678,247 @@ bool ShowBrowser(char * Path, bool & pendingPlay){	//custom filebrowser code req
 	}
 	return false;
 }
+*/
+
+
+
+static inline bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){
+	scanKeys();
+	while((keysPressed() & KEY_START) || (keysPressed() & KEY_A) || (keysPressed() & KEY_B)){
+		scanKeys();
+		IRQWait(IRQ_VBLANK);
+	}
+	
+	//Create TGDS Dir API context
+	struct FileClassList * fileClassListCtx = playlistfileClassListCtx;
+	
+	//Use TGDS Dir API context
+	int pressed = 0;
+	struct FileClass filStub;
+	{
+		filStub.type = FT_FILE;
+		strcpy(filStub.fd_namefullPath, "");
+		filStub.isIterable = true;
+		filStub.d_ino = -1;
+		filStub.curIndexInsideFileClassList = 0;
+		filStub.parentFileClassList = fileClassListCtx;
+	}
+	char fname[256+1];
+	strcpy(fname, Path);
+	setFileClassObj(0, (struct FileClass *)&filStub, fileClassListCtx);
+	
+	int j = 1;
+	int startFromIndex = 1;
+	struct FileClass * fileClassInst = NULL;
+	fileClassInst = FAT_FindFirstFile(fname, fileClassListCtx, startFromIndex);
+	while(fileClassInst != NULL){
+		//directory?
+		if(fileClassInst->type == FT_DIR){
+			char tmpBuf[512];
+			strcpy(tmpBuf, fileClassInst->fd_namefullPath);
+			parseDirNameTGDS(tmpBuf);
+			strcpy(fileClassInst->fd_namefullPath, tmpBuf);
+		}
+		//file?
+		else if(fileClassInst->type  == FT_FILE){
+			char tmpBuf[512];
+			strcpy(tmpBuf, fileClassInst->fd_namefullPath);
+			parsefileNameTGDS(tmpBuf);
+			strcpy(fileClassInst->fd_namefullPath, tmpBuf);
+		}
+		
+		//more file/dir objects?
+		fileClassInst = FAT_FindNextFile(fname, fileClassListCtx);
+	}
+	
+	//actual file lister
+	clrscr();
+	
+	j = 1;
+	pressed = 0 ;
+	int lastVal = 0;
+	bool reloadDirA = false;
+	bool reloadDirB = false;
+	char * newDir = NULL;
+	
+	#define itemsShown (int)(15)
+	int curjoffset = 0;
+	int itemRead=1;
+	
+	while(1){
+		int fileClassListSize = getCurrentDirectoryCount(fileClassListCtx) + 1;	//+1 the stub
+		int itemsToLoad = (fileClassListSize - curjoffset);
+		
+		//check if remaining items are enough
+		if(itemsToLoad > itemsShown){
+			itemsToLoad = itemsShown;
+		}
+		
+		while(itemRead < itemsToLoad ){		
+			if(getFileClassFromList(itemRead+curjoffset, fileClassListCtx)->type == FT_DIR){
+				printfCoords(0, itemRead, "--- %s%s",getFileClassFromList(itemRead+curjoffset, fileClassListCtx)->fd_namefullPath,"<dir>");
+			}
+			else{
+				printfCoords(0, itemRead, "--- %s",getFileClassFromList(itemRead+curjoffset, fileClassListCtx)->fd_namefullPath);
+			}
+			itemRead++;
+		}
+		
+		scanKeys();
+		pressed = keysPressed();
+		if (pressed&KEY_DOWN && (j < (itemsToLoad - 1) ) ){
+			j++;
+			while(pressed&KEY_DOWN){
+				scanKeys();
+				pressed = keysPressed();
+				IRQWait(IRQ_VBLANK);
+			}
+		}
+		
+		//downwards: means we need to reload new screen
+		else if(pressed&KEY_DOWN && (j >= (itemsToLoad - 1) ) && ((fileClassListSize - curjoffset - itemRead) > 0) ){
+			
+			//list only the remaining items
+			clrscr();
+			
+			curjoffset = (curjoffset + itemsToLoad - 1);
+			itemRead = 1;
+			j = 1;
+			
+			scanKeys();
+			pressed = keysPressed();
+			while(pressed&KEY_DOWN){
+				scanKeys();
+				pressed = keysPressed();
+				IRQWait(IRQ_VBLANK);
+			}
+		}
+		
+		//LEFT, reload new screen
+		else if(pressed&KEY_LEFT && ((curjoffset - itemsToLoad) > 0) ){
+			
+			//list only the remaining items
+			clrscr();
+			
+			curjoffset = (curjoffset - itemsToLoad - 1);
+			itemRead = 1;
+			j = 1;
+			
+			scanKeys();
+			pressed = keysPressed();
+			while(pressed&KEY_LEFT){
+				scanKeys();
+				pressed = keysPressed();
+				IRQWait(IRQ_VBLANK);
+			}
+		}
+		
+		//RIGHT, reload new screen
+		else if(pressed&KEY_RIGHT && ((fileClassListSize - curjoffset - itemsToLoad) > 0) ){
+			
+			//list only the remaining items
+			clrscr();
+			
+			curjoffset = (curjoffset + itemsToLoad - 1);
+			itemRead = 1;
+			j = 1;
+			
+			scanKeys();
+			pressed = keysPressed();
+			while(pressed&KEY_RIGHT){
+				scanKeys();
+				pressed = keysPressed();
+				IRQWait(IRQ_VBLANK);
+			}
+		}
+		
+		else if (pressed&KEY_UP && (j > 1)) {
+			j--;
+			while(pressed&KEY_UP){
+				scanKeys();
+				pressed = keysPressed();
+				IRQWait(IRQ_VBLANK);
+			}
+		}
+		
+		//upwards: means we need to reload new screen
+		else if (pressed&KEY_UP && (j <= 1) && (curjoffset > 0) ) {
+			//list only the remaining items
+			clrscr();
+			
+			curjoffset--;
+			itemRead = 1;
+			j = 1;
+			
+			scanKeys();
+			pressed = keysPressed();
+			while(pressed&KEY_UP){
+				scanKeys();
+				pressed = keysPressed();
+				IRQWait(IRQ_VBLANK);
+			}
+		}
+		
+		//reload DIR (forward)
+		else if( (pressed&KEY_A) && (getFileClassFromList(j+curjoffset, fileClassListCtx)->type == FT_DIR) ){
+			struct FileClass * fileClassChosen = getFileClassFromList(j+curjoffset, fileClassListCtx);
+			newDir = fileClassChosen->fd_namefullPath;
+			reloadDirA = true;
+			break;
+		}
+		
+		//file chosen
+		else if( (pressed&KEY_A) && (getFileClassFromList(j+curjoffset, fileClassListCtx)->type == FT_FILE) ){
+			break;
+		}
+		
+		//reload DIR (backward)
+		else if(pressed&KEY_B){
+			reloadDirB = true;
+			break;
+		}
+		
+		// Show cursor
+		printfCoords(0, j, "*");
+		if(lastVal != j){
+			printfCoords(0, lastVal, " ");	//clean old
+		}
+		lastVal = j;
+	}
+	
+	//enter a dir
+	if(reloadDirA == true){
+		//Free TGDS Dir API context
+		//freeFileList(fileClassListCtx);	//can't because we keep the fileClassListCtx handle across folders
+		
+		enterDir((char*)newDir);
+		return true;
+	}
+	
+	//leave a dir
+	if(reloadDirB == true){
+		//Free TGDS Dir API context
+		//freeFileList(fileClassListCtx);	//can't because we keep the fileClassListCtx handle across folders
+		
+		//rewind to preceding dir in TGDSCurrentWorkingDirectory
+		leaveDir(getTGDSCurrentWorkingDirectory());
+		return true;
+	}
+	
+	strcpy((char*)outBuf, getFileClassFromList(j+curjoffset, fileClassListCtx)->fd_namefullPath);
+	clrscr();
+	printf("                                   ");
+	if(getFileClassFromList(j+curjoffset, fileClassListCtx)->type == FT_DIR){
+		//printf("you chose Dir:%s",outBuf);
+	}
+	else{
+		*pendingPlay = true;
+	}
+	
+	//Free TGDS Dir API context
+	//freeFileList(fileClassListCtx);
+	return false;
+}	
 
 static bool drawMandelbrt = false;
 __attribute__((section(".itcm")))	
@@ -683,6 +933,7 @@ void handleInput(){
 	scanKeys();
 	
 	if (keysPressed() & KEY_L){
+		/*
 		int oldLstSize = oldSongLst.size();
 		if(oldLstSize > 0){
 			strcpy(curChosenBrowseFile, (const char *)oldSongLst.at(oldLstSize - 1).c_str());
@@ -710,6 +961,7 @@ void handleInput(){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
+		*/
 	}
 	
 	if (keysPressed() & KEY_START){
@@ -717,7 +969,7 @@ void handleInput(){
 		if(soundLoaded == false){
 			char startPath[MAX_TGDSFILENAME_LENGTH+1];
 			sprintf(startPath,"%s","/");
-			while( ShowBrowser((char *)startPath, pendingPlay) == true ){	//as long you keep using directories ShowBrowser will be true
+			while( ShowBrowserC((char *)startPath, curChosenBrowseFile, &pendingPlay) == true ){	//as long you keep using directories ShowBrowser will be true
 				//navigating DIRs here...
 			}
 			
@@ -730,10 +982,9 @@ void handleInput(){
 		else{
 			clrscr();
 			printfCoords(0, 6, "Please stop audio playback before listing files. ");
-			printfCoords(0, 7, "Press (A).");
 			
 			scanKeys();
-			while(!(keysPressed() & KEY_A)){
+			while(keysPressed() & KEY_L){
 				scanKeys();
 				IRQWait(IRQ_HBLANK);
 			}
@@ -773,7 +1024,7 @@ void handleInput(){
 	
 	if (keysPressed() & KEY_R){
 		//Play Random song from current folder
-		int lstSize = songLst.size();
+		int lstSize = getCurrentDirectoryCount(playlistfileClassListCtx) + 1;	//+1 the stub
 		if(lstSize > 0){
 			closeSound();
 			
@@ -786,15 +1037,15 @@ void handleInput(){
 			}
 			
 			//remember playlist as long the audio file is unique. (for L button)
-			int oldPlsSize = oldSongLst.size();
-			if( (oldPlsSize > 0) && ((oldSongLst.at(oldPlsSize -1).compare(string(curChosenBrowseFile))) != 0) ){
-				oldSongLst.push_back(string(curChosenBrowseFile));
+			int oldPlsSize = 0; //getCurrentDirectoryCount(playlistfileClassListCtx) + 1;	//+1 the stub
+			if( (oldPlsSize > 0) /*&& ((oldSongLst.at(oldPlsSize -1).compare(string(curChosenBrowseFile))) != 0) */ ){
+				//oldSongLst.push_back(string(curChosenBrowseFile));
 			}
 			else if (oldPlsSize == 0){
-				oldSongLst.push_back(string(curChosenBrowseFile));
+				//oldSongLst.push_back(string(curChosenBrowseFile));
 			}
 			
-			strcpy(curChosenBrowseFile, (const char *)songLst.at(randFile).c_str());
+			strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(randFile, playlistfileClassListCtx)->fd_namefullPath);	//todo
 			pendingPlay = true;
 			
 			scanKeys();
@@ -810,6 +1061,7 @@ void handleInput(){
 	updateStreamLoop();	//runs once per hblank line
 	
 }
+
 
 __attribute__((section(".itcm")))
 int main(int _argc, sint8 **_argv) {
@@ -843,8 +1095,8 @@ int main(int _argc, sint8 **_argv) {
 	disableVBlank();
 	setGenericSound(11025, 127, 64, 1);
 	initComplexSound(); // initialize sound variables
-	oldSongLst.clear();
-	
+	songfileClassListCtx = initFileList(); //oldSongLst.clear();
+	playlistfileClassListCtx = initFileList();
 	
 	
 	menuShow();
