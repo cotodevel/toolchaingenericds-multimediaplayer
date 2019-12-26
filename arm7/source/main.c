@@ -78,24 +78,6 @@ void freeData()
 {	
 	//free(strpcmR0);
 }
-
-void startSound(int sampleRate, const void* data, u32 bytes, u8 channel, u8 vol,  u8 pan, u8 format) 
-{
-	SCHANNEL_TIMER(channel)  = SOUND_FREQ(sampleRate);
-	SCHANNEL_SOURCE(channel) = (u32)data;
-	SCHANNEL_LENGTH(channel) = bytes >> 2;
-	SCHANNEL_CR(channel)     = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(vol) | SOUND_PAN(pan) | (format==1?SOUND_8BIT:SOUND_16BIT);
-}
-
-s32 getFreeSoundChannel() // modified to only look on channels 4 and up
-{
-	int i;
-	for (i=4;i<16;++i) 
-		if (!(SCHANNEL_CR(i) & SCHANNEL_ENABLE)) return i;
-	
-	return -1;
-}
-
 void setSwapChannel()
 {
 	s16 *buf;
@@ -171,12 +153,6 @@ void StopSound()
 	//irqSet(IRQ_VBLANK, VblankHandler);
 	//irqEnable(IRQ_VBLANK);
 	EnableIrq(IRQ_VBLANK);
-}
-
-void TIMER1Handler()
-{	
-	setSwapChannel();
-	SendFIFOWords(ARM9COMMAND_UPDATE_BUFFER, 0);
 }
 
 

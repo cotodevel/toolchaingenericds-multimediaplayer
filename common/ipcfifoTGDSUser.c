@@ -309,15 +309,6 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			SCHANNEL_TIMER(soundIPC->psgChannel) = soundIPC->timer;
 		}
 		break;
-		case ARM7COMMAND_PLAYCLICK:
-		{
-			s32 chan = getFreeSoundChannel();
-			if (chan >= 0) 
-			{
-				startSound(11025, &click_raw, click_raw_size, chan, 40, 63, 1);
-			}
-		}
-		break;
 		#endif
 		
 		//NDS9: 

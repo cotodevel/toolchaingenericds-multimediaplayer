@@ -23,6 +23,13 @@ USA
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
+#include "ipcfifoTGDSUser.h"
+
+static inline void TIMER1Handler()
+{	
+	setSwapChannel();
+	SendFIFOWords(ARM9COMMAND_UPDATE_BUFFER, 0);
+}
 
 #endif
 
@@ -50,12 +57,9 @@ extern int sndRate;
 
 extern void mallocData(int size);
 extern void freeData();
-extern void startSound(int sampleRate, const void* data, u32 bytes, u8 channel, u8 vol,  u8 pan, u8 format);
-extern s32 getFreeSoundChannel();
 extern void setSwapChannel();
 extern void SetupSound();
 extern void StopSound();
-extern void TIMER1Handler();
 
 #ifdef __cplusplus
 }

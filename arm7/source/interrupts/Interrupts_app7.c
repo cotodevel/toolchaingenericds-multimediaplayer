@@ -24,6 +24,7 @@ USA
 #include "biosTGDS.h"
 #include "ipcfifoTGDSUser.h"
 #include "spifwTGDS.h"
+#include "main.h"
 
 //User Handler Definitions
 #ifdef ARM9

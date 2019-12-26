@@ -27,10 +27,13 @@ USA
 #include "gui_console_connector.h"
 #include "misc.h"
 #include "sound.h"
+#include "soundTGDS.h"
+
 #include "dswnifi_lib.h"
 #include "TGDSLogoLZSSCompressed.h"
 
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
+#include "click_raw.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * RecentPlaylistfileClassListCtx = NULL;		//Recent Played
@@ -729,6 +732,17 @@ void handleInput(){
 	}
 	
 	scanKeys();
+	
+	if (keysPressed() & KEY_TOUCH){
+		int oldLstSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);
+		u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
+		setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
+		scanKeys();
+		while(keysPressed() & KEY_TOUCH){
+			scanKeys();
+			IRQWait(IRQ_HBLANK);
+		}
+	}
 	
 	if (keysPressed() & KEY_L){
 		int oldLstSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);

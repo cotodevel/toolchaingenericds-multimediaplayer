@@ -736,7 +736,7 @@ int getSoundLength()
 	return sndLen;
 }
 
-void startSound()
+void startSound9()
 {	
 	if(!playing)
 		SendArm7Command(ARM7COMMAND_START_SOUND, 0);
@@ -2272,7 +2272,7 @@ bool loadSound(char *fName)
 		}
 		
 		wavDecode();
-		startSound();
+		startSound9();
 		
 		return true;
 	}
@@ -2313,7 +2313,7 @@ bool loadSound(char *fName)
 		soundData.loc = 0;
 		sCursor = 0;
 		
-		startSound();
+		startSound9();
 		
 		return true;		
 	}
@@ -2396,7 +2396,7 @@ bool loadSound(char *fName)
 		bytesLeftBuf = NULL;
 		
 		mp3Decode();	//process header frame
-		startSound();
+		startSound9();
 		return true;
 	}
 	*/
@@ -2442,7 +2442,7 @@ bool loadSound(char *fName)
 		soundData.len = flength(fp);
 		soundData.loc = 0;
     	
-		startSound();
+		startSound9();
 		
 		return true;
 	}
@@ -2521,7 +2521,7 @@ bool loadSound(char *fName)
 		soundData.len = flength(fp);
 		soundData.loc = 0;
 		
-		startSound();
+		startSound9();
 		
 		return true;
 	}
@@ -2660,7 +2660,7 @@ bool loadSound(char *fName)
 		aacLength = aacFrameInfo.outputSamps / soundData.channels;
 		soundData.loc = 0;
 		
-		startSound();
+		startSound9();
 		
 		return true;
 	}
@@ -2704,7 +2704,7 @@ bool loadSound(char *fName)
 		bytesLeftBuf = NULL;
     	
 		decodeFlacFrame();
-		startSound();
+		startSound9();
 		
 		return true;
 	}
@@ -2752,7 +2752,7 @@ bool loadSound(char *fName)
 		sidfile[SID_META_LOC + 95] = 0;
 		
 		sidDecode();
-		startSound();		
+		startSound9();		
 		
 		return true;
 	}	
@@ -2811,7 +2811,7 @@ bool loadSound(char *fName)
 		
 		StopFade();
 		nsfDecode();
-		startSound();	
+		startSound9();	
 		
 		return true;
 	}
@@ -2844,7 +2844,7 @@ bool loadSound(char *fName)
 		mallocData(SPC_OUT_SIZE);
 		
 		spcDecode();
-		startSound();
+		startSound9();
 		
 		return true;
 	}
@@ -2900,7 +2900,7 @@ bool loadSound(char *fName)
 		
 		sndhDecode();
 		
-		startSound();
+		startSound9();
 		
 		return true;
 	}
@@ -2937,7 +2937,7 @@ bool loadSound(char *fName)
 		
 		gbsDecode();
 		
-		startSound();
+		startSound9();
 		
 		return true;
 	}
@@ -3321,7 +3321,7 @@ void startStreamAudio()
 				bufCursor = 0;
 				streamOpened = true;
 				
-				startSound();
+				startSound9();
 			}
 			
 			break;
@@ -3355,7 +3355,7 @@ void startStreamAudio()
 			bufCursor = 0;
 			streamOpened = true;
 			
-			startSound();
+			startSound9();
 			break;
 		}
 		case SRC_STREAM_AAC:
@@ -3422,7 +3422,7 @@ void startStreamAudio()
 			
 			aacLength = aacFrameInfo.outputSamps / soundData.channels;
 			
-			startSound();
+			startSound9();
 			streamOpened = true;
 			
 			break;
