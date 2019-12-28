@@ -133,7 +133,6 @@ void SetupSound()
 	//irqDisable(IRQ_VBLANK);
 	DisableIrq(IRQ_VBLANK);
 	
-	
 	lastL = 0;
 	lastR = 0;
 }
@@ -153,6 +152,7 @@ void StopSound()
 	//irqSet(IRQ_VBLANK, VblankHandler);
 	//irqEnable(IRQ_VBLANK);
 	EnableIrq(IRQ_VBLANK);
+	
 }
 
 
@@ -171,11 +171,6 @@ int main(int _argc, sint8 **_argv) {
 	
     while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		
-		if(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){
-			REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-		}
-		
 		IRQWait(IRQ_HBLANK);
 	}
    

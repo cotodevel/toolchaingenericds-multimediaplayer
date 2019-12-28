@@ -314,40 +314,34 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		//NDS9: 
 		#ifdef ARM9
 		case ARM9COMMAND_UPDATE_BUFFER:{
-			
-			
-			REG_IME = 0;
+			updateRequested = true;
+				
+			// check for formats that can handle not being on an interrupt (better stability)
+			// (these formats are generally decoded faster)
+			switch(soundData.sourceFmt)
 			{
-				updateRequested = true;
-				
-				// check for formats that can handle not being on an interrupt (better stability)
-				// (these formats are generally decoded faster)
-				switch(soundData.sourceFmt)
-				{
-					/*
-					case SRC_MP3:
-						// mono sounds are slower than stereo for some reason
-						// so we force them to update faster
-						if(soundData.channels != 1)
-							return;
-						
-						break;
-					*/
-					case SRC_WAV:
-					case SRC_FLAC:
-					//case SRC_STREAM_MP3:
-					case SRC_STREAM_AAC:
-					case SRC_SID:
-						// these will be played next time it hits in the main screen
-						// theres like 4938598345 of the updatestream checks in the 
-						// main code
+				/*
+				case SRC_MP3:
+					// mono sounds are slower than stereo for some reason
+					// so we force them to update faster
+					if(soundData.channels != 1)
 						return;
-				}
-				
-				// call immediately if the format needs it
-				updateStreamLoop();
+					
+					break;
+				*/
+				case SRC_WAV:
+				case SRC_FLAC:
+				//case SRC_STREAM_MP3:
+				case SRC_STREAM_AAC:
+				case SRC_SID:
+					// these will be played next time it hits in the main screen
+					// theres like 4938598345 of the updatestream checks in the 
+					// main code
+					return;
 			}
-			REG_IME = 1;
+			
+			// call immediately if the format needs it
+			updateStreamLoop();
 		}	
 		break;
 		case ARM9COMMAND_SAVE_DATA:{
