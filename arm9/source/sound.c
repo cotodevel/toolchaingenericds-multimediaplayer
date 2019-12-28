@@ -40,7 +40,7 @@
 #include "videoTGDS.h"
 #include "InterruptsARMCores_h.h"
 #include "nds_cp15_misc.h"
-//#include "mad.h"
+#include "mad.h"
 #include "flac.h"
 #include "aacdec.h"
 #include "main.h"
@@ -84,13 +84,11 @@ static int sCursor = 0;
 bool allowEQ = true;
 
 // mp3
-/*
 struct mad_stream Stream;
 struct mad_frame Frame;
 struct mad_synth Synth;
 static mad_timer_t Timer;
 static unsigned char *mp3Buf = NULL;
-*/
 
 // ogg
 static OggVorbis_File vf;
@@ -187,7 +185,7 @@ void nsfDecode();
 void spcDecode();
 void sndhDecode();
 void gbsDecode();
-//void mp3Decode();
+void mp3Decode();
 void (*wavDecode)() = NULL;
 
 int getSIDTrack();
@@ -446,7 +444,6 @@ static void updateStream()
 			}
 		}
 		break;
-		/*
 		case SRC_MP3:		
 		{
 			swapAndSend(ARM7COMMAND_SOUND_COPY);
@@ -480,7 +477,6 @@ static void updateStream()
 				recieveStream(-1);
 		}
 		break;
-		*/
 		case SRC_OGG:
 		case SRC_STREAM_OGG:
 		{
@@ -802,7 +798,6 @@ void freeSound()
 			MikMod_Exit();
 			
 			break;
-		/*
 		case SRC_MP3:			
 			if(mp3Buf)
 				trackFree(mp3Buf);
@@ -818,7 +813,6 @@ void freeSound()
 			bytesLeftBuf = NULL;
 			
 			break;
-		*/
 		case SRC_STREAM_OGG:
 			freeStreamBuffer();
 			
@@ -864,7 +858,6 @@ void freeSound()
 			bytesLeftBuf = NULL;
 			
 			break;
-		/*
 		case SRC_STREAM_MP3:
 			freeStreamBuffer();
 				
@@ -890,7 +883,6 @@ void freeSound()
 			streamMode = STREAM_TRYNEXT;
 			
 		break;
-		*/
 		case SRC_STREAM_AAC:
 			freeStreamBuffer();
 			
@@ -1135,7 +1127,6 @@ char *sidMeta(int which)
 	return sidfile + SID_META_LOC + (which << 5);
 }
 
-/*
 void mp3Decode()
 {	
 	madFinished = false;
@@ -1149,7 +1140,6 @@ void mp3Decode()
 		//checkKeys();
 	}
 }
-*/
 
 void nsfDecode()
 {
@@ -1421,9 +1411,6 @@ void wavDecode32Bit()
 	trackFree(tmpData);
 }
 
-//mp3 refill method. todo: remove LIBMAD and use something else
-
-/*
 
 static inline u16 scale(mad_fixed_t sample)
 {
@@ -1760,8 +1747,6 @@ void copyData()
 	
 	return;
 }
-
-*/
 
 
 __attribute__((section(".itcm")))
@@ -2318,7 +2303,6 @@ bool loadSound(char *fName)
 		return true;		
 	}
 	
-	/*
 	if(strcmp(ext, ".mp3") == 0 || strcmp(ext, ".mp2") == 0 || strcmp(ext, ".mpa") == 0)
 	{
 		// mp3 file
@@ -2399,7 +2383,6 @@ bool loadSound(char *fName)
 		startSound9();
 		return true;
 	}
-	*/
 	
 	if(strcmp(ext, ".ogg") == 0)
 	{
@@ -3250,7 +3233,7 @@ bool amountLeftOver()
 	// Exit if we aren't supposed to be here
 	switch(soundData.sourceFmt)
 	{
-		//case SRC_STREAM_MP3:
+		case SRC_STREAM_MP3:
 		case SRC_STREAM_OGG:
 		case SRC_STREAM_AAC:
 			break;
@@ -3274,7 +3257,6 @@ void startStreamAudio()
 {
 	switch(soundData.sourceFmt)
 	{
-		/*
 		case SRC_STREAM_MP3:			
 		{	
 			mad_stream_init(&Stream);
@@ -3326,7 +3308,6 @@ void startStreamAudio()
 			
 			break;
 		}
-		*/
 		case SRC_STREAM_OGG:
 		{
 			ov_callbacks oggCallBacks = {callbacks_read_func_stream, callbacks_seek_func_stream, callbacks_close_func_stream, callbacks_tell_func_stream};			
@@ -3522,7 +3503,7 @@ void pauseSound(bool pause)
 {
 	switch(soundData.sourceFmt)
 	{
-		//case SRC_STREAM_MP3:
+		case SRC_STREAM_MP3:
 		case SRC_STREAM_OGG:
 		case SRC_STREAM_AAC:
 			return;
@@ -3584,7 +3565,7 @@ void setSoundLoc(u32 loc)
 				seekUpdate = loc;
 			}
 			break;
-		//case SRC_MP3:
+		case SRC_MP3:
 		case SRC_OGG:
 			soundData.loc = loc;
 			
@@ -3617,7 +3598,7 @@ int getState()
 	if(soundData.sourceFmt == SRC_NONE)
 		return STATE_UNLOADED;
 		
-	if(soundData.sourceFmt == SRC_STREAM_OGG || /* soundData.sourceFmt == SRC_STREAM_MP3 || */ soundData.sourceFmt == SRC_STREAM_AAC)
+	if(soundData.sourceFmt == SRC_STREAM_OGG || soundData.sourceFmt == SRC_STREAM_MP3 || soundData.sourceFmt == SRC_STREAM_AAC)
 	{	
 		if(streamMode != STREAM_TRYNEXT)
 			return STATE_PLAYING;	
