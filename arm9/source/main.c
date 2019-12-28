@@ -359,7 +359,11 @@ static inline void draw(float x_start, float x_fin, float y_start, float y_fin) 
 }
 
 static inline int getRand(int size){
-	return (rand() % size);
+	int res = (( (rand() + (REG_VCOUNT&(256-1))) ) % size);
+	if(res >= 0){
+		return res;
+	}
+	return getRand(size);
 }
 
 //static vector<string> oldSongLst;
@@ -409,7 +413,7 @@ void menuShow(){
 	}
 }
 
-static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, struct FileClassList * playLst){	//MUST be same as the template one at "fileBrowse.h" but added some custom code
+static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){	//MUST be same as the template one at "fileBrowse.h" but added some custom code
 	scanKeys();
 	while((keysPressed() & KEY_START) || (keysPressed() & KEY_A) || (keysPressed() & KEY_B)){
 		scanKeys();
@@ -417,7 +421,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, struct 
 	}
 	
 	//Create TGDS Dir API context
-	cleanFileList(playLst);
+	cleanFileList(playlistfileClassListCtx);
 	cleanFileList(menuIteratorfileClassListCtx);
 	
 	//Use TGDS Dir API context
@@ -441,7 +445,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, struct 
 		while(1==1);
 	}
 	
-	if(pushEntryToFileClassList(true, filStub.fd_namefullPath, filStub.type, -1, playLst) != NULL){
+	if(pushEntryToFileClassList(true, filStub.fd_namefullPath, filStub.type, -1, playlistfileClassListCtx) != NULL){
 		//OK item added
 	}
 	else{
@@ -517,7 +521,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, struct 
 				||
 				(strcmp(ext,".gbs") == 0)
 			){
-				if(pushEntryToFileClassList(fileClassInst->isIterable, fileClassInst->fd_namefullPath, fileClassInst->type, fileClassInst->d_ino, playLst) != NULL){
+				if(pushEntryToFileClassList(fileClassInst->isIterable, fileClassInst->fd_namefullPath, fileClassInst->type, fileClassInst->d_ino, playlistfileClassListCtx) != NULL){
 					//OK item added
 				}
 				else{
@@ -734,7 +738,6 @@ void handleInput(){
 	scanKeys();
 	
 	if (keysPressed() & KEY_TOUCH){
-		int oldLstSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);
 		u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
 		setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
 		scanKeys();
@@ -752,6 +755,11 @@ void handleInput(){
 			lastRand = oldLstSize - 1;
 			
 			pendingPlay = true;
+			scanKeys();
+			while(keysPressed() & KEY_L){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
 		}
 		else{
 			clrscr();
@@ -762,11 +770,6 @@ void handleInput(){
 				IRQWait(IRQ_HBLANK);
 			}
 			menuShow();
-		}
-		scanKeys();
-		while(keysPressed() & KEY_L){
-			scanKeys();
-			IRQWait(IRQ_HBLANK);
 		}
 	}
 	
@@ -787,7 +790,7 @@ void handleInput(){
 			
 			//remember playlist as long the audio file is unique. (for L button)
 			int oldPlsSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);
-			if( (oldPlsSize > 0) && (strcmp( getFileClassFromList(oldPlsSize - 1, RecentPlaylistfileClassListCtx)->fd_namefullPath, curChosenBrowseFile) != 0)  ){
+			if(oldPlsSize >= 0){
 				struct FileClass * fileClassInst = getFileClassFromList(randFile, playlistfileClassListCtx);
 				if(pushEntryToFileClassList(fileClassInst->isIterable, fileClassInst->fd_namefullPath, fileClassInst->type, fileClassInst->d_ino, RecentPlaylistfileClassListCtx) != NULL){
 					//OK item added
@@ -796,27 +799,17 @@ void handleInput(){
 					printf("failed to add an item to a RecentPlaylistfileClassListCtx FileClass Directory Iterator! ");
 					while(1==1);
 				}
-			}
-			else if (oldPlsSize == 0){
-				struct FileClass * fileClassInst = getFileClassFromList(randFile, playlistfileClassListCtx);
-				if(pushEntryToFileClassList(fileClassInst->isIterable, fileClassInst->fd_namefullPath, fileClassInst->type, fileClassInst->d_ino, RecentPlaylistfileClassListCtx) != NULL){
-					//OK item added
-				}
-				else{
-					printf("failed to add an item to a RecentPlaylistfileClassListCtx FileClass Directory Iterator! ");
-					while(1==1);
-				}
-			}
-			
-			strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(randFile, playlistfileClassListCtx)->fd_namefullPath);
-			pendingPlay = true;
-			
-			scanKeys();
-			while(keysPressed() & KEY_R){
+				
+				strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(randFile, playlistfileClassListCtx)->fd_namefullPath);
+				pendingPlay = true;
+				
 				scanKeys();
-				IRQWait(IRQ_HBLANK);
+				while(keysPressed() & KEY_R){
+					scanKeys();
+					IRQWait(IRQ_HBLANK);
+				}
+				lastRand = randFile;				
 			}
-			lastRand = randFile;
 		}
 	}
 	
@@ -825,7 +818,7 @@ void handleInput(){
 		if(soundLoaded == false){
 			char startPath[MAX_TGDSFILENAME_LENGTH+1];
 			sprintf(startPath,"%s","/");
-			while( ShowBrowserC((char *)startPath, curChosenBrowseFile, &pendingPlay, playlistfileClassListCtx) == true ){	//as long you keep using directories ShowBrowser will be true
+			while( ShowBrowserC((char *)startPath, curChosenBrowseFile, &pendingPlay) == true ){	//as long you keep using directories ShowBrowser will be true
 				//navigating DIRs here...
 			}
 			
