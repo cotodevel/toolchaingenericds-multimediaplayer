@@ -171,6 +171,11 @@ int main(int _argc, sint8 **_argv) {
 	
     while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
+		
+		if(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){
+			REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
+		}
+		
 		IRQWait(IRQ_HBLANK);
 	}
    
