@@ -28,6 +28,7 @@ USA
 #include "misc.h"
 #include "sound.h"
 #include "soundTGDS.h"
+#include "keypadTGDS.h"
 
 #include "dswnifi_lib.h"
 #include "TGDSLogoLZSSCompressed.h"
@@ -560,6 +561,31 @@ static inline void handleInput(){
 	
 	scanKeys();
 	
+	if (keysPressed() & KEY_UP){
+		struct touchScr touchScrInst;
+		touchScrRead(&touchScrInst);
+		volumeUp(touchScrInst.touchXpx, touchScrInst.touchYpx);
+		menuShow();
+		scanKeys();
+		while(keysPressed() & KEY_UP){
+			scanKeys();
+			IRQWait(IRQ_HBLANK);
+		}
+	}
+	
+	if (keysPressed() & KEY_DOWN){
+		struct touchScr touchScrInst;
+		touchScrRead(&touchScrInst);
+		volumeDown(touchScrInst.touchXpx, touchScrInst.touchYpx);
+		menuShow();
+		scanKeys();
+		while(keysPressed() & KEY_DOWN){
+			scanKeys();
+			IRQWait(IRQ_HBLANK);
+		}
+	}
+	
+	
 	if (keysPressed() & KEY_TOUCH){
 		u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
 		setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
@@ -857,13 +883,17 @@ void menuShow(){
 	printf("(R): Random audio file playback ");
 	printf("(B): Stop audio playback ");
 	printf("(X): Mandelbrot demo ");
+	printf("(D-PAD: Down): Volume - ");
+	printf("(D-PAD: Up): Volume + ");
 	printf("(Select): this menu");
+	
 	if(soundLoaded == false){
 		printf("Playback: Stopped.");
 	}
 	else{
 		printf("Playing: %s", curChosenBrowseFile);
 	}
+	printf("Current Volume: %d", (int)getVolume());
 }
 
 

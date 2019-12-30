@@ -3647,8 +3647,24 @@ void setVolume(u8 volume)
 	soundIPC->volume = volume;
 }
 
+void volumeUp(int x, int y)
+{
+	if(getVolume() < 16)
+	{
+		setVolume(getVolume() + 1);
+	}
+}
 
-//Stuff that will be rewritten anyway (ARM9 part). (libnds for now) Toolchain Audio specific
+void volumeDown(int x, int y)
+{
+	if(getVolume() > 0)
+	{
+		setVolume(getVolume() - 1);
+	}
+}
+
+
+//TODO: Remove this ... Stuff that will be rewritten anyway (ARM9 part). (libnds for now) Toolchain Audio specific
 TransferSound Snd;
 TransferSoundData SndDat =		{ (void *)0 , 0, 11025, 64, 64, 1 };
 void playSoundBlock(TransferSound *snd) {
