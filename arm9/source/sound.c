@@ -3662,39 +3662,7 @@ void volumeDown(int x, int y)
 		setVolume(getVolume() - 1);
 	}
 }
-
-
-//TODO: Remove this ... Stuff that will be rewritten anyway (ARM9 part). (libnds for now) Toolchain Audio specific
-TransferSound Snd;
-TransferSoundData SndDat =		{ (void *)0 , 0, 11025, 64, 64, 1 };
-void playSoundBlock(TransferSound *snd) {
-	coherent_user_range_by_size((uint32)snd, (int)sizeof(TransferSound));	//DC_FlushRange( snd, sizeof(TransferSound) );
-	setSoundRegion(snd);	//IPC->soundData = snd;
-}
-
-int playSound( pTransferSoundData sound) {
-	Snd.count = 1;
-	memcpy( &Snd.data[0], sound, sizeof(TransferSoundData) );
-	playSoundBlock(&Snd);
-	return 0;
-}
-
-int playGenericSound(const void* data, u32 length) {
-	Snd.count = 1;
-	memcpy( &Snd.data[0], &SndDat, sizeof(TransferSoundData) );
-	Snd.data[0].data = data;
-	Snd.data[0].len = length;
-	playSoundBlock(&Snd);
-	return 0;
- }
  
-void setGenericSound( u32 rate, u8 vol, u8 pan, u8 format) { 
-	SndDat.rate		= rate;
-	SndDat.vol		= vol;
-	SndDat.pan		= pan;
-	SndDat.format	= format;
-}
-
 int getSIDTrack()
 {
 	return sid_subSong + 1;

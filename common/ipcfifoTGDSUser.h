@@ -70,27 +70,6 @@ USA
 
 #define BIT(n) (1 << (n))
 
-typedef struct sTransferSoundData {
-//---------------------------------------------------------------------------------
-const void *data;
-u32 len;
-u32 rate;
-u8 vol;
-u8 pan;
-u8 format;
-u8 PADDING;
-} TransferSoundData, * pTransferSoundData;
-
-
-//---------------------------------------------------------------------------------
-typedef struct sTransferSound {
-//---------------------------------------------------------------------------------
-TransferSoundData data[16];
-u8 count;
-u8 PADDING[3];
-} TransferSound, * pTransferSound;
-
-
 typedef struct
 {
 	s16 *arm9L;
@@ -122,7 +101,6 @@ typedef struct
 struct sIPCSharedTGDSSpecific {
 	uint32 frameCounter7;	//VBLANK counter7
 	uint32 frameCounter9;	//VBLANK counter9
-	pTransferSound soundData;	//when this TransferSound * is not NULL, its absorbed by the ARM7 Core.
 };
 
 #define soundIPC ((SoundRegion volatile *)(((u32)TGDSIPCUserStartAddress + sizeof(struct sIPCSharedTGDSSpecific)) ))
@@ -152,9 +130,6 @@ extern "C" {
 //NOT weak symbols : the implementation of these is project-defined (here)
 extern void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
-
-extern TransferSound * getSoundRegion();
-extern void setSoundRegion(TransferSound * sndRegion);
 
 #ifdef __cplusplus
 }

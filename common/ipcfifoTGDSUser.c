@@ -356,13 +356,3 @@ __attribute__((section(".itcm")))
 #endif
 void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 }
-
-void setSoundRegion(TransferSound * sndRegion){
-	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;	
-	TGDSUSERIPC->soundData = sndRegion;
-}
-
-TransferSound * getSoundRegion(){
-	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-	return (TransferSound *)TGDSUSERIPC->soundData;
-}

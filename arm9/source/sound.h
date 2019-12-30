@@ -245,12 +245,6 @@ extern void volumeDown(int x, int y);
 extern void setLoop();
 extern void clearLoop();
 
-extern TransferSound Snd;
-extern TransferSoundData SndDat;
-extern void playSoundBlock(TransferSound *snd);
-extern int playSound( pTransferSoundData sound);
-extern int playGenericSound(const void* data, u32 length);
-extern void setGenericSound( u32 rate, u8 vol, u8 pan, u8 format);
 extern bool updateRequested;
 extern sndData soundData;
 extern void updateStreamLoop();

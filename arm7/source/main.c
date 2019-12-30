@@ -167,7 +167,6 @@ int main(int _argc, sint8 **_argv) {
 	while (!(*((vuint8*)0x04000240) & 0x2));
 	
 	SoundPowerON(127);		//volume
-	setSoundRegion(NULL);	//IPC->soundData = 0;
 	
     while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */

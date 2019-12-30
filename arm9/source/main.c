@@ -927,7 +927,6 @@ int main(int _argc, sint8 **_argv) {
 
 	//Init sound
 	disableVBlank();
-	setGenericSound(11025, 127, 64, 1);
 	initComplexSound(); // initialize sound variables
 	
 	//Init TGDS FS Directory Iterator Context(s). Mandatory to init them like this!! Otherwise several functions won't work correctly.
