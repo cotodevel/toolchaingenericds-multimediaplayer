@@ -252,8 +252,8 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){	//MUST
 		filStub.d_ino = -1;
 		filStub.parentFileClassList = menuIteratorfileClassListCtx;
 	}
-	char fname[MAX_TGDSFILENAME_LENGTH+1];
-	strcpy(fname, Path);
+	char curPath[MAX_TGDSFILENAME_LENGTH+1];
+	strcpy(curPath, Path);
 	
 	if(pushEntryToFileClassList(true, filStub.fd_namefullPath, filStub.type, -1, menuIteratorfileClassListCtx) != NULL){
 		//OK item added
@@ -274,7 +274,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){	//MUST
 	int j = 1;
 	int startFromIndex = 1;
 	struct FileClass * fileClassInst = NULL;
-	fileClassInst = FAT_FindFirstFile(fname, menuIteratorfileClassListCtx, startFromIndex);
+	fileClassInst = FAT_FindFirstFile(curPath, menuIteratorfileClassListCtx, startFromIndex);
 	while(fileClassInst != NULL){
 		//directory?
 		if(fileClassInst->type == FT_DIR){
@@ -351,7 +351,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){	//MUST
 		
 		
 		//more file/dir objects?
-		fileClassInst = FAT_FindNextFile(fname, menuIteratorfileClassListCtx);
+		fileClassInst = FAT_FindNextFile(curPath, menuIteratorfileClassListCtx);
 	}
 	
 	//actual file lister
@@ -514,7 +514,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){	//MUST
 		//Free TGDS Dir API context
 		//freeFileList(menuIteratorfileClassListCtx);	//can't because we keep the menuIteratorfileClassListCtx handle across folders
 		
-		enterDir((char*)newDir);
+		enterDir((char*)newDir, Path);
 		return true;
 	}
 	
@@ -524,7 +524,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){	//MUST
 		//freeFileList(menuIteratorfileClassListCtx);	//can't because we keep the menuIteratorfileClassListCtx handle across folders
 		
 		//rewind to preceding dir in TGDSCurrentWorkingDirectory
-		leaveDir(getTGDSCurrentWorkingDirectory());
+		leaveDir(Path);
 		return true;
 	}
 	
@@ -659,7 +659,7 @@ static inline void handleInput(){
 		
 		if(soundLoaded == false){
 			char startPath[MAX_TGDSFILENAME_LENGTH+1];
-			sprintf(startPath,"%s","/");
+			strcpy(startPath,"/");
 			while( ShowBrowserC((char *)startPath, curChosenBrowseFile, &pendingPlay) == true ){	//as long you keep using directories ShowBrowser will be true
 				//navigating DIRs here...
 			}
