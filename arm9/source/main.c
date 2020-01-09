@@ -19,20 +19,16 @@ USA
 */
 
 #include "main.h"
-
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
-
 #include "gui_console_connector.h"
 #include "misc.h"
 #include "sound.h"
 #include "soundTGDS.h"
 #include "keypadTGDS.h"
-
 #include "dswnifi_lib.h"
 #include "TGDSLogoLZSSCompressed.h"
-
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
 #include "click_raw.h"
 
@@ -228,9 +224,197 @@ static inline struct rgbMandel mandelbrot(float real, float imag) {
 	return rgb;
 }
 
-static bool drawMandelbrt = false;
+static inline void draw(float x_start, float x_fin, float y_start, float y_fin) {
+	
+	int width = SCREENWIDTH; //number of characters fitting horizontally on my screen 
+	int heigth = SCREENHEIGHT; //number of characters fitting vertically on my screen
+	float dx = (x_fin - x_start)/(width-1);
+	float dy = (y_fin - y_start)/(heigth-1);
+	
+	//stable
+	int i = 0;
+	for (i = 0; i < heigth; i++) {
+		float y = y_fin - i*dy; // current imaginary value
+		int j = 0;
+		for (j = 0; j < width; j+=40) {
+			
+			float x0 = x_start + (j+0)*dx; // current real value
+			float x1 = x_start + (j+1)*dx; // current real value
+			float x2 = x_start + (j+2)*dx; // current real value
+			float x3 = x_start + (j+3)*dx; // current real value
+			float x4 = x_start + (j+4)*dx; // current real value
+			float x5 = x_start + (j+5)*dx; // current real value
+			float x6 = x_start + (j+6)*dx; // current real value
+			float x7 = x_start + (j+7)*dx; // current real value
+			float x8 = x_start + (j+8)*dx; // current real value
+			float x9 = x_start + (j+9)*dx; // current real value
+			
+			float x10 = x_start + (j+10)*dx; // current real value
+			float x11 = x_start + (j+11)*dx; // current real value
+			float x12 = x_start + (j+12)*dx; // current real value
+			float x13 = x_start + (j+13)*dx; // current real value
+			float x14 = x_start + (j+14)*dx; // current real value
+			float x15 = x_start + (j+15)*dx; // current real value
+			float x16 = x_start + (j+16)*dx; // current real value
+			float x17 = x_start + (j+17)*dx; // current real value
+			float x18 = x_start + (j+18)*dx; // current real value
+			float x19 = x_start + (j+19)*dx; // current real value
+			
+			float x20 = x_start + (j+20)*dx; // current real value
+			float x21 = x_start + (j+21)*dx; // current real value
+			float x22 = x_start + (j+22)*dx; // current real value
+			float x23 = x_start + (j+23)*dx; // current real value
+			float x24 = x_start + (j+24)*dx; // current real value
+			float x25 = x_start + (j+25)*dx; // current real value
+			float x26 = x_start + (j+26)*dx; // current real value
+			float x27 = x_start + (j+27)*dx; // current real value
+			float x28 = x_start + (j+28)*dx; // current real value
+			float x29 = x_start + (j+29)*dx; // current real value
+			
+			float x30 = x_start + (j+30)*dx; // current real value
+			float x31 = x_start + (j+31)*dx; // current real value
+			float x32 = x_start + (j+32)*dx; // current real value
+			float x33 = x_start + (j+33)*dx; // current real value
+			float x34 = x_start + (j+34)*dx; // current real value
+			float x35 = x_start + (j+35)*dx; // current real value
+			float x36 = x_start + (j+36)*dx; // current real value
+			float x37 = x_start + (j+37)*dx; // current real value
+			float x38 = x_start + (j+38)*dx; // current real value
+			float x39 = x_start + (j+39)*dx; // current real value
+			
+			struct rgbMandel rgb0 = mandelbrot(x0,y);	
+			struct rgbMandel rgb1 = mandelbrot(x1,y);	
+			struct rgbMandel rgb2 = mandelbrot(x2,y);	
+			struct rgbMandel rgb3 = mandelbrot(x3,y);	
+			struct rgbMandel rgb4 = mandelbrot(x4,y);	
+			struct rgbMandel rgb5 = mandelbrot(x5,y);	
+			struct rgbMandel rgb6 = mandelbrot(x6,y);	
+			struct rgbMandel rgb7 = mandelbrot(x7,y);	
+			struct rgbMandel rgb8 = mandelbrot(x8,y);	
+			struct rgbMandel rgb9 = mandelbrot(x9,y);	
+			
+			struct rgbMandel rgb10 = mandelbrot(x10,y);	
+			struct rgbMandel rgb11 = mandelbrot(x11,y);	
+			struct rgbMandel rgb12 = mandelbrot(x12,y);	
+			struct rgbMandel rgb13 = mandelbrot(x13,y);	
+			struct rgbMandel rgb14 = mandelbrot(x14,y);	
+			struct rgbMandel rgb15 = mandelbrot(x15,y);	
+			struct rgbMandel rgb16 = mandelbrot(x16,y);	
+			struct rgbMandel rgb17 = mandelbrot(x17,y);	
+			struct rgbMandel rgb18 = mandelbrot(x18,y);	
+			struct rgbMandel rgb19 = mandelbrot(x19,y);
+			
+			struct rgbMandel rgb20 = mandelbrot(x20,y);	
+			struct rgbMandel rgb21 = mandelbrot(x21,y);	
+			struct rgbMandel rgb22 = mandelbrot(x22,y);	
+			struct rgbMandel rgb23 = mandelbrot(x23,y);	
+			struct rgbMandel rgb24 = mandelbrot(x24,y);	
+			struct rgbMandel rgb25 = mandelbrot(x25,y);	
+			struct rgbMandel rgb26 = mandelbrot(x26,y);	
+			struct rgbMandel rgb27 = mandelbrot(x27,y);	
+			struct rgbMandel rgb28 = mandelbrot(x28,y);	
+			struct rgbMandel rgb29 = mandelbrot(x29,y);
+			
+			struct rgbMandel rgb30 = mandelbrot(x30,y);	
+			struct rgbMandel rgb31 = mandelbrot(x31,y);	
+			struct rgbMandel rgb32 = mandelbrot(x32,y);	
+			struct rgbMandel rgb33 = mandelbrot(x33,y);	
+			struct rgbMandel rgb34 = mandelbrot(x34,y);	
+			struct rgbMandel rgb35 = mandelbrot(x35,y);	
+			struct rgbMandel rgb36 = mandelbrot(x36,y);	
+			struct rgbMandel rgb37 = mandelbrot(x37,y);	
+			struct rgbMandel rgb38 = mandelbrot(x38,y);	
+			struct rgbMandel rgb39 = mandelbrot(x39,y);
+			
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 0] = (u32)((COLOR(rgb0.r, rgb0.g, rgb0.b) | PIXEL_ENABLE) | ((COLOR(rgb1.r, rgb1.g, rgb1.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 2] = (u32)((COLOR(rgb2.r, rgb2.g, rgb2.b) | PIXEL_ENABLE) | ((COLOR(rgb3.r, rgb3.g, rgb3.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 4] = (u32)((COLOR(rgb4.r, rgb4.g, rgb4.b) | PIXEL_ENABLE) | ((COLOR(rgb5.r, rgb5.g, rgb5.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 6] = (u32)((COLOR(rgb6.r, rgb6.g, rgb6.b) | PIXEL_ENABLE) | ((COLOR(rgb7.r, rgb7.g, rgb7.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 8] = (u32)((COLOR(rgb8.r, rgb8.g, rgb8.b) | PIXEL_ENABLE) | ((COLOR(rgb9.r, rgb9.g, rgb9.b) | PIXEL_ENABLE)<<16));
+			
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 10] = (u32)((COLOR(rgb10.r, rgb10.g, rgb10.b) | PIXEL_ENABLE) | ((COLOR(rgb11.r, rgb11.g, rgb11.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 12] = (u32)((COLOR(rgb12.r, rgb12.g, rgb12.b) | PIXEL_ENABLE) | ((COLOR(rgb13.r, rgb13.g, rgb13.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 14] = (u32)((COLOR(rgb14.r, rgb14.g, rgb14.b) | PIXEL_ENABLE) | ((COLOR(rgb15.r, rgb15.g, rgb15.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 16] = (u32)((COLOR(rgb16.r, rgb16.g, rgb16.b) | PIXEL_ENABLE) | ((COLOR(rgb17.r, rgb17.g, rgb17.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 18] = (u32)((COLOR(rgb18.r, rgb18.g, rgb18.b) | PIXEL_ENABLE) | ((COLOR(rgb19.r, rgb19.g, rgb19.b) | PIXEL_ENABLE)<<16));
+			
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 20] = (u32)((COLOR(rgb20.r, rgb20.g, rgb20.b) | PIXEL_ENABLE) | ((COLOR(rgb21.r, rgb21.g, rgb21.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 22] = (u32)((COLOR(rgb22.r, rgb22.g, rgb22.b) | PIXEL_ENABLE) | ((COLOR(rgb23.r, rgb23.g, rgb23.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 24] = (u32)((COLOR(rgb24.r, rgb24.g, rgb24.b) | PIXEL_ENABLE) | ((COLOR(rgb25.r, rgb25.g, rgb25.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 26] = (u32)((COLOR(rgb26.r, rgb26.g, rgb26.b) | PIXEL_ENABLE) | ((COLOR(rgb27.r, rgb27.g, rgb27.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 28] = (u32)((COLOR(rgb28.r, rgb28.g, rgb28.b) | PIXEL_ENABLE) | ((COLOR(rgb29.r, rgb29.g, rgb29.b) | PIXEL_ENABLE)<<16));
+			
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 30] = (u32)((COLOR(rgb30.r, rgb30.g, rgb30.b) | PIXEL_ENABLE) | ((COLOR(rgb31.r, rgb31.g, rgb31.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 32] = (u32)((COLOR(rgb32.r, rgb32.g, rgb32.b) | PIXEL_ENABLE) | ((COLOR(rgb33.r, rgb33.g, rgb33.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 34] = (u32)((COLOR(rgb34.r, rgb34.g, rgb34.b) | PIXEL_ENABLE) | ((COLOR(rgb35.r, rgb35.g, rgb35.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 36] = (u32)((COLOR(rgb36.r, rgb36.g, rgb36.b) | PIXEL_ENABLE) | ((COLOR(rgb37.r, rgb37.g, rgb37.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 38] = (u32)((COLOR(rgb38.r, rgb38.g, rgb38.b) | PIXEL_ENABLE) | ((COLOR(rgb39.r, rgb39.g, rgb39.b) | PIXEL_ENABLE)<<16));
+			
+		} // width == 256
+		handleInput();
+	}	
+}
+
+static inline int getRand(int size){
+	int res = (( (rand() + (REG_VCOUNT&(256-1))) ) % size);
+	if(res >= 0){
+		return res;
+	}
+	return getRand(size);
+}
+
+
 static bool pendingPlay = false;
 static int lastRand = 0;
+
+__attribute__((section(".itcm")))
+void drawMandel(float factor){
+	float center_x = -1.04082816210546;
+	float center_y = 0.3546341718848392;
+	int iter = 128;
+	
+	float x_start = center_x - 1.5*factor;
+	float x_fin = center_x + 1.5*factor;
+	float y_start = center_y - factor;
+	float y_fin = center_y + factor;
+	draw(x_start, x_fin, y_start, y_fin);
+	
+	int i = 0;
+	for (i = 0; i < iter; i++) {
+		factor = factor / 1.3;
+		x_start = center_x - 1.5*factor;
+		x_fin = center_x + 1.5*factor;
+		y_start = center_y - factor;
+		y_fin = center_y + factor;
+		draw(x_start, x_fin, y_start, y_fin);
+	}
+}
+
+void menuShow(){
+	clrscr();
+	printf("                              ");
+	printf("Supported Formats: WAV/MP3/AAC/Ogg");
+	printf("/FLAC/NSF/SPC/GBS/+ others");
+	printf("                              ");
+	printf("(Start): File Browser -> (A) to play audio file");
+	printf("(L): Recent Playlist ");
+	printf("(R): Random audio file playback ");
+	printf("(B): Stop audio playback ");
+	printf("(X): Mandelbrot demo ");
+	printf("(D-PAD: Down): Volume - ");
+	printf("(D-PAD: Up): Volume + ");
+	printf("(Select): this menu");
+	printf("Available heap memory: %d", getMaxRam());
+	
+	if(soundLoaded == false){
+		printf("Playback: Stopped.");
+	}
+	else{
+		printf("Playing: %s", curChosenBrowseFile);
+	}
+	printf("Current Volume: %d", (int)getVolume());
+}
+
 static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){	//MUST be same as the template one at "fileBrowse.h" but added some custom code
 	scanKeys();
 	while((keysPressed() & KEY_START) || (keysPressed() & KEY_A) || (keysPressed() & KEY_B)){
@@ -543,15 +727,9 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){	//MUST
 	return false;
 }	
 
-static inline int getRand(int size){
-	int res = (( (rand() + (REG_VCOUNT&(256-1))) ) % size);
-	if(res >= 0){
-		return res;
-	}
-	return getRand(size);
-}
-
-static inline void handleInput(){
+static bool drawMandelbrt = false;
+__attribute__((section(".itcm")))	
+void handleInput(){
 	if(pendingPlay == true){
 		soundLoaded = loadSound((char*)curChosenBrowseFile);
 		pendingPlay = false;
@@ -604,16 +782,22 @@ static inline void handleInput(){
 			lastRand = oldLstSize - 1;
 			
 			pendingPlay = true;
+			scanKeys();
+			while(keysPressed() & KEY_L){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
 		}
 		else{
 			clrscr();
 			printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
-		}
-		scanKeys();
-		while(keysPressed() & KEY_L){
 			scanKeys();
+			while(keysPressed() & KEY_L){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
+			menuShow();
 		}
-		menuShow();
 	}
 	
 	if (keysPressed() & KEY_R){
@@ -649,6 +833,7 @@ static inline void handleInput(){
 				scanKeys();
 				while(keysPressed() & KEY_R){
 					scanKeys();
+					IRQWait(IRQ_HBLANK);
 				}
 				lastRand = randFile;				
 			}
@@ -715,186 +900,6 @@ static inline void handleInput(){
 	
 	//Audio playback here....
 	updateStreamLoop();	//runs once per hblank line
-}
-
-static inline void draw(float x_start, float x_fin, float y_start, float y_fin) {
-	
-	int width = SCREENWIDTH; //number of characters fitting horizontally on my screen 
-	int heigth = SCREENHEIGHT; //number of characters fitting vertically on my screen
-	float dx = (x_fin - x_start)/(width-1);
-	float dy = (y_fin - y_start)/(heigth-1);
-	
-	//stable
-	int i = 0;
-	for (i = 0; i < heigth; i++) {
-		float y = y_fin - i*dy; // current imaginary value
-		int j = 0;
-		for (j = 0; j < width; j+=40) {
-			
-			float x0 = x_start + (j+0)*dx; // current real value
-			float x1 = x_start + (j+1)*dx; // current real value
-			float x2 = x_start + (j+2)*dx; // current real value
-			float x3 = x_start + (j+3)*dx; // current real value
-			float x4 = x_start + (j+4)*dx; // current real value
-			float x5 = x_start + (j+5)*dx; // current real value
-			float x6 = x_start + (j+6)*dx; // current real value
-			float x7 = x_start + (j+7)*dx; // current real value
-			float x8 = x_start + (j+8)*dx; // current real value
-			float x9 = x_start + (j+9)*dx; // current real value
-			
-			float x10 = x_start + (j+10)*dx; // current real value
-			float x11 = x_start + (j+11)*dx; // current real value
-			float x12 = x_start + (j+12)*dx; // current real value
-			float x13 = x_start + (j+13)*dx; // current real value
-			float x14 = x_start + (j+14)*dx; // current real value
-			float x15 = x_start + (j+15)*dx; // current real value
-			float x16 = x_start + (j+16)*dx; // current real value
-			float x17 = x_start + (j+17)*dx; // current real value
-			float x18 = x_start + (j+18)*dx; // current real value
-			float x19 = x_start + (j+19)*dx; // current real value
-			
-			float x20 = x_start + (j+20)*dx; // current real value
-			float x21 = x_start + (j+21)*dx; // current real value
-			float x22 = x_start + (j+22)*dx; // current real value
-			float x23 = x_start + (j+23)*dx; // current real value
-			float x24 = x_start + (j+24)*dx; // current real value
-			float x25 = x_start + (j+25)*dx; // current real value
-			float x26 = x_start + (j+26)*dx; // current real value
-			float x27 = x_start + (j+27)*dx; // current real value
-			float x28 = x_start + (j+28)*dx; // current real value
-			float x29 = x_start + (j+29)*dx; // current real value
-			
-			float x30 = x_start + (j+30)*dx; // current real value
-			float x31 = x_start + (j+31)*dx; // current real value
-			float x32 = x_start + (j+32)*dx; // current real value
-			float x33 = x_start + (j+33)*dx; // current real value
-			float x34 = x_start + (j+34)*dx; // current real value
-			float x35 = x_start + (j+35)*dx; // current real value
-			float x36 = x_start + (j+36)*dx; // current real value
-			float x37 = x_start + (j+37)*dx; // current real value
-			float x38 = x_start + (j+38)*dx; // current real value
-			float x39 = x_start + (j+39)*dx; // current real value
-			
-			struct rgbMandel rgb0 = mandelbrot(x0,y);	
-			struct rgbMandel rgb1 = mandelbrot(x1,y);	
-			struct rgbMandel rgb2 = mandelbrot(x2,y);	
-			struct rgbMandel rgb3 = mandelbrot(x3,y);	
-			struct rgbMandel rgb4 = mandelbrot(x4,y);	
-			struct rgbMandel rgb5 = mandelbrot(x5,y);	
-			struct rgbMandel rgb6 = mandelbrot(x6,y);	
-			struct rgbMandel rgb7 = mandelbrot(x7,y);	
-			struct rgbMandel rgb8 = mandelbrot(x8,y);	
-			struct rgbMandel rgb9 = mandelbrot(x9,y);	
-			
-			struct rgbMandel rgb10 = mandelbrot(x10,y);	
-			struct rgbMandel rgb11 = mandelbrot(x11,y);	
-			struct rgbMandel rgb12 = mandelbrot(x12,y);	
-			struct rgbMandel rgb13 = mandelbrot(x13,y);	
-			struct rgbMandel rgb14 = mandelbrot(x14,y);	
-			struct rgbMandel rgb15 = mandelbrot(x15,y);	
-			struct rgbMandel rgb16 = mandelbrot(x16,y);	
-			struct rgbMandel rgb17 = mandelbrot(x17,y);	
-			struct rgbMandel rgb18 = mandelbrot(x18,y);	
-			struct rgbMandel rgb19 = mandelbrot(x19,y);
-			
-			struct rgbMandel rgb20 = mandelbrot(x20,y);	
-			struct rgbMandel rgb21 = mandelbrot(x21,y);	
-			struct rgbMandel rgb22 = mandelbrot(x22,y);	
-			struct rgbMandel rgb23 = mandelbrot(x23,y);	
-			struct rgbMandel rgb24 = mandelbrot(x24,y);	
-			struct rgbMandel rgb25 = mandelbrot(x25,y);	
-			struct rgbMandel rgb26 = mandelbrot(x26,y);	
-			struct rgbMandel rgb27 = mandelbrot(x27,y);	
-			struct rgbMandel rgb28 = mandelbrot(x28,y);	
-			struct rgbMandel rgb29 = mandelbrot(x29,y);
-			
-			struct rgbMandel rgb30 = mandelbrot(x30,y);	
-			struct rgbMandel rgb31 = mandelbrot(x31,y);	
-			struct rgbMandel rgb32 = mandelbrot(x32,y);	
-			struct rgbMandel rgb33 = mandelbrot(x33,y);	
-			struct rgbMandel rgb34 = mandelbrot(x34,y);	
-			struct rgbMandel rgb35 = mandelbrot(x35,y);	
-			struct rgbMandel rgb36 = mandelbrot(x36,y);	
-			struct rgbMandel rgb37 = mandelbrot(x37,y);	
-			struct rgbMandel rgb38 = mandelbrot(x38,y);	
-			struct rgbMandel rgb39 = mandelbrot(x39,y);
-			
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 0] = (u32)((COLOR(rgb0.r, rgb0.g, rgb0.b) | PIXEL_ENABLE) | ((COLOR(rgb1.r, rgb1.g, rgb1.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 2] = (u32)((COLOR(rgb2.r, rgb2.g, rgb2.b) | PIXEL_ENABLE) | ((COLOR(rgb3.r, rgb3.g, rgb3.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 4] = (u32)((COLOR(rgb4.r, rgb4.g, rgb4.b) | PIXEL_ENABLE) | ((COLOR(rgb5.r, rgb5.g, rgb5.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 6] = (u32)((COLOR(rgb6.r, rgb6.g, rgb6.b) | PIXEL_ENABLE) | ((COLOR(rgb7.r, rgb7.g, rgb7.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 8] = (u32)((COLOR(rgb8.r, rgb8.g, rgb8.b) | PIXEL_ENABLE) | ((COLOR(rgb9.r, rgb9.g, rgb9.b) | PIXEL_ENABLE)<<16));
-			
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 10] = (u32)((COLOR(rgb10.r, rgb10.g, rgb10.b) | PIXEL_ENABLE) | ((COLOR(rgb11.r, rgb11.g, rgb11.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 12] = (u32)((COLOR(rgb12.r, rgb12.g, rgb12.b) | PIXEL_ENABLE) | ((COLOR(rgb13.r, rgb13.g, rgb13.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 14] = (u32)((COLOR(rgb14.r, rgb14.g, rgb14.b) | PIXEL_ENABLE) | ((COLOR(rgb15.r, rgb15.g, rgb15.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 16] = (u32)((COLOR(rgb16.r, rgb16.g, rgb16.b) | PIXEL_ENABLE) | ((COLOR(rgb17.r, rgb17.g, rgb17.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 18] = (u32)((COLOR(rgb18.r, rgb18.g, rgb18.b) | PIXEL_ENABLE) | ((COLOR(rgb19.r, rgb19.g, rgb19.b) | PIXEL_ENABLE)<<16));
-			
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 20] = (u32)((COLOR(rgb20.r, rgb20.g, rgb20.b) | PIXEL_ENABLE) | ((COLOR(rgb21.r, rgb21.g, rgb21.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 22] = (u32)((COLOR(rgb22.r, rgb22.g, rgb22.b) | PIXEL_ENABLE) | ((COLOR(rgb23.r, rgb23.g, rgb23.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 24] = (u32)((COLOR(rgb24.r, rgb24.g, rgb24.b) | PIXEL_ENABLE) | ((COLOR(rgb25.r, rgb25.g, rgb25.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 26] = (u32)((COLOR(rgb26.r, rgb26.g, rgb26.b) | PIXEL_ENABLE) | ((COLOR(rgb27.r, rgb27.g, rgb27.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 28] = (u32)((COLOR(rgb28.r, rgb28.g, rgb28.b) | PIXEL_ENABLE) | ((COLOR(rgb29.r, rgb29.g, rgb29.b) | PIXEL_ENABLE)<<16));
-			
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 30] = (u32)((COLOR(rgb30.r, rgb30.g, rgb30.b) | PIXEL_ENABLE) | ((COLOR(rgb31.r, rgb31.g, rgb31.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 32] = (u32)((COLOR(rgb32.r, rgb32.g, rgb32.b) | PIXEL_ENABLE) | ((COLOR(rgb33.r, rgb33.g, rgb33.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 34] = (u32)((COLOR(rgb34.r, rgb34.g, rgb34.b) | PIXEL_ENABLE) | ((COLOR(rgb35.r, rgb35.g, rgb35.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 36] = (u32)((COLOR(rgb36.r, rgb36.g, rgb36.b) | PIXEL_ENABLE) | ((COLOR(rgb37.r, rgb37.g, rgb37.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 38] = (u32)((COLOR(rgb38.r, rgb38.g, rgb38.b) | PIXEL_ENABLE) | ((COLOR(rgb39.r, rgb39.g, rgb39.b) | PIXEL_ENABLE)<<16));
-			
-		} // width == 256
-		handleInput();
-	}	
-}
-
-
-__attribute__((section(".itcm")))
-void drawMandel(float factor){
-	float center_x = -1.04082816210546;
-	float center_y = 0.3546341718848392;
-	int iter = 128;
-	
-	float x_start = center_x - 1.5*factor;
-	float x_fin = center_x + 1.5*factor;
-	float y_start = center_y - factor;
-	float y_fin = center_y + factor;
-	draw(x_start, x_fin, y_start, y_fin);
-	
-	int i = 0;
-	for (i = 0; i < iter; i++) {
-		factor = factor / 1.3;
-		x_start = center_x - 1.5*factor;
-		x_fin = center_x + 1.5*factor;
-		y_start = center_y - factor;
-		y_fin = center_y + factor;
-		draw(x_start, x_fin, y_start, y_fin);
-	}
-}
-
-void menuShow(){
-	clrscr();
-	printf("                              ");
-	printf("Supported Formats: WAV/MP3/AAC/Ogg");
-	printf("/FLAC/NSF/SPC/GBS/+ others");
-	printf("                              ");
-	printf("(Start): File Browser -> (A) to play audio file");
-	printf("(L): Recent Playlist ");
-	printf("(R): Random audio file playback ");
-	printf("(B): Stop audio playback ");
-	printf("(X): Mandelbrot demo ");
-	printf("(D-PAD: Down): Volume - ");
-	printf("(D-PAD: Up): Volume + ");
-	printf("(Select): this menu");
-	printf("Available heap memory: %d", getMaxRam());
-	
-	if(soundLoaded == false){
-		printf("Playback: Stopped.");
-	}
-	else{
-		printf("Playing: %s", curChosenBrowseFile);
-	}
-	printf("Current Volume: %d", (int)getVolume());
 }
 
 
