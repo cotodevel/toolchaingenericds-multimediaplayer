@@ -886,6 +886,7 @@ void menuShow(){
 	printf("(D-PAD: Down): Volume - ");
 	printf("(D-PAD: Up): Volume + ");
 	printf("(Select): this menu");
+	printf("Available heap memory: %d", getMaxRam());
 	
 	if(soundLoaded == false){
 		printf("Playback: Stopped.");
