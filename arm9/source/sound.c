@@ -708,7 +708,6 @@ void initComplexSound()
 	MikMod_RegisterAllDrivers();
 	MikMod_RegisterAllLoaders();
 	
-	VRAMBLOCK_SETBANK_D(VRAM_D_0x06000000_ARM7);	//give arm7 vram bank d (extend +128K RAM)
 }
 
 void setSoundFrequency(u32 freq)

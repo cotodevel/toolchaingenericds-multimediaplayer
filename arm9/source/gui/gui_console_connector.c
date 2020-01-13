@@ -64,6 +64,10 @@ ConsoleInstance * DEFAULT_CONSOLE_ENGINE_A_VRAMSETUP(){
 	vramSetupInst->vramBankSetupInst[VRAM_C_INDEX].vrambankCR = VRAM_C_0x06200000_ENGINE_B_BG;	//NDS BMP rgb15 mode + keyboard
 	vramSetupInst->vramBankSetupInst[VRAM_C_INDEX].enabled = true;
 	
+	// 128K ARM7
+	vramSetupInst->vramBankSetupInst[VRAM_D_INDEX].vrambankCR = VRAM_D_0x06000000_ARM7;
+	vramSetupInst->vramBankSetupInst[VRAM_D_INDEX].enabled = true;
+	
 	return CustomSessionConsoleInst;
 }
 
