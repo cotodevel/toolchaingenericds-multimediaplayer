@@ -912,10 +912,7 @@ int main(int _argc, sint8 **_argv) {
 	GUI_clear();
 	
 	sint32 fwlanguage = (sint32)getLanguage();
-	
-	printf("     ");
-	printf("     ");
-	
+	setDLDIARM7Address((u32 *)TGDSDLDI_ARM7_ADDRESS);	//Required by ARM7DLDI!
 	int ret=FS_init();
 	if (ret == 0)
 	{

@@ -165,9 +165,7 @@ int main(int _argc, sint8 **_argv) {
 	
 	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
 	while (!(*((vuint8*)0x04000240) & 0x2));
-	
-	TGDSDLDIARM7SetupStage0((u32)0x06000000 + (64*1024));
-	
+	ARM7DLDIInit();
 	
 	SoundPowerON(127);		//volume
 	

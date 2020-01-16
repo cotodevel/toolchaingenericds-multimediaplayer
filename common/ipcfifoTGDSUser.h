@@ -121,6 +121,11 @@ typedef sint16 int16;
 #define VRAM_H        ((uint16*)0x6898000)
 #define VRAM_I        ((uint16*)0x68A0000)
 
+#ifdef ARM9
+//Used by ARM9. Required internally by ARM7
+#define TGDSDLDI_ARM7_ADDRESS (u32)(0x06000000 + (96*1024))
+#endif
+
 #endif
 
 #ifdef __cplusplus
