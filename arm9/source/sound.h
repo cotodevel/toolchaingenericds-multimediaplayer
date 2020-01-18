@@ -111,18 +111,6 @@ enum {
 // mikmod
 #include "drv_nos.h"
 
-typedef struct 
-{
-	char chunkID[4];
-	long chunkSize;
-
-	short wFormatTag;
-	unsigned short wChannels;
-	unsigned long dwSamplesPerSec;
-	unsigned long dwAvgBytesPerSec;
-	unsigned short wBlockAlign;
-	unsigned short wBitsPerSample;
-} wavFormatChunk;
 
 typedef struct
 {
@@ -229,7 +217,7 @@ extern int getCurrentStatus();
 // for streaming record interrupt
 extern void copyChunk();
 extern void setSoundFrequency(u32 freq);
-extern void setSoundLength(u32 len);
+extern void setSoundLengthTGDSAudioplayer(u32 len);
 
 extern u32 getSoundChannels();
 extern u8 getVolume();

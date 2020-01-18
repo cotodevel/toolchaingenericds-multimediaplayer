@@ -44,6 +44,7 @@
 #include "flac.h"
 #include "aacdec.h"
 #include "main.h"
+#include "soundplayerShared.h"
 
 //Handles current file playback status
 bool soundLoaded = false;
@@ -206,6 +207,7 @@ void loadWavToMemory()
 
 void mallocData(int size)
 {
+	struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
 	m_SIWRAM = 0;
 	REG_SIWRAMCNT = 0; // arm9 owns both
 	
@@ -219,10 +221,10 @@ void mallocData(int size)
 	lBuffer = SIWRAM0;
 	rBuffer = SIWRAM0 + m_size;
 	
-	soundIPC->arm9L = NULL; // temporary
-	soundIPC->arm9R = NULL; // temporary
+	soundPlayerCtx->arm9L = NULL; // temporary
+	soundPlayerCtx->arm9R = NULL; // temporary
 	
-	soundIPC->interlaced = NULL;
+	soundPlayerCtx->interlaced = NULL;
 }
 
 void freeData()
@@ -234,6 +236,8 @@ void freeData()
 __attribute__((section(".itcm")))
 void swapData()
 {
+	struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+	
 	m_SIWRAM = 1 - m_SIWRAM;
 	
 	switch(m_SIWRAM)
@@ -244,10 +248,10 @@ void swapData()
 			
 			REG_SIWRAMCNT = 2; // bank 0 to arm9, bank 1 to arm7
 			
-			soundIPC->arm9L = SIWRAM1;
-			soundIPC->arm9R = SIWRAM1 + m_size;
+			soundPlayerCtx->arm9L = SIWRAM1;
+			soundPlayerCtx->arm9R = SIWRAM1 + m_size;
 			
-			soundIPC->interlaced = SIWRAM1;
+			soundPlayerCtx->interlaced = SIWRAM1;
 			break;
 		case 1:
 			lBuffer = SIWRAM1;
@@ -255,10 +259,10 @@ void swapData()
 			
 			REG_SIWRAMCNT = 1; // bank 0 to arm7, bank 1 to arm9
 			
-			soundIPC->arm9L = SIWRAM0;
-			soundIPC->arm9R = SIWRAM0 + m_size;
+			soundPlayerCtx->arm9L = SIWRAM0;
+			soundPlayerCtx->arm9R = SIWRAM0 + m_size;
 			
-			soundIPC->interlaced = SIWRAM0;
+			soundPlayerCtx->interlaced = SIWRAM0;
 			
 			break;
 	}
@@ -480,7 +484,8 @@ static void updateStream()
 		case SRC_OGG:
 		case SRC_STREAM_OGG:
 		{
-			soundIPC->channels = soundData.channels;
+			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			soundPlayerCtx->channels = soundData.channels;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
 			if(soundData.sourceFmt == SRC_STREAM_OGG)
@@ -530,7 +535,8 @@ static void updateStream()
 		case SRC_STREAM_AAC:{
 			bool isSeek = (seekUpdate >= 0);
 			
-			soundIPC->channels = soundData.channels;			
+			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			soundPlayerCtx->channels = soundData.channels;			
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
 			if(soundData.sourceFmt == SRC_STREAM_AAC)
@@ -622,7 +628,8 @@ static void updateStream()
 		}
 		break;
 		case SRC_SID:{
-			soundIPC->channels = 1;
+			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			soundPlayerCtx->channels = 1;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
 			//checkKeys();
@@ -636,7 +643,8 @@ static void updateStream()
 				memset(lBuffer, 0, NSF_OUT_SIZE * 4);
 			}
 			
-			soundIPC->channels = 1;
+			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			soundPlayerCtx->channels = 1;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
 			//checkKeys();			
@@ -653,7 +661,8 @@ static void updateStream()
 		}
 		break;
 		case SRC_SNDH:{
-			soundIPC->channels = 2;
+			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			soundPlayerCtx->channels = 2;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
 			//checkKeys();			
@@ -662,7 +671,8 @@ static void updateStream()
 		}
 		break;
 		case SRC_GBS:{
-			soundIPC->channels = 2;
+			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			soundPlayerCtx->channels = 2;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
 			//checkKeys();			
@@ -703,26 +713,17 @@ void initComplexSound()
 {	
 	soundData.sourceFmt = SRC_NONE;
 	soundData.filePointer = NULL;
-	soundIPC->volume = 4;
+	struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+	soundPlayerCtx->volume = 4;
 	
 	MikMod_RegisterAllDrivers();
 	MikMod_RegisterAllLoaders();
 	
 }
 
-void setSoundFrequency(u32 freq)
+void setSoundLengthTGDSAudioplayer(u32 len)
 {
-	SendArm7Command(ARM7COMMAND_SOUND_SETRATE, freq);
-}
-
-void setSoundInterpolation(u32 mult)
-{
-	SendArm7Command(ARM7COMMAND_SOUND_SETMULT, mult);
-}
-
-void setSoundLength(u32 len)
-{
-	SendArm7Command(ARM7COMMAND_SOUND_SETLEN, len);
+	setSoundLength(len);	//TGDS impl.
 	sndLen = len;
 }
 
@@ -2233,7 +2234,7 @@ bool loadSound(char *fName)
 		setSoundInterpolation(1);
 		setSoundFrequency(headerChunk.dwSamplesPerSec);
 		
-		setSoundLength(WAV_READ_SIZE);		
+		setSoundLengthTGDSAudioplayer(WAV_READ_SIZE);		
 		mallocData(WAV_READ_SIZE);
 		
 		memoryContents = NULL;
@@ -2275,7 +2276,8 @@ bool loadSound(char *fName)
 		
 		MikMod_Init("");
 		
-		soundIPC->channels = 2; // for de-interlacing
+		struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+		soundPlayerCtx->channels = 2; // for de-interlacing
 		
 		soundData.sourceFmt = SRC_MIKMOD;
 		soundData.bufLoc = 0;
@@ -2289,7 +2291,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(1);
 		setSoundFrequency(MIKMOD_FREQ);
-		setSoundLength(ZEROLEN >> 2);
+		setSoundLengthTGDSAudioplayer(ZEROLEN >> 2);
 		
 		mallocData(ZEROLEN >> 2);
 		
@@ -2359,7 +2361,7 @@ bool loadSound(char *fName)
 		mad_synth_init(&Synth);
 		mad_timer_reset(&Timer);
 		
-		setSoundLength(MP3_WRITE_SIZE);
+		setSoundLengthTGDSAudioplayer(MP3_WRITE_SIZE);
 		
 		if(strcmp(ext, ".mp3") != 0)
 		{
@@ -2416,7 +2418,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(1);
 		setSoundFrequency(vi->rate);		
-		setSoundLength(OGG_READ_SIZE);
+		setSoundLengthTGDSAudioplayer(OGG_READ_SIZE);
 		mallocData(OGG_READ_SIZE);		
 		
 		bufCursor = 0;
@@ -2491,7 +2493,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(2);
 		setSoundFrequency(aacFrameInfo.sampRateOut);		
-		setSoundLength(aacFrameInfo.outputSamps / soundData.channels);
+		setSoundLengthTGDSAudioplayer(aacFrameInfo.outputSamps / soundData.channels);
 		mallocData(aacFrameInfo.outputSamps / soundData.channels);	
 		
 		memcpy(lBuffer, aacOutBuf, aacFrameInfo.outputSamps / soundData.channels);		
@@ -2632,7 +2634,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(1);
 		setSoundFrequency(aacFrameInfo.sampRateOut);		
-		setSoundLength(aacFrameInfo.outputSamps / soundData.channels);
+		setSoundLengthTGDSAudioplayer(aacFrameInfo.outputSamps / soundData.channels);
 		mallocData(aacFrameInfo.outputSamps / soundData.channels);	
 		
 		memcpy(lBuffer, aacOutBuf, aacFrameInfo.outputSamps / soundData.channels);		
@@ -2675,7 +2677,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(1);
 		setSoundFrequency(fc.samplerate);	
-		setSoundLength(FLAC_OUT_SIZE);
+		setSoundLengthTGDSAudioplayer(FLAC_OUT_SIZE);
 		
 		mallocData(FLAC_OUT_SIZE);
 		
@@ -2724,7 +2726,7 @@ bool loadSound(char *fName)
 		soundData.channels = 1;
 		setSoundInterpolation(2);
 		setSoundFrequency(SID_FREQ);	
-		setSoundLength(SID_OUT_SIZE);
+		setSoundLengthTGDSAudioplayer(SID_OUT_SIZE);
 		
 		mallocData(SID_OUT_SIZE);
 		
@@ -2787,7 +2789,7 @@ bool loadSound(char *fName)
 		soundData.channels = 1;
 		setSoundInterpolation(2);
 		setSoundFrequency(NSF_FREQ);	
-		setSoundLength(NSF_OUT_SIZE/2);
+		setSoundLengthTGDSAudioplayer(NSF_OUT_SIZE/2);
 		
 		mallocData(NSF_OUT_SIZE);
 		
@@ -2821,7 +2823,7 @@ bool loadSound(char *fName)
 		soundData.channels = 2;
 		setSoundInterpolation(2);
 		setSoundFrequency(SPC_FREQ);	
-		setSoundLength(SPC_OUT_SIZE);
+		setSoundLengthTGDSAudioplayer(SPC_OUT_SIZE);
 		
 		mallocData(SPC_OUT_SIZE);
 		
@@ -2876,7 +2878,7 @@ bool loadSound(char *fName)
 		soundData.channels = 1;
 		setSoundInterpolation(1);
 		setSoundFrequency(init68.sampling_rate);	
-		setSoundLength(SNDH_OUT_SIZE);
+		setSoundLengthTGDSAudioplayer(SNDH_OUT_SIZE);
 		
 		mallocData(SNDH_OUT_SIZE);
 		
@@ -2914,7 +2916,7 @@ bool loadSound(char *fName)
 		soundData.channels = 2;
 		setSoundInterpolation(1);
 		setSoundFrequency(GBS_FREQ);	
-		setSoundLength(GBS_OUT_SIZE);		
+		setSoundLengthTGDSAudioplayer(GBS_OUT_SIZE);		
 		mallocData(GBS_OUT_SIZE);
 		
 		gbsDecode();
@@ -3263,7 +3265,7 @@ void startStreamAudio()
 			mad_synth_init(&Synth);
 			mad_timer_reset(&Timer);
 			
-			setSoundLength(MP3_WRITE_SIZE);
+			setSoundLengthTGDSAudioplayer(MP3_WRITE_SIZE);
 			mallocData(MP3_WRITE_SIZE);
 			
 			mp3Buf = (unsigned char *)trackMalloc(STREAM_MP3_READ_SIZE, "mp3 stream buf");
@@ -3329,7 +3331,7 @@ void startStreamAudio()
 			
 			setSoundInterpolation(1);
 			setSoundFrequency(vi->rate);		
-			setSoundLength(OGG_READ_SIZE);
+			setSoundLengthTGDSAudioplayer(OGG_READ_SIZE);
 			mallocData(OGG_READ_SIZE);		
 			
 			bufCursor = 0;
@@ -3393,7 +3395,7 @@ void startStreamAudio()
 			
 			setSoundInterpolation(1);
 			setSoundFrequency(aacFrameInfo.sampRateOut);		
-			setSoundLength(aacFrameInfo.outputSamps / soundData.channels);
+			setSoundLengthTGDSAudioplayer(aacFrameInfo.outputSamps / soundData.channels);
 			mallocData(aacFrameInfo.outputSamps / soundData.channels);	
 			
 			memcpy(lBuffer, aacOutBuf, aacFrameInfo.outputSamps / soundData.channels);		
@@ -3630,7 +3632,8 @@ int getStreamLead()
 
 u8 getVolume()
 {
-	return soundIPC->volume;
+	struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+	return soundPlayerCtx->volume;
 }
 
 u32 getSoundChannels()
@@ -3643,7 +3646,8 @@ void setVolume(u8 volume)
 	if(volume > 16)
 		volume = 16;
 	
-	soundIPC->volume = volume;
+	struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+	soundPlayerCtx->volume = volume;
 }
 
 void volumeUp(int x, int y)

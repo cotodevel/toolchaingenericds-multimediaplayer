@@ -31,6 +31,7 @@ USA
 #include "TGDSLogoLZSSCompressed.h"
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
 #include "click_raw.h"
+#include "global_settings.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * RecentPlaylistfileClassListCtx = NULL;		//Recent Played
@@ -912,7 +913,11 @@ int main(int _argc, sint8 **_argv) {
 	GUI_clear();
 	
 	sint32 fwlanguage = (sint32)getLanguage();
+	
+	#ifdef ARM7_DLDI
 	setDLDIARM7Address((u32 *)TGDSDLDI_ARM7_ADDRESS);	//Required by ARM7DLDI!
+	#endif
+	
 	int ret=FS_init();
 	if (ret == 0)
 	{

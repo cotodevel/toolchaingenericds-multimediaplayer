@@ -46,14 +46,7 @@ extern s16 *strpcmR1;
 
 extern int lastL;
 extern int lastR;
-
-extern int multRate;
 extern int pollCount; //start with a read
-
-extern u32 sndCursor;
-extern u32 micBufLoc;
-extern u32 sampleLen;
-extern int sndRate;
 
 extern void mallocData(int size);
 extern void freeData();

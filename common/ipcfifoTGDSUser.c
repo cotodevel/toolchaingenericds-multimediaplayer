@@ -31,6 +31,7 @@ USA
 #include "dsregs.h"
 #include "dsregs_asm.h"
 #include "InterruptsARMCores_h.h"
+#include "soundplayerShared.h"
 
 #ifdef ARM7
 #include <string.h>
@@ -39,6 +40,8 @@ USA
 #include "wifi_arm7.h"
 #include "spifwTGDS.h"
 #include "click_raw.h"
+#include "soundTGDS.h"
+#include "microphone7.h"
 
 static inline s16 checkClipping(int data)
 {
@@ -77,18 +80,6 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			StopSound();
 		}
 		break;
-		case ARM7COMMAND_SOUND_SETRATE:{
-			sndRate = cmd2;
-		}
-		break;
-		case ARM7COMMAND_SOUND_SETLEN:{
-			sampleLen = cmd2;
-		}
-		break;
-		case ARM7COMMAND_SOUND_SETMULT:{
-			multRate = cmd2;
-		}
-		break;
 		case ARM7COMMAND_SOUND_COPY:
 		{
 			s16 *lbuf = NULL;
@@ -106,11 +97,12 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			}
 			
 			u32 i;
-			int vMul = soundIPC->volume;
+			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			int vMul = soundPlayerCtx->volume;
 			int lSample = 0;
 			int rSample = 0;
-			s16 *arm9LBuf = soundIPC->arm9L;
-			s16 *arm9RBuf = soundIPC->arm9R;
+			s16 *arm9LBuf = soundPlayerCtx->arm9L;
+			s16 *arm9RBuf = soundPlayerCtx->arm9R;
 			
 			switch(multRate)
 			{
@@ -194,17 +186,17 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 				lbuf = strpcmL1;
 				rbuf = strpcmR1;
 			}
-			
-			s16 *iSrc = soundIPC->interlaced;
+			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			s16 *iSrc = soundPlayerCtx->interlaced;
 			u32 i = 0;
-			int vMul = soundIPC->volume;
+			int vMul = soundPlayerCtx->volume;
 			int lSample = 0;
 			int rSample = 0;
 			
 			switch(multRate)
 			{
 				case 1:{
-					if(soundIPC->channels == 2)
+					if(soundPlayerCtx->channels == 2)
 					{
 						for(i=0;i<sampleLen;++i)
 						{					
@@ -232,7 +224,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 				case 2:{
 					for(i=0;i<sampleLen;++i)
 					{					
-						if(soundIPC->channels == 2)
+						if(soundPlayerCtx->channels == 2)
 						{
 							lSample = *iSrc++;
 							rSample = *iSrc++;
@@ -262,7 +254,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 				case 4:{
 					for(i=0;i<sampleLen;++i)
 					{				
-						if(soundIPC->channels == 2)
+						if(soundPlayerCtx->channels == 2)
 						{
 							lSample = *iSrc++;
 							rSample = *iSrc++;
@@ -305,8 +297,9 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		break;
 		case ARM7COMMAND_PSG_COMMAND:
 		{				
-			SCHANNEL_CR(soundIPC->psgChannel) = soundIPC->cr;
-			SCHANNEL_TIMER(soundIPC->psgChannel) = soundIPC->timer;
+			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			SCHANNEL_CR(soundPlayerCtx->psgChannel) = soundPlayerCtx->cr;
+			SCHANNEL_TIMER(soundPlayerCtx->psgChannel) = soundPlayerCtx->timer;
 		}
 		break;
 		#endif
@@ -341,10 +334,6 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			// call immediately if the format needs it
 			updateStreamLoop();
 		}	
-		break;
-		case ARM9COMMAND_SAVE_DATA:{
-			//copyChunk();
-		}
 		break;
 		#endif
 	}

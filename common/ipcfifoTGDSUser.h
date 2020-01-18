@@ -42,7 +42,6 @@ USA
 
 #define ARM9COMMAND_SUCCESS (uint32)(0xFFFFFF01)
 #define ARM9COMMAND_UPDATE_BUFFER (uint32)(0xFFFFFF02)
-#define ARM9COMMAND_SAVE_DATA (uint32)(0xFFFFFF03)
 #define ARM9COMMAND_TOUCHDOWN (uint32)(0xFFFFFF04)
 #define ARM9COMMAND_TOUCHMOVE (uint32)(0xFFFFFF05)
 #define ARM9COMMAND_TOUCHUP (uint32)(0xFFFFFF06)
@@ -53,13 +52,9 @@ USA
 
 #define ARM7COMMAND_START_SOUND (uint32)(0xFFFFFF10)
 #define ARM7COMMAND_STOP_SOUND (uint32)(0xFFFFFF11)
-#define ARM7COMMAND_SOUND_SETMULT (uint32)(0xFFFFFF12)
-#define ARM7COMMAND_SOUND_SETRATE (uint32)(0xFFFFFF13)
-#define ARM7COMMAND_SOUND_SETLEN (uint32)(0xFFFFFF14)
+
 #define ARM7COMMAND_SOUND_COPY (uint32)(0xFFFFFF15)
 #define ARM7COMMAND_SOUND_DEINTERLACE (uint32)(0xFFFFFF16)
-#define ARM7COMMAND_START_RECORDING (uint32)(0xFFFFFF17)
-#define ARM7COMMAND_STOP_RECORDING (uint32)(0xFFFFFF18)
 #define ARM7COMMAND_BOOT_GBAMP (uint32)(0xFFFFFF19)
 #define ARM7COMMAND_BOOT_SUPERCARD (uint32)(0xFFFFFF20)
 #define ARM7COMMAND_BOOT_MIGHTYMAX (uint32)(0xFFFFFF21)
@@ -70,40 +65,11 @@ USA
 
 #define BIT(n) (1 << (n))
 
-typedef struct
-{
-	s16 *arm9L;
-	s16 *arm9R;
-	
-	s16 *interlaced;
-	int channels;
-	u8 volume;
-	
-	u32 tX;
-	u32 tY;
-	
-	int psgChannel;
-	u32 cr;
-	u32 timer;
-	/*
-	//bugfix
-	int sendHeartbeat_arm9;
-	int sendHeartbeat_arm7;
-	int recvHeartbeat_arm9;
-	int recvHeartbeat_arm7;	
-	int vblankHeartbeat;
-	int timerHeartbeat;
-	int fullHeartbeat;
-	
-	int arbitraryCommand[17];*/
-} SoundRegion;
-
 struct sIPCSharedTGDSSpecific {
 	uint32 frameCounter7;	//VBLANK counter7
 	uint32 frameCounter9;	//VBLANK counter9
 };
 
-#define soundIPC ((SoundRegion volatile *)(((u32)TGDSIPCUserStartAddress + sizeof(struct sIPCSharedTGDSSpecific)) ))
 
 //types used by DSOrganize
 typedef sint16 int16;

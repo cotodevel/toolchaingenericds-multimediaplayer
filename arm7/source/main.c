@@ -35,6 +35,8 @@ USA
 #include "spifwTGDS.h"
 #include "powerTGDS.h"
 #include "utilsTGDS.h"
+#include "soundTGDS.h"
+#include "microphone7.h"
 
 s16 *strpcmL0 = NULL;
 s16 *strpcmL1 = NULL;
@@ -44,13 +46,7 @@ s16 *strpcmR1 = NULL;
 int lastL = 0;
 int lastR = 0;
 
-int multRate = 1;
 int pollCount = 100; //start with a read
-
-u32 sndCursor = 0;
-u32 micBufLoc = 0;
-u32 sampleLen = 0;
-int sndRate = 0;
 
 void mallocData(int size)
 {
