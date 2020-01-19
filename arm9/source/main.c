@@ -776,68 +776,98 @@ void handleInput(){
 	}
 	
 	if (keysPressed() & KEY_L){
-		int oldLstSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);
-		if(oldLstSize > 0){
-			strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(oldLstSize - 1, RecentPlaylistfileClassListCtx)->fd_namefullPath);
-			popEntryfromFileClassList(RecentPlaylistfileClassListCtx);
-			lastRand = oldLstSize - 1;
-			
-			pendingPlay = true;
-			scanKeys();
-			while(keysPressed() & KEY_L){
-				scanKeys();
-				IRQWait(IRQ_HBLANK);
+		switch(soundData.sourceFmt){
+			case(SRC_NSF):
+			case(SRC_SNDH):
+			case(SRC_SID):
+			case(SRC_GBS):
+			{
+				struct touchScr touchScrInst;
+				touchScrRead(&touchScrInst);
+				soundPrevTrack(touchScrInst.touchXpx, touchScrInst.touchYpx);
 			}
-		}
-		else{
-			clrscr();
-			printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
-			scanKeys();
-			while(keysPressed() & KEY_L){
-				scanKeys();
-				IRQWait(IRQ_HBLANK);
-			}
-			menuShow();
-		}
-	}
-	
-	if (keysPressed() & KEY_R){
-		//Play Random song from current folder
-		int lstSize = getCurrentDirectoryCount(playlistfileClassListCtx);
-		
-		if(lstSize > 0){
-			closeSound();
-			
-			//pick one and play
-			int randFile = -1;
-			while( (randFile = getRand(lstSize)) == lastRand){
-				if(lstSize == 1){
-					break;	//means rand() will loop forever here because the random number will always be 0
-				}
-			}
-			
-			//remember playlist as long the audio file is unique. (for L button)
-			int oldPlsSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);
-			if(oldPlsSize >= 0){
-				struct FileClass * fileClassInst = getFileClassFromList(randFile, playlistfileClassListCtx);
-				if(pushEntryToFileClassList(fileClassInst->isIterable, fileClassInst->fd_namefullPath, fileClassInst->type, fileClassInst->d_ino, RecentPlaylistfileClassListCtx) != NULL){
-					//OK item added
+			break;
+			default:{
+				int oldLstSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);
+				if(oldLstSize > 0){
+					strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(oldLstSize - 1, RecentPlaylistfileClassListCtx)->fd_namefullPath);
+					popEntryfromFileClassList(RecentPlaylistfileClassListCtx);
+					lastRand = oldLstSize - 1;
+					
+					pendingPlay = true;
+					scanKeys();
+					while(keysPressed() & KEY_L){
+						scanKeys();
+						IRQWait(IRQ_HBLANK);
+					}
 				}
 				else{
-					printf("failed to add an item to a RecentPlaylistfileClassListCtx FileClass Directory Iterator! ");
-					while(1==1);
-				}
-				
-				strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(randFile, playlistfileClassListCtx)->fd_namefullPath);
-				pendingPlay = true;
-				
-				scanKeys();
-				while(keysPressed() & KEY_R){
+					clrscr();
+					printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
 					scanKeys();
-					IRQWait(IRQ_HBLANK);
+					while(keysPressed() & KEY_L){
+						scanKeys();
+						IRQWait(IRQ_HBLANK);
+					}
+					menuShow();
 				}
-				lastRand = randFile;				
 			}
+			break;
+		}
+	}
+	if (keysPressed() & KEY_R){
+		
+		switch(soundData.sourceFmt){
+			case(SRC_NSF):
+			case(SRC_SNDH):
+			case(SRC_SID):
+			case(SRC_GBS):
+			{
+				struct touchScr touchScrInst;
+				touchScrRead(&touchScrInst);
+				soundNextTrack(touchScrInst.touchXpx, touchScrInst.touchYpx);
+			}
+			break;
+			default:{
+				//Play Random song from current folder
+				int lstSize = getCurrentDirectoryCount(playlistfileClassListCtx);
+				
+				if(lstSize > 0){
+					closeSound();
+					
+					//pick one and play
+					int randFile = -1;
+					while( (randFile = getRand(lstSize)) == lastRand){
+						if(lstSize == 1){
+							break;	//means rand() will loop forever here because the random number will always be 0
+						}
+					}
+					
+					//remember playlist as long the audio file is unique. (for L button)
+					int oldPlsSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);
+					if(oldPlsSize >= 0){
+						struct FileClass * fileClassInst = getFileClassFromList(randFile, playlistfileClassListCtx);
+						if(pushEntryToFileClassList(fileClassInst->isIterable, fileClassInst->fd_namefullPath, fileClassInst->type, fileClassInst->d_ino, RecentPlaylistfileClassListCtx) != NULL){
+							//OK item added
+						}
+						else{
+							printf("failed to add an item to a RecentPlaylistfileClassListCtx FileClass Directory Iterator! ");
+							while(1==1);
+						}
+						
+						strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(randFile, playlistfileClassListCtx)->fd_namefullPath);
+						pendingPlay = true;
+						
+						scanKeys();
+						while(keysPressed() & KEY_R){
+							scanKeys();
+							IRQWait(IRQ_HBLANK);
+						}
+						lastRand = randFile;				
+					}
+				}
+			}
+			break;
 		}
 	}
 	
