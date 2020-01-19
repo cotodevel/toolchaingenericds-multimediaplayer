@@ -795,11 +795,6 @@ void handleInput(){
 					lastRand = oldLstSize - 1;
 					
 					pendingPlay = true;
-					scanKeys();
-					while(keysPressed() & KEY_L){
-						scanKeys();
-						IRQWait(IRQ_HBLANK);
-					}
 				}
 				else{
 					clrscr();
@@ -813,6 +808,12 @@ void handleInput(){
 				}
 			}
 			break;
+		}
+		
+		scanKeys();
+		while(keysPressed() & KEY_L){
+			scanKeys();
+			IRQWait(IRQ_HBLANK);
 		}
 	}
 	if (keysPressed() & KEY_R){
@@ -857,17 +858,17 @@ void handleInput(){
 						
 						strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(randFile, playlistfileClassListCtx)->fd_namefullPath);
 						pendingPlay = true;
-						
-						scanKeys();
-						while(keysPressed() & KEY_R){
-							scanKeys();
-							IRQWait(IRQ_HBLANK);
-						}
 						lastRand = randFile;				
 					}
 				}
 			}
 			break;
+		}
+		
+		scanKeys();
+		while(keysPressed() & KEY_R){
+			scanKeys();
+			IRQWait(IRQ_HBLANK);
 		}
 	}
 	
