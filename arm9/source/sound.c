@@ -721,11 +721,7 @@ void initComplexSound()
 	
 }
 
-void setSoundLengthTGDSAudioplayer(u32 len)
-{
-	setSoundLength(len);	//TGDS impl.
-	sndLen = len;
-}
+
 
 int getSoundLength()
 {
@@ -2234,7 +2230,7 @@ bool loadSound(char *fName)
 		setSoundInterpolation(1);
 		setSoundFrequency(headerChunk.dwSamplesPerSec);
 		
-		setSoundLengthTGDSAudioplayer(WAV_READ_SIZE);		
+		setSoundLength(WAV_READ_SIZE);		
 		mallocData(WAV_READ_SIZE);
 		
 		memoryContents = NULL;
@@ -2291,7 +2287,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(1);
 		setSoundFrequency(MIKMOD_FREQ);
-		setSoundLengthTGDSAudioplayer(ZEROLEN >> 2);
+		setSoundLength(ZEROLEN >> 2);
 		
 		mallocData(ZEROLEN >> 2);
 		
@@ -2361,7 +2357,7 @@ bool loadSound(char *fName)
 		mad_synth_init(&Synth);
 		mad_timer_reset(&Timer);
 		
-		setSoundLengthTGDSAudioplayer(MP3_WRITE_SIZE);
+		setSoundLength(MP3_WRITE_SIZE);
 		
 		if(strcmp(ext, ".mp3") != 0)
 		{
@@ -2418,7 +2414,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(1);
 		setSoundFrequency(vi->rate);		
-		setSoundLengthTGDSAudioplayer(OGG_READ_SIZE);
+		setSoundLength(OGG_READ_SIZE);
 		mallocData(OGG_READ_SIZE);		
 		
 		bufCursor = 0;
@@ -2493,7 +2489,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(2);
 		setSoundFrequency(aacFrameInfo.sampRateOut);		
-		setSoundLengthTGDSAudioplayer(aacFrameInfo.outputSamps / soundData.channels);
+		setSoundLength(aacFrameInfo.outputSamps / soundData.channels);
 		mallocData(aacFrameInfo.outputSamps / soundData.channels);	
 		
 		memcpy(lBuffer, aacOutBuf, aacFrameInfo.outputSamps / soundData.channels);		
@@ -2634,7 +2630,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(1);
 		setSoundFrequency(aacFrameInfo.sampRateOut);		
-		setSoundLengthTGDSAudioplayer(aacFrameInfo.outputSamps / soundData.channels);
+		setSoundLength(aacFrameInfo.outputSamps / soundData.channels);
 		mallocData(aacFrameInfo.outputSamps / soundData.channels);	
 		
 		memcpy(lBuffer, aacOutBuf, aacFrameInfo.outputSamps / soundData.channels);		
@@ -2677,7 +2673,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(1);
 		setSoundFrequency(fc.samplerate);	
-		setSoundLengthTGDSAudioplayer(FLAC_OUT_SIZE);
+		setSoundLength(FLAC_OUT_SIZE);
 		
 		mallocData(FLAC_OUT_SIZE);
 		
@@ -2726,7 +2722,7 @@ bool loadSound(char *fName)
 		soundData.channels = 1;
 		setSoundInterpolation(2);
 		setSoundFrequency(SID_FREQ);	
-		setSoundLengthTGDSAudioplayer(SID_OUT_SIZE);
+		setSoundLength(SID_OUT_SIZE);
 		
 		mallocData(SID_OUT_SIZE);
 		
@@ -2789,7 +2785,7 @@ bool loadSound(char *fName)
 		soundData.channels = 1;
 		setSoundInterpolation(2);
 		setSoundFrequency(NSF_FREQ);	
-		setSoundLengthTGDSAudioplayer(NSF_OUT_SIZE/2);
+		setSoundLength(NSF_OUT_SIZE/2);
 		
 		mallocData(NSF_OUT_SIZE);
 		
@@ -2823,7 +2819,7 @@ bool loadSound(char *fName)
 		soundData.channels = 2;
 		setSoundInterpolation(2);
 		setSoundFrequency(SPC_FREQ);	
-		setSoundLengthTGDSAudioplayer(SPC_OUT_SIZE);
+		setSoundLength(SPC_OUT_SIZE);
 		
 		mallocData(SPC_OUT_SIZE);
 		
@@ -2878,7 +2874,7 @@ bool loadSound(char *fName)
 		soundData.channels = 1;
 		setSoundInterpolation(1);
 		setSoundFrequency(init68.sampling_rate);	
-		setSoundLengthTGDSAudioplayer(SNDH_OUT_SIZE);
+		setSoundLength(SNDH_OUT_SIZE);
 		
 		mallocData(SNDH_OUT_SIZE);
 		
@@ -2916,7 +2912,7 @@ bool loadSound(char *fName)
 		soundData.channels = 2;
 		setSoundInterpolation(1);
 		setSoundFrequency(GBS_FREQ);	
-		setSoundLengthTGDSAudioplayer(GBS_OUT_SIZE);		
+		setSoundLength(GBS_OUT_SIZE);		
 		mallocData(GBS_OUT_SIZE);
 		
 		gbsDecode();
@@ -3265,7 +3261,7 @@ void startStreamAudio()
 			mad_synth_init(&Synth);
 			mad_timer_reset(&Timer);
 			
-			setSoundLengthTGDSAudioplayer(MP3_WRITE_SIZE);
+			setSoundLength(MP3_WRITE_SIZE);
 			mallocData(MP3_WRITE_SIZE);
 			
 			mp3Buf = (unsigned char *)trackMalloc(STREAM_MP3_READ_SIZE, "mp3 stream buf");
@@ -3331,7 +3327,7 @@ void startStreamAudio()
 			
 			setSoundInterpolation(1);
 			setSoundFrequency(vi->rate);		
-			setSoundLengthTGDSAudioplayer(OGG_READ_SIZE);
+			setSoundLength(OGG_READ_SIZE);
 			mallocData(OGG_READ_SIZE);		
 			
 			bufCursor = 0;
@@ -3395,7 +3391,7 @@ void startStreamAudio()
 			
 			setSoundInterpolation(1);
 			setSoundFrequency(aacFrameInfo.sampRateOut);		
-			setSoundLengthTGDSAudioplayer(aacFrameInfo.outputSamps / soundData.channels);
+			setSoundLength(aacFrameInfo.outputSamps / soundData.channels);
 			mallocData(aacFrameInfo.outputSamps / soundData.channels);	
 			
 			memcpy(lBuffer, aacOutBuf, aacFrameInfo.outputSamps / soundData.channels);		
@@ -3775,4 +3771,21 @@ void checkEndSound()
 	}
 	*/
 
+}
+
+//Audio commands: drive Sound Player Context (Note: different from soundTGDS.h -> Sound Sample Context)
+void setSoundLength(u32 len)
+{
+	SendFIFOWords(ARM7COMMAND_SOUND_SETLEN, len);
+	sndLen = len;
+}
+
+void setSoundFrequency(u32 freq)
+{
+	SendFIFOWords(ARM7COMMAND_SOUND_SETRATE, freq);
+}
+
+void setSoundInterpolation(u32 mult)
+{
+	SendFIFOWords(ARM7COMMAND_SOUND_SETMULT, mult);
 }

@@ -54,6 +54,11 @@ extern void setSwapChannel();
 extern void SetupSound();
 extern void StopSound();
 
+extern u32 sampleLen;
+extern int multRate;
+extern int sndRate;
+extern u32 sndCursor;
+
 #ifdef __cplusplus
 }
 #endif

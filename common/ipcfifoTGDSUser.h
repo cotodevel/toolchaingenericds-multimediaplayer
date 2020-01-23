@@ -52,7 +52,9 @@ USA
 
 #define ARM7COMMAND_START_SOUND (uint32)(0xFFFFFF10)
 #define ARM7COMMAND_STOP_SOUND (uint32)(0xFFFFFF11)
-
+#define ARM7COMMAND_SOUND_SETMULT (uint32)(0xffff03A1)
+#define ARM7COMMAND_SOUND_SETRATE (uint32)(0xffff03A2)
+#define ARM7COMMAND_SOUND_SETLEN (uint32)(0xffff03A3)
 #define ARM7COMMAND_SOUND_COPY (uint32)(0xFFFFFF15)
 #define ARM7COMMAND_SOUND_DEINTERLACE (uint32)(0xFFFFFF16)
 #define ARM7COMMAND_BOOT_GBAMP (uint32)(0xFFFFFF19)
@@ -65,11 +67,30 @@ USA
 
 #define BIT(n) (1 << (n))
 
+struct sSoundPlayerStruct {
+	s16 *arm9L;
+	s16 *arm9R;
+	
+	s16 *interlaced;
+	int channels;
+	u8 volume;
+	
+	//u32 tX;
+	//u32 tY;
+	
+	int psgChannel;
+	u32 cr;
+	u32 timer;
+	//Mic bits end
+} __attribute__((aligned (4)));
+
+//---------------------------------------------------------------------------------
 struct sIPCSharedTGDSSpecific {
+//---------------------------------------------------------------------------------
 	uint32 frameCounter7;	//VBLANK counter7
 	uint32 frameCounter9;	//VBLANK counter9
+	struct sSoundPlayerStruct sndPlayerCtx;
 };
-
 
 //types used by DSOrganize
 typedef sint16 int16;

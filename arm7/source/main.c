@@ -36,7 +36,11 @@ USA
 #include "powerTGDS.h"
 #include "utilsTGDS.h"
 #include "soundTGDS.h"
-#include "microphone7.h"
+
+u32 sampleLen = 0;
+int multRate = 1;
+int sndRate = 0;
+u32 sndCursor = 0;
 
 s16 *strpcmL0 = NULL;
 s16 *strpcmL1 = NULL;

@@ -41,7 +41,6 @@ USA
 #include "spifwTGDS.h"
 #include "click_raw.h"
 #include "soundTGDS.h"
-#include "microphone7.h"
 
 static inline s16 checkClipping(int data)
 {
@@ -67,11 +66,24 @@ static inline s16 checkClipping(int data)
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
+void HandleFifoNotEmptyWeakRef(uint32 data0, uint32 data1){
 	
-	switch (cmd1) {
+	switch (data0) {
 		//NDS7: 
 		#ifdef ARM7
+		//Sound Player Context / Mic
+		case ARM7COMMAND_SOUND_SETLEN:{
+			sampleLen = (data1);
+		}
+		break;
+		case ARM7COMMAND_SOUND_SETRATE:{
+			sndRate = (data1);
+		}
+		break;
+		case ARM7COMMAND_SOUND_SETMULT:{
+			multRate = (data1);
+		}
+		break;
 		case ARM7COMMAND_START_SOUND:{
 			SetupSound();
 		}
@@ -343,5 +355,5 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
+void HandleFifoEmptyWeakRef(uint32 data0, uint32 data1){
 }

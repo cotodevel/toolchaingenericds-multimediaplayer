@@ -215,9 +215,12 @@ extern int getCurrentStatus();
 //extern ICY_HEADER *getStreamData();
 
 // for streaming record interrupt
+//Audio commands: drive Sound Player Context (Note: different from soundTGDS.h -> Sound Sample Context)
+extern void setSoundLength(u32 len);
+extern void setSoundFrequency(u32 freq);
+extern void setSoundInterpolation(u32 mult);
 extern void copyChunk();
 extern void setSoundFrequency(u32 freq);
-extern void setSoundLengthTGDSAudioplayer(u32 len);
 
 extern u32 getSoundChannels();
 extern u8 getVolume();
