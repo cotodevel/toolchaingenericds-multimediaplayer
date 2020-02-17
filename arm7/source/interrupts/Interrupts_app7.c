@@ -27,6 +27,11 @@ USA
 #include "wifi_arm7.h"
 #include "main.h"
 
+
+int secondsPassed = 0; 
+int dsvcount = 0;
+bool sleepModeEnabled = true;
+
 //User Handler Definitions
 #ifdef ARM9
 __attribute__((section(".itcm")))
@@ -92,7 +97,18 @@ __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void VcounterUser(){
-
+	if(sleepModeEnabled == true){
+		if(dsvcount < 60){
+			dsvcount++;
+		}
+		else{
+			secondsPassed++;
+			if(secondsPassed == SLEEPMODE_SECONDS){
+				screenLidHasClosedhandlerUser();
+			}
+			dsvcount = 0;
+		}
+	}
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware

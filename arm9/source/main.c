@@ -750,6 +750,7 @@ void handleInput(){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
+		TurnOnScreens();
 	}
 	
 	if (keysPressed() & KEY_DOWN){
@@ -762,6 +763,7 @@ void handleInput(){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
+		TurnOnScreens();
 	}
 	
 	
@@ -773,6 +775,7 @@ void handleInput(){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
+		TurnOnScreens();
 	}
 	
 	if (keysPressed() & KEY_L){
@@ -815,9 +818,10 @@ void handleInput(){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
+		TurnOnScreens();
 	}
-	if (keysPressed() & KEY_R){
-		
+	
+	if (keysPressed() & KEY_R){	
 		switch(soundData.sourceFmt){
 			case(SRC_NSF):
 			case(SRC_SNDH):
@@ -870,11 +874,12 @@ void handleInput(){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
+		TurnOnScreens();
 	}
 	
 	if (keysPressed() & KEY_START){
-		
 		if(soundLoaded == false){
+			disableSleepMode();	//Prevent accidental backlight power off while we choose a file
 			char startPath[MAX_TGDSFILENAME_LENGTH+1];
 			strcpy(startPath,"/");
 			while( ShowBrowserC((char *)startPath, curChosenBrowseFile, &pendingPlay) == true ){	//as long you keep using directories ShowBrowser will be true
@@ -886,6 +891,7 @@ void handleInput(){
 				scanKeys();
 				IRQWait(IRQ_HBLANK);
 			}
+			enableSleepMode();
 		}
 		else{
 			clrscr();
@@ -898,29 +904,30 @@ void handleInput(){
 			}
 			menuShow();
 		}
-		
+		TurnOnScreens();
 	}
 	
 	if (keysPressed() & KEY_B){
 		//Audio stop here....
 		closeSound();
-		
 		menuShow();
-		
 		scanKeys();
 		while(keysPressed() & KEY_B){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
+		TurnOnScreens();
 	}
 	
 	if (keysPressed() & KEY_X){
 		if(drawMandelbrt == false){
 			drawMandelbrt = true;
+			disableSleepMode();
 			float factor = 1.0; 
 			drawMandel(factor);
 			//render TGDSLogo from a LZSS compressed file
 			RenderTGDSLogoSubEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
+			enableSleepMode();
 		}
 		
 		scanKeys();
@@ -928,6 +935,7 @@ void handleInput(){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
+		TurnOnScreens();
 	}
 	
 	//Audio playback here....
@@ -979,6 +987,8 @@ int main(int _argc, sint8 **_argv) {
 	
 	menuIteratorfileClassListCtx = initFileList();	
 	cleanFileList(menuIteratorfileClassListCtx);
+	
+	enableSleepMode();
 	
 	menuShow();
 

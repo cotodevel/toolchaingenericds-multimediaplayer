@@ -41,6 +41,10 @@ extern void VcounterUser();
 extern void screenLidHasOpenedhandlerUser();
 extern void screenLidHasClosedhandlerUser();
 
+extern int secondsPassed;
+extern int dsvcount;
+extern bool sleepModeEnabled;
+
 #ifdef __cplusplus
 }
 #endif

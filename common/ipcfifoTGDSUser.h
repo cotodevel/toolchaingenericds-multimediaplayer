@@ -36,7 +36,6 @@ USA
 #include "dswnifi.h"
 #include "utilsTGDS.h"
 
-
 #define VRAM_D		((s16*)0x06000000)
 #define SIWRAM		((s16*)0x037F8000)
 
@@ -64,6 +63,9 @@ USA
 #define ARM7COMMAND_PSG_COMMAND (uint32)(0xFFFFFF23)
 #define ARM7COMMAND_SAVE_WIFI (uint32)(0xFFFFFF24)
 #define ARM7COMMAND_LOAD_WIFI (uint32)(0xFFFFFF25)
+#define ARM7COMMAND_RESET_BACKLIGHT (uint32)(0xFFFFFF26)
+#define ARM7COMMAND_DISABLE_SLEEPMODE (uint32)(0xFFFFFF27)
+#define ARM7COMMAND_ENABLE_SLEEPMODE (uint32)(0xFFFFFF28)
 
 #define BIT(n) (1 << (n))
 
@@ -107,6 +109,9 @@ typedef sint16 int16;
 #define VRAM_G        ((uint16*)0x6894000)
 #define VRAM_H        ((uint16*)0x6898000)
 #define VRAM_I        ((uint16*)0x68A0000)
+
+//Seconds before sleepmode takes place
+#define SLEEPMODE_SECONDS (int)(15)
 
 #ifdef ARM9
 //Used by ARM9. Required internally by ARM7

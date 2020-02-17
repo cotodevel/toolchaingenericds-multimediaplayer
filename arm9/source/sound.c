@@ -721,7 +721,17 @@ void initComplexSound()
 	
 }
 
+void TurnOnScreens(){
+	SendArm7Command(ARM7COMMAND_RESET_BACKLIGHT, 0);
+}
 
+void enableSleepMode(){
+	SendArm7Command(ARM7COMMAND_ENABLE_SLEEPMODE, 0);
+}
+
+void disableSleepMode(){
+	SendArm7Command(ARM7COMMAND_DISABLE_SLEEPMODE, 0);
+}
 
 int getSoundLength()
 {

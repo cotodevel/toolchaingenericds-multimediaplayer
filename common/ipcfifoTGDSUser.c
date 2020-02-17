@@ -35,7 +35,7 @@ USA
 
 #ifdef ARM7
 #include <string.h>
-
+#include "interrupts.h"
 #include "main.h"
 #include "wifi_arm7.h"
 #include "spifwTGDS.h"
@@ -314,6 +314,24 @@ void HandleFifoNotEmptyWeakRef(uint32 data0, uint32 data1){
 			SCHANNEL_TIMER(soundPlayerCtx->psgChannel) = soundPlayerCtx->timer;
 		}
 		break;
+		
+		case ARM7COMMAND_RESET_BACKLIGHT:{
+			secondsPassed = 0;
+			dsvcount = 0;
+			screenLidHasOpenedhandlerUser();
+		}
+		break;
+		
+		case ARM7COMMAND_DISABLE_SLEEPMODE:{
+			sleepModeEnabled = false;
+		}
+		break;
+		
+		case ARM7COMMAND_ENABLE_SLEEPMODE:{
+			sleepModeEnabled = true;
+		}
+		break;
+		
 		#endif
 		
 		//NDS9: 

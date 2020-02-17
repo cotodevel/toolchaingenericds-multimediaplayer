@@ -239,10 +239,12 @@ extern void clearLoop();
 extern bool updateRequested;
 extern sndData soundData;
 extern void updateStreamLoop();
-
 extern void checkEndSound();
-
 extern bool soundLoaded;
+
+extern void TurnOnScreens();
+extern void enableSleepMode();
+extern void disableSleepMode();
 
 #ifdef __cplusplus
 }
