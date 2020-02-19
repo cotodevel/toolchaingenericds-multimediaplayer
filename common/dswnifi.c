@@ -53,28 +53,18 @@ USA
 
 //Example Sender Code
 //Send This DS Time to External DS through UDP NIFI or Local NIFI:
-//volatile uint8 somebuf[128];
+//volatile uint8 somebuf[256];
 //sprintf((char*)somebuf,"DSTime:%d:%d:%d",getTime()->tm_hour,getTime()->tm_min,getTime()->tm_sec);
 //if(!FrameSenderUser){
-//				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	//make room for crc16 frame
+//				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	
 //}
 
 //Example Receiver Code
 __attribute__((section(".itcm")))
-void HandleRecvUserspace(struct frameBlock * frameBlockRecv){
+bool TGDSRecvHandlerUser(struct frameBlock * frameBlockRecv, int DSWnifiMode){
 	//frameBlockRecv->framebuffer	//Pointer to received Frame
 	//frameBlockRecv->frameSize		//Size of received Frame
-	do_multi(frameBlockRecv);		
-}
-
-//Multiplayer key binding/buffer shared code. For DS-DS multiplayer emu core stuff.
-__attribute__((section(".itcm")))
-bool do_multi(struct frameBlock * frameBlockRecv)
-{
-	//frameBlockRecv->framebuffer	//Pointer to received Frame
-	//frameBlockRecv->frameSize		//Size of received Frame
-	
-	switch(getMULTIMode()){
+	switch(DSWnifiMode){
 		//single player, has no access to shared buffers.
 		case(dswifi_idlemode):{
 			//DSWNIFIStatus:SinglePlayer
@@ -83,19 +73,17 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 		break;
 		
 		//NIFI local
-		case(dswifi_localnifimode):{	//detect nifi_stat here if nifi_stat = 0 for disconnect when nifi was issued
+		case(dswifi_localnifimode):{
 			clrscr();
 			printf("DSWNIFIStatus:LocalNifi!");
-			printf("%s",(char*)frameBlockRecv->framebuffer);
 			return true;
 		}
 		break;
 		
 		//UDP NIFI
-		case(dswifi_udpnifimode):{	//detect nifi_stat here if nifi_stat = 0 for disconnect when nifi was issued
+		case(dswifi_udpnifimode):{
 			clrscr();
 			printf("DSWNIFIStatus:UDPNifi!");
-			printf("%s",(char*)frameBlockRecv->framebuffer);
 			return true;
 		}
 		break;
@@ -104,7 +92,8 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 	return false;
 }
 
-//DSWNIFI callbacks. These run only once per DSWNIFI set mode
+
+//DSWNIFI callbacks. These run when setting DSWNIFI up
 void OnDSWIFIlocalnifiEnable(){
 
 }

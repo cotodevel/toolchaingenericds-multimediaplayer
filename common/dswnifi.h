@@ -35,7 +35,7 @@ extern "C"{
 //volatile uint8 somebuf[128];
 //sprintf((char*)somebuf,"DSTime:%d:%d:%d",getTime()->tm_hour,getTime()->tm_min,getTime()->tm_sec);
 //if(!FrameSenderUser){
-//				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	//make room for crc16 frame
+//				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	
 //}
 
 #ifdef __cplusplus
