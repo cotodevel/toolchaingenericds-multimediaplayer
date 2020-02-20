@@ -102,7 +102,7 @@ typedef sint16 int16;
 #define VRAM_0        ((uint16*)0x6000000)
 #define VRAM_A        ((uint16*)0x6800000)
 #define VRAM_B        ((uint16*)0x6820000)
-#define VRAM_C        ((uint16*)0x6840000)
+//#define VRAM_C        ((uint16*)0x6840000)
 //#define VRAM_D        ((uint16*)0x6860000)
 #define VRAM_E        ((uint16*)0x6880000)
 #define VRAM_F        ((uint16*)0x6890000)
