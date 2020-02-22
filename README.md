@@ -19,6 +19,7 @@ Button (X): Mandelbrot demo
 Button (D-PAD Down):		Volume Down (-)
 Button (D-PAD Up):		Volume Up (+)
 Button (Select): This menu screen
+Touchscreen : Swap screens
 
 
 /release folder has the latest binary precompiled for your convenience.

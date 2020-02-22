@@ -36,6 +36,7 @@ USA
 #include "powerTGDS.h"
 #include "utilsTGDS.h"
 #include "soundTGDS.h"
+#include "keypadTGDS.h"
 
 u32 sampleLen = 0;
 int multRate = 1;
@@ -175,4 +176,9 @@ int main(int _argc, sint8 **_argv) {
 	}
    
 	return 0;
+}
+
+//Custom Button Mapping Handler implementation: IRQ Driven
+void CustomInputMappingHandler(uint32 readKeys){
+	
 }
