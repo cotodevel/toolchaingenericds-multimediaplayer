@@ -743,6 +743,8 @@ void handleInput(){
 	if(keysPressed() & KEY_TOUCH){
 		//Toggle console between screens
 		ToggleTGDSConsole();
+		u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
+		setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
 		scanKeys();
 		while(keysPressed() & KEY_TOUCH){
 			scanKeys();
@@ -760,7 +762,6 @@ void handleInput(){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
-		TurnOnScreens();
 	}
 	
 	if (keysPressed() & KEY_DOWN){
@@ -773,19 +774,6 @@ void handleInput(){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
-		TurnOnScreens();
-	}
-	
-	
-	if (keysPressed() & KEY_TOUCH){
-		u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
-		setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
-		scanKeys();
-		while(keysPressed() & KEY_TOUCH){
-			scanKeys();
-			IRQWait(IRQ_HBLANK);
-		}
-		TurnOnScreens();
 	}
 	
 	if (keysPressed() & KEY_L){
@@ -828,7 +816,6 @@ void handleInput(){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
-		TurnOnScreens();
 	}
 	
 	if (keysPressed() & KEY_R){	
@@ -884,7 +871,6 @@ void handleInput(){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
-		TurnOnScreens();
 	}
 	
 	if (keysPressed() & KEY_START){
@@ -914,7 +900,6 @@ void handleInput(){
 			}
 			menuShow();
 		}
-		TurnOnScreens();
 	}
 	
 	if (keysPressed() & KEY_B){
@@ -926,7 +911,6 @@ void handleInput(){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
-		TurnOnScreens();
 	}
 	
 	if (keysPressed() & KEY_X){
@@ -945,7 +929,6 @@ void handleInput(){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
-		TurnOnScreens();
 	}
 	
 	//Audio playback here....
