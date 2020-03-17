@@ -43,7 +43,6 @@ extern int main(int _argc, sint8 **_argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 
 //TGDS Dir API: Directory Iterator(s)
-extern struct FileClassList * RecentPlaylistfileClassListCtx;		//Recent Played
 extern struct FileClassList * menuIteratorfileClassListCtx;			//Menu Directory Iterator
 extern struct FileClassList * playlistfileClassListCtx;				//Playlist Directory Iterator
 

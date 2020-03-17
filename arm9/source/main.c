@@ -34,7 +34,6 @@ USA
 #include "global_settings.h"
 
 //TGDS Dir API: Directory Iterator(s)
-struct FileClassList * RecentPlaylistfileClassListCtx = NULL;		//Recent Played
 struct FileClassList * menuIteratorfileClassListCtx = NULL;			//Menu Directory Iterator
 struct FileClassList * playlistfileClassListCtx = NULL;				//Playlist Directory Iterator
 
@@ -366,7 +365,6 @@ static inline int getRand(int size){
 
 
 static bool pendingPlay = false;
-static int lastRand = 0;
 
 __attribute__((section(".itcm")))
 void drawMandel(float factor){
@@ -728,6 +726,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){	//MUST
 	return false;
 }	
 
+static int curFileIndex = 0;
 static bool drawMandelbrt = false;
 __attribute__((section(".itcm")))	
 void handleInput(){
@@ -789,12 +788,11 @@ void handleInput(){
 			}
 			break;
 			default:{
-				int oldLstSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);
-				if(oldLstSize > 0){
-					strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(oldLstSize - 1, RecentPlaylistfileClassListCtx)->fd_namefullPath);
-					popEntryfromFileClassList(RecentPlaylistfileClassListCtx);
-					lastRand = oldLstSize - 1;
-					
+				if(getCurrentDirectoryCount(playlistfileClassListCtx) > 0){
+					if(curFileIndex > 1){
+						curFileIndex-=2;
+					}
+					strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
 					pendingPlay = true;
 				}
 				else{
@@ -831,35 +829,16 @@ void handleInput(){
 			}
 			break;
 			default:{
-				//Play Random song from current folder
+				//Play next (random sorted) song from current folder
 				int lstSize = getCurrentDirectoryCount(playlistfileClassListCtx);
-				
 				if(lstSize > 0){
 					closeSound();
 					
-					//pick one and play
-					int randFile = -1;
-					while( (randFile = getRand(lstSize)) == lastRand){
-						if(lstSize == 1){
-							break;	//means rand() will loop forever here because the random number will always be 0
-						}
-					}
+					strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
+					pendingPlay = true;
 					
-					//remember playlist as long the audio file is unique. (for L button)
-					int oldPlsSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);
-					if(oldPlsSize >= 0){
-						struct FileClass * fileClassInst = getFileClassFromList(randFile, playlistfileClassListCtx);
-						if(pushEntryToFileClassList(fileClassInst->isIterable, fileClassInst->fd_namefullPath, fileClassInst->type, fileClassInst->d_ino, RecentPlaylistfileClassListCtx) != NULL){
-							//OK item added
-						}
-						else{
-							printf("failed to add an item to a RecentPlaylistfileClassListCtx FileClass Directory Iterator! ");
-							while(1==1);
-						}
-						
-						strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(randFile, playlistfileClassListCtx)->fd_namefullPath);
-						pendingPlay = true;
-						lastRand = randFile;				
+					if(curFileIndex < lstSize){
+						curFileIndex++;
 					}
 				}
 			}
@@ -881,7 +860,9 @@ void handleInput(){
 			while( ShowBrowserC((char *)startPath, curChosenBrowseFile, &pendingPlay) == true ){	//as long you keep using directories ShowBrowser will be true
 				//navigating DIRs here...
 			}
-			
+			//Shuffle List
+			playlistfileClassListCtx = randomizeFileClassList(playlistfileClassListCtx);	
+		
 			scanKeys();
 			while(keysPressed() & KEY_START){
 				scanKeys();
@@ -975,8 +956,6 @@ int main(int _argc, sint8 **_argv) {
 	initComplexSound(); // initialize sound variables
 	
 	//Init TGDS FS Directory Iterator Context(s). Mandatory to init them like this!! Otherwise several functions won't work correctly.
-	RecentPlaylistfileClassListCtx = initFileList();
-	cleanFileList(RecentPlaylistfileClassListCtx);
 	
 	playlistfileClassListCtx = initFileList();
 	cleanFileList(playlistfileClassListCtx);
