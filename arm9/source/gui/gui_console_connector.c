@@ -32,13 +32,13 @@ USA
 	//Which provides the console init code, example not available here, checkout projects that support Custom console implementation.
 
 //After that you can call :
-	//bool project_specific_console = true;
-	//GUI_init(project_specific_console);
+	//bool isTGDSCustomConsole = true;
+	//GUI_init(isTGDSCustomConsole);
 
 
 ////////[For default Console implementation simply call]:////////
-	//bool project_specific_console = false;
-	//GUI_init(project_specific_console);
+	//bool isTGDSCustomConsole = false;
+	//GUI_init(isTGDSCustomConsole);
 
 
 	////////[Default Console implementation is selected, thus stubs are implemented here]////////
