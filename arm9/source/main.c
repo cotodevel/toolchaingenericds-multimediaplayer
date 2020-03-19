@@ -741,7 +741,9 @@ void handleInput(){
 	
 	if(keysPressed() & KEY_TOUCH){
 		//Toggle console between screens
-		ToggleTGDSConsole();
+		bool isDirectFramebuffer = true;
+		bool disableTSCWhenTGDSConsoleTop = false;
+		TGDSLCDSwap(disableTSCWhenTGDSConsoleTop, isDirectFramebuffer);
 		u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
 		setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
 		scanKeys();
