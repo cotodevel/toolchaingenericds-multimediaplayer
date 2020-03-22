@@ -168,7 +168,7 @@ int main(int _argc, sint8 **_argv) {
 	while (!(*((vuint8*)0x04000240) & 0x2));
 	ARM7DLDIInit();
 	
-	writePrintfBuffer7("TGDS ARM7.bin Boot OK!");
+	writeDebugBuffer7("TGDS ARM7.bin Boot OK!");
 	/*			TGDS 1.5 Standard ARM7 Init code end	*/
 	
 	SoundPowerON(127);		//volume
