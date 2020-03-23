@@ -389,6 +389,8 @@ void drawMandel(float factor){
 	}
 }
 
+bool keypadDisabled = false;
+
 void menuShow(){
 	clrscr();
 	printf("                              ");
@@ -398,6 +400,12 @@ void menuShow(){
 	printf("(Start): File Browser -> (A) to play audio file");
 	printf("(L): Recent Playlist ");
 	printf("(R): Random audio file playback ");
+	if(keypadDisabled == false){
+		printf("(A): Disable keypad");
+	}
+	else{
+		printf("(A): Enable keypad");
+	}
 	printf("(B): Stop audio playback ");
 	printf("(X): Mandelbrot demo ");
 	printf("(D-PAD: Down): Volume - ");
@@ -412,7 +420,7 @@ void menuShow(){
 		printf("Playing: %s", curChosenBrowseFile);
 	}
 	printf("Current Volume: %d", (int)getVolume());
-	printf("ARM7 Status: %s", getarm7DebugBuffer());
+	//printf("ARM7 Status: %s", getarm7DebugBuffer());
 }
 
 static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){	//MUST be same as the template one at "fileBrowse.h" but added some custom code
@@ -740,183 +748,199 @@ void handleInput(){
 	
 	scanKeys();
 	
-	if(keysPressed() & KEY_TOUCH){
-		//Toggle console between screens
-		bool isDirectFramebuffer = true;
-		bool disableTSCWhenTGDSConsoleTop = false;
-		bool SaveConsoleContext = false;	//no effect because directFB == true
-		u8 * FBSaveContext = NULL;			//no effect because directFB == true
-		TGDSLCDSwap(disableTSCWhenTGDSConsoleTop, isDirectFramebuffer, SaveConsoleContext, FBSaveContext);
-		u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
-		setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
-		scanKeys();
-		while(keysPressed() & KEY_TOUCH){
-			scanKeys();
-			IRQWait(IRQ_HBLANK);
-		}
-	}
-	
-	if (keysPressed() & KEY_UP){
-		struct touchScr touchScrInst;
-		touchScrRead(&touchScrInst);
-		volumeUp(touchScrInst.touchXpx, touchScrInst.touchYpx);
-		menuShow();
-		scanKeys();
-		while(keysPressed() & KEY_UP){
-			scanKeys();
-			IRQWait(IRQ_HBLANK);
-		}
-	}
-	
-	if (keysPressed() & KEY_DOWN){
-		struct touchScr touchScrInst;
-		touchScrRead(&touchScrInst);
-		volumeDown(touchScrInst.touchXpx, touchScrInst.touchYpx);
-		menuShow();
-		scanKeys();
-		while(keysPressed() & KEY_DOWN){
-			scanKeys();
-			IRQWait(IRQ_HBLANK);
-		}
-	}
-	
-	if (keysPressed() & KEY_L){
-		switch(soundData.sourceFmt){
-			case(SRC_NSF):
-			case(SRC_SNDH):
-			case(SRC_SID):
-			case(SRC_GBS):
-			{
-				struct touchScr touchScrInst;
-				touchScrRead(&touchScrInst);
-				soundPrevTrack(touchScrInst.touchXpx, touchScrInst.touchYpx);
-			}
-			break;
-			default:{
-				if(getCurrentDirectoryCount(playlistfileClassListCtx) > 0){
-					if(curFileIndex > 1){
-						curFileIndex-=2;
-					}
-					strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
-					pendingPlay = true;
-				}
-				else{
-					clrscr();
-					printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
-					scanKeys();
-					while(keysPressed() & KEY_L){
-						scanKeys();
-						IRQWait(IRQ_HBLANK);
-					}
-					menuShow();
-				}
-			}
-			break;
-		}
-		
-		scanKeys();
-		while(keysPressed() & KEY_L){
-			scanKeys();
-			IRQWait(IRQ_HBLANK);
-		}
-	}
-	
-	if (keysPressed() & KEY_R){	
-		switch(soundData.sourceFmt){
-			case(SRC_NSF):
-			case(SRC_SNDH):
-			case(SRC_SID):
-			case(SRC_GBS):
-			{
-				struct touchScr touchScrInst;
-				touchScrRead(&touchScrInst);
-				soundNextTrack(touchScrInst.touchXpx, touchScrInst.touchYpx);
-			}
-			break;
-			default:{
-				//Play next (random sorted) song from current folder
-				int lstSize = getCurrentDirectoryCount(playlistfileClassListCtx);
-				if(lstSize > 0){
-					closeSound();
-					
-					strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
-					pendingPlay = true;
-					
-					if(curFileIndex < lstSize){
-						curFileIndex++;
-					}
-				}
-			}
-			break;
-		}
-		
-		scanKeys();
-		while(keysPressed() & KEY_R){
-			scanKeys();
-			IRQWait(IRQ_HBLANK);
-		}
-	}
-	
-	if (keysPressed() & KEY_START){
-		if(soundLoaded == false){
-			disableSleepMode();	//Prevent accidental backlight power off while we choose a file
-			char startPath[MAX_TGDSFILENAME_LENGTH+1];
-			strcpy(startPath,"/");
-			while( ShowBrowserC((char *)startPath, curChosenBrowseFile, &pendingPlay) == true ){	//as long you keep using directories ShowBrowser will be true
-				//navigating DIRs here...
-			}
-			//Shuffle List
-			playlistfileClassListCtx = randomizeFileClassList(playlistfileClassListCtx);	
-		
-			scanKeys();
-			while(keysPressed() & KEY_START){
-				scanKeys();
-				IRQWait(IRQ_HBLANK);
-			}
-			enableSleepMode();
+	if(keysPressed() & KEY_A){
+		if(keypadDisabled == false){
+			keypadDisabled = true;
 		}
 		else{
-			clrscr();
-			printfCoords(0, 6, "Please stop audio playback before listing files. ");
-			
+			keypadDisabled = false;
+		}
+		menuShow();
+		scanKeys();
+		while(keysPressed() & KEY_A){
 			scanKeys();
-			while(keysPressed() & KEY_START){
+			IRQWait(IRQ_HBLANK);
+		}
+	}
+	
+	if(keypadDisabled == false){
+		if(keysPressed() & KEY_TOUCH){
+			//Toggle console between screens
+			bool isDirectFramebuffer = true;
+			bool disableTSCWhenTGDSConsoleTop = false;
+			bool SaveConsoleContext = false;	//no effect because directFB == true
+			u8 * FBSaveContext = NULL;			//no effect because directFB == true
+			TGDSLCDSwap(disableTSCWhenTGDSConsoleTop, isDirectFramebuffer, SaveConsoleContext, FBSaveContext);
+			u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
+			setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
+			scanKeys();
+			while(keysPressed() & KEY_TOUCH){
 				scanKeys();
 				IRQWait(IRQ_HBLANK);
 			}
-			menuShow();
-		}
-	}
-	
-	if (keysPressed() & KEY_B){
-		//Audio stop here....
-		closeSound();
-		menuShow();
-		scanKeys();
-		while(keysPressed() & KEY_B){
-			scanKeys();
-			IRQWait(IRQ_HBLANK);
-		}
-	}
-	
-	if (keysPressed() & KEY_X){
-		if(drawMandelbrt == false){
-			drawMandelbrt = true;
-			disableSleepMode();
-			float factor = 1.0; 
-			drawMandel(factor);
-			//render TGDSLogo from a LZSS compressed file
-			RenderTGDSLogoSubEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
-			enableSleepMode();
 		}
 		
-		scanKeys();
-		while(keysPressed() & KEY_X){
+		if (keysPressed() & KEY_UP){
+			struct touchScr touchScrInst;
+			touchScrRead(&touchScrInst);
+			volumeUp(touchScrInst.touchXpx, touchScrInst.touchYpx);
+			menuShow();
 			scanKeys();
-			IRQWait(IRQ_HBLANK);
+			while(keysPressed() & KEY_UP){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
+		}
+		
+		if (keysPressed() & KEY_DOWN){
+			struct touchScr touchScrInst;
+			touchScrRead(&touchScrInst);
+			volumeDown(touchScrInst.touchXpx, touchScrInst.touchYpx);
+			menuShow();
+			scanKeys();
+			while(keysPressed() & KEY_DOWN){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
+		}
+		
+		if (keysPressed() & KEY_L){
+			switch(soundData.sourceFmt){
+				case(SRC_NSF):
+				case(SRC_SNDH):
+				case(SRC_SID):
+				case(SRC_GBS):
+				{
+					struct touchScr touchScrInst;
+					touchScrRead(&touchScrInst);
+					soundPrevTrack(touchScrInst.touchXpx, touchScrInst.touchYpx);
+				}
+				break;
+				default:{
+					if(getCurrentDirectoryCount(playlistfileClassListCtx) > 0){
+						if(curFileIndex > 1){
+							curFileIndex-=2;
+						}
+						strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
+						pendingPlay = true;
+					}
+					else{
+						clrscr();
+						printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
+						scanKeys();
+						while(keysPressed() & KEY_L){
+							scanKeys();
+							IRQWait(IRQ_HBLANK);
+						}
+						menuShow();
+					}
+				}
+				break;
+			}
+			
+			scanKeys();
+			while(keysPressed() & KEY_L){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
+		}
+		
+		if (keysPressed() & KEY_R){	
+			switch(soundData.sourceFmt){
+				case(SRC_NSF):
+				case(SRC_SNDH):
+				case(SRC_SID):
+				case(SRC_GBS):
+				{
+					struct touchScr touchScrInst;
+					touchScrRead(&touchScrInst);
+					soundNextTrack(touchScrInst.touchXpx, touchScrInst.touchYpx);
+				}
+				break;
+				default:{
+					//Play next (random sorted) song from current folder
+					int lstSize = getCurrentDirectoryCount(playlistfileClassListCtx);
+					if(lstSize > 0){
+						closeSound();
+						
+						strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
+						pendingPlay = true;
+						
+						if(curFileIndex < lstSize){
+							curFileIndex++;
+						}
+					}
+				}
+				break;
+			}
+			
+			scanKeys();
+			while(keysPressed() & KEY_R){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
+		}
+		
+		if (keysPressed() & KEY_START){
+			if(soundLoaded == false){
+				disableSleepMode();	//Prevent accidental backlight power off while we choose a file
+				char startPath[MAX_TGDSFILENAME_LENGTH+1];
+				strcpy(startPath,"/");
+				while( ShowBrowserC((char *)startPath, curChosenBrowseFile, &pendingPlay) == true ){	//as long you keep using directories ShowBrowser will be true
+					//navigating DIRs here...
+				}
+				//Shuffle List
+				playlistfileClassListCtx = randomizeFileClassList(playlistfileClassListCtx);	
+			
+				scanKeys();
+				while(keysPressed() & KEY_START){
+					scanKeys();
+					IRQWait(IRQ_HBLANK);
+				}
+				enableSleepMode();
+			}
+			else{
+				clrscr();
+				printfCoords(0, 6, "Please stop audio playback before listing files. ");
+				
+				scanKeys();
+				while(keysPressed() & KEY_START){
+					scanKeys();
+					IRQWait(IRQ_HBLANK);
+				}
+				menuShow();
+			}
+		}
+		
+		if (keysPressed() & KEY_B){
+			//Audio stop here....
+			closeSound();
+			menuShow();
+			scanKeys();
+			while(keysPressed() & KEY_B){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
+		}
+		
+		if (keysPressed() & KEY_X){
+			if(drawMandelbrt == false){
+				drawMandelbrt = true;
+				disableSleepMode();
+				float factor = 1.0; 
+				drawMandel(factor);
+				//render TGDSLogo from a LZSS compressed file
+				RenderTGDSLogoSubEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
+				enableSleepMode();
+			}
+			
+			scanKeys();
+			while(keysPressed() & KEY_X){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
 		}
 	}
-	
 	//Audio playback here....
 	updateStreamLoop();	//runs once per hblank line
 }
@@ -971,7 +995,8 @@ int main(int _argc, sint8 **_argv) {
 	enableSleepMode();
 	
 	menuShow();
-
+	keypadDisabled = false;
+	
 	while (1){
 		handleInput();
 		if(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){

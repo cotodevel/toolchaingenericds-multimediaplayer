@@ -46,6 +46,8 @@ extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 extern struct FileClassList * menuIteratorfileClassListCtx;			//Menu Directory Iterator
 extern struct FileClassList * playlistfileClassListCtx;				//Playlist Directory Iterator
 
+extern bool keypadDisabled;
+
 #ifdef __cplusplus
 }
 #endif

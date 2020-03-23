@@ -14,6 +14,7 @@ TGDS Audio Player, supported formats are:
 Button (Start): File Browser -> (A) to play audio file
 Button (L): Recent Playlist 
 Button (R): Random audio file playback
+Button (A): Enable/Disable keypad
 Button (B): Stop audio playback
 Button (X): Mandelbrot demo
 Button (D-PAD Down):		Volume Down (-)
