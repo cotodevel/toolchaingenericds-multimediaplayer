@@ -420,7 +420,7 @@ void menuShow(){
 		printf("Playing: %s", curChosenBrowseFile);
 	}
 	printf("Current Volume: %d", (int)getVolume());
-	//printf("ARM7 Status: %s", getarm7DebugBuffer());
+	//printarm7DebugBuffer();
 }
 
 static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){	//MUST be same as the template one at "fileBrowse.h" but added some custom code
