@@ -95,7 +95,7 @@ VIRTUAL_FILE* _mm_fopen(CHAR* fname,CHAR* attrib)
 			_mm_errno = MMERR_OPENING_FILE;
 			if(_mm_errorhandler) _mm_errorhandler();
 			
-			free(vfp);
+			safeFree(vfp);
 			vfp = NULL;
 			return vfp;
 		}
@@ -125,11 +125,11 @@ int _mm_fclose(VIRTUAL_FILE *vfp)
 		return 0;
 	
 	if(vfp->buffer != NULL)
-		free(vfp->buffer);
+		safeFree(vfp->buffer);
 	vfp->buffer = NULL;
 	
 	if(vfp != NULL)
-		free(vfp);
+		safeFree(vfp);
 	vfp = NULL;
 	
 	return 1;
@@ -267,7 +267,7 @@ MREADER *_mm_new_file_reader(VIRTUAL_FILE* fp)
 
 void _mm_delete_file_reader (MREADER* reader)
 {
-	if(reader) free(reader);
+	if(reader) safeFree(reader);
 }
 
 /*========== File Writer */

@@ -8,6 +8,18 @@
 #include <stdlib.h>
 #include <math.h>
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
+extern void *safeMalloc(size_t size);
+extern void safeFree(void *ptr);
+extern void *safeRealloc(void *ptr, size_t size);
+
+#ifdef __cplusplus
+}
+#endif
+
 /* Copyright (C) 2003-2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
 General Public License as published by the Free Software Foundation; either
@@ -53,7 +65,7 @@ Blip_Buffer::Blip_Buffer()
 Blip_Buffer::~Blip_Buffer()
 {
 	if ( buffer_size_ != silent_buf_size )
-		free( buffer_ );
+		safeFree( buffer_ );
 }
 
 Silent_Blip_Buffer::Silent_Blip_Buffer()
@@ -97,7 +109,7 @@ Blip_Buffer::blargg_err_t Blip_Buffer::set_sample_rate( long new_rate, int msec 
 	
 	if ( buffer_size_ != new_size )
 	{
-		void* p = realloc( buffer_, (new_size + blip_buffer_extra_) * sizeof *buffer_ );
+		void* p = safeRealloc( buffer_, (new_size + blip_buffer_extra_) * sizeof *buffer_ );
 		if ( !p )
 			return "Out of memory";
 		buffer_ = (buf_t_*) p;

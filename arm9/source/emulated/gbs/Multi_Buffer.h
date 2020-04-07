@@ -7,6 +7,18 @@
 #include "blargg_common.h"
 #include "Blip_Buffer.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
+extern void *safeMalloc(size_t size);
+extern void safeFree(void *ptr);
+extern void *safeRealloc(void *ptr, size_t size);
+
+#ifdef __cplusplus
+}
+#endif
+
 // Interface to one or more Blip_Buffers mapped to one or more channels
 // consisting of left, center, and right buffers.
 class Multi_Buffer {

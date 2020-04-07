@@ -9,6 +9,20 @@
 #include <assert.h>
 #include <limits.h>
 
+#include "misc.h"
+
+#ifdef __cplusplus
+extern "C"{
+#endif
+
+extern void *safeMalloc(size_t size);
+extern void safeFree(void *ptr);
+extern void *safeRealloc(void *ptr, size_t size);
+
+#ifdef __cplusplus
+}
+#endif
+
 #undef BLARGG_COMMON_H
 // allow blargg_config.h to #include blargg_common.h
 #include "blargg_config.h"
@@ -38,7 +52,7 @@ public:
 	T* end() const { return begin_ + size_; }
 	blargg_err_t resize( size_t n )
 	{
-		void* p = realloc( begin_, n * sizeof (T) );
+		void* p = safeRealloc( begin_, n * sizeof (T) );
 		if ( !p && n )
 			return "Out of memory";
 		begin_ = (T*) p;
@@ -60,8 +74,8 @@ public:
 		#define BLARGG_THROWS( spec ) throw spec
 	#endif
 	#define BLARGG_DISABLE_NOTHROW \
-		void* operator new ( size_t s ) BLARGG_THROWS(()) { return malloc( s ); }\
-		void operator delete ( void* p ) { free( p ); }
+		void* operator new ( size_t s ) BLARGG_THROWS(()) { return safeMalloc( s ); }\
+		void operator delete ( void* p ) { safeFree( p ); }
 	#define BLARGG_NEW new
 #else
 	#include <new>

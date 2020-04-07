@@ -32,6 +32,7 @@ USA
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
 #include "click_raw.h"
 #include "global_settings.h"
+#include "xmem.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * menuIteratorfileClassListCtx = NULL;			//Menu Directory Iterator
@@ -977,6 +978,14 @@ int main(int _argc, sint8 **_argv) {
 	
 	//Remove logo and restore Main Engine registers
 	//restoreFBModeMainEngine();
+	
+	//Init XMEM (let's see how good this one behaves...)
+	u32 xmemsize = XMEMTOTALSIZE;
+	xmemsize = xmemsize - (xmemsize/XMEM_BS) - 1024;
+	xmemsize = xmemsize - (xmemsize%1024);
+	XmemSetup(xmemsize, XMEM_BS);
+	XmemInit();
+	
 	
 	//Init sound
 	DisableIrq(IRQ_VCOUNT);

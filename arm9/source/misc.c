@@ -8,6 +8,8 @@
 #include "main.h"
 #include "dswnifi_lib.h"
 
+#include "xmem.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -15,45 +17,33 @@
 char fileName[MAX_TGDSFILENAME_LENGTH+1];
 char curDir[MAX_TGDSFILENAME_LENGTH+1];
 
-void *safeMalloc(size_t size)
-{
-	void *tmp = malloc(size);
-	if(!tmp)
-	{
-		//rewind memory
-		//sbrk(-(512*1024));	//whatever, just rewind the malloc
-		//tmp = calloc(1, size);
+void *safeMalloc(size_t size){
+	void *ptr=(void *)Xmalloc(size);
+	if(ptr==NULL){
+		printf("safemalloc(%d) fail allocate error. ",size);
+		return(NULL);
 	}
-	else{
-		memset(tmp, 0, size);
-	}
-	return tmp;
+	return ptr;
 }
 
 void *safeRealloc(void *ptr, size_t size){
-	void *tmp = realloc(ptr, size);
-	if(!tmp)
-	{
-		//rewind memory
-		//sbrk(-(512*1024));	//whatever, just rewind the malloc 
-		//tmp = calloc(1, size);
+	if(ptr!=NULL){
+		safeFree(ptr);
 	}
-	return tmp;
+	return safeMalloc(size);
 }
 
 void* safeCalloc (size_t num, size_t size){
-	void *tmp = calloc(num, size);
-	if(!tmp)
-	{
-		//rewind memory
-		//sbrk(-(768*1024));	//whatever, just rewind the malloc so we have 1.7~ MB free.
-		//tmp = calloc(num, size);
+	void *ptr=(void *)Xcalloc((const int)size, (const int)num);
+	if(ptr==NULL){
+		printf("safecalloc(%d) fail allocate error. ",size);
+		return(NULL);
 	}
-	return tmp;
+	return ptr;
 }
 
-void safeFree(void *p){
-	free(p);
+void safeFree(void *ptr){
+	Xfree((const void *)ptr);
 }
 
 void enableVBlank()
