@@ -38,6 +38,7 @@ USA
 #include "soundTGDS.h"
 #include "keypadTGDS.h"
 #include "posixHandleTGDS.h"
+#include "dmaTGDS.h"
 
 u32 sampleLen = 0;
 int multRate = 1;
@@ -56,30 +57,23 @@ int pollCount = 100; //start with a read
 
 void mallocData(int size)
 {
-    // this no longer uses malloc due to using vram bank d.
-	strpcmL0 = VRAM_D;
-	strpcmL1 = strpcmL0 + (size >> 1);
-	strpcmR0 = strpcmL1 + (size >> 1);
-	strpcmR1 = strpcmR0 + (size >> 1);
+	strpcmL0 = (s16 *)TGDSARM7Malloc(size);
+	strpcmL1 = (s16 *)TGDSARM7Malloc(size);
+	strpcmR0 = (s16 *)TGDSARM7Malloc(size);
+	strpcmR1 = (s16 *)TGDSARM7Malloc(size);
 	
 	// clear vram d bank to not have sound leftover
-	int i = 0;
-	
-	for(i=0;i<(size);++i)
-	{
-		strpcmL0[i] = 0;
-	}
-	
-	for(i=0;i<(size);++i)
-	{
-		strpcmR0[i] = 0;
-	}
+	dmaFillHalfWord(3, 0, (uint32)VRAM_D, (uint32)(128*1024));
 }
 
 void freeData()
 {	
-	//free(strpcmR0);
+	TGDSARM7Free((u8*)strpcmL0);
+	TGDSARM7Free((u8*)strpcmL1);
+	TGDSARM7Free((u8*)strpcmR0);
+	TGDSARM7Free((u8*)strpcmR1);
 }
+
 void setSwapChannel()
 {
 	s16 *buf;
@@ -114,12 +108,6 @@ void SetupSound()
 	
 	mallocData(sampleLen * 2 * multRate);
     
-	TIMERXDATA(0) = SOUND_FREQ((sndRate * multRate));
-	TIMERXCNT(0) = TIMER_DIV_1 | TIMER_ENABLE;
-  
-	TIMERXDATA(1) = 0x10000 - (sampleLen * 2 * multRate);
-	TIMERXCNT(1) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
-	
 	//irqSet(IRQ_TIMER1, TIMER1Handler);
 	int ch;
 	
@@ -137,6 +125,13 @@ void SetupSound()
 	
 	lastL = 0;
 	lastR = 0;
+	
+	TIMERXDATA(0) = SOUND_FREQ((sndRate * multRate));
+	TIMERXCNT(0) = TIMER_DIV_1 | TIMER_ENABLE;
+  
+	//Timer1 go
+	TIMERXDATA(1) = 0x10000 - (sampleLen * 2 * multRate);
+	TIMERXCNT(1) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
 }
 
 void StopSound() 
@@ -154,7 +149,6 @@ void StopSound()
 	//irqSet(IRQ_VBLANK, VblankHandler);
 	//irqEnable(IRQ_VBLANK);
 	EnableIrq(IRQ_VBLANK);
-	
 }
 
 
