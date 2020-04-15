@@ -34,13 +34,15 @@ AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(){
 	AllocatorInstance * customMemoryAllocator = &CustomAllocatorInstance;
 	memset((u8*)customMemoryAllocator, 0, sizeof(CustomAllocatorInstance));
 	
+	customMemoryAllocator->ARM9MallocStartaddress = (u32)sbrk(0);
+	customMemoryAllocator->memoryToAllocate = (2000*1024);	//2.0MB Alloc
 	customMemoryAllocator->CustomTGDSMalloc9 = (TGDSARM9MallocHandler)&Xmalloc;
 	customMemoryAllocator->CustomTGDSCalloc9 = (TGDSARM9CallocHandler)&Xcalloc;
 	customMemoryAllocator->CustomTGDSFree9 = (TGDSARM9FreeHandler)&Xfree;
 	customMemoryAllocator->CustomTGDSMallocFreeMemory9 = (TGDSARM9MallocFreeMemoryHandler)&XMEM_FreeMem;
 	
 	//Init XMEM (let's see how good this one behaves...)
-	u32 xmemsize = XMEMTOTALSIZE;
+	u32 xmemsize = XMEMTOTALSIZE = customMemoryAllocator->memoryToAllocate;
 	xmemsize = xmemsize - (xmemsize/XMEM_BS) - 1024;
 	xmemsize = xmemsize - (xmemsize%1024);
 	XmemSetup(xmemsize, XMEM_BS);
