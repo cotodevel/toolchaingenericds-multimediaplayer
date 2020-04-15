@@ -33,6 +33,8 @@ USA
 #include "click_raw.h"
 #include "global_settings.h"
 #include "xmem.h"
+#include "posixHandleTGDS.h"
+#include "TGDSMemoryAllocator.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * menuIteratorfileClassListCtx = NULL;			//Menu Directory Iterator
@@ -954,6 +956,7 @@ int main(int _argc, sint8 **_argv) {
 	bool isTGDSCustomConsole = false;	//set default console or custom console: default console
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
+	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup());
 	
 	sint32 fwlanguage = (sint32)getLanguage();
 	
@@ -978,14 +981,6 @@ int main(int _argc, sint8 **_argv) {
 	
 	//Remove logo and restore Main Engine registers
 	//restoreFBModeMainEngine();
-	
-	//Init XMEM (let's see how good this one behaves...)
-	u32 xmemsize = XMEMTOTALSIZE;
-	xmemsize = xmemsize - (xmemsize/XMEM_BS) - 1024;
-	xmemsize = xmemsize - (xmemsize%1024);
-	XmemSetup(xmemsize, XMEM_BS);
-	XmemInit();
-	
 	
 	//Init sound
 	DisableIrq(IRQ_VCOUNT);

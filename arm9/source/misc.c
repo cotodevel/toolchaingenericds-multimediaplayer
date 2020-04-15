@@ -7,8 +7,7 @@
 #include "ipcfifoTGDSUser.h"
 #include "main.h"
 #include "dswnifi_lib.h"
-
-#include "xmem.h"
+#include "TGDSMemoryAllocator.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -18,7 +17,7 @@ char fileName[MAX_TGDSFILENAME_LENGTH+1];
 char curDir[MAX_TGDSFILENAME_LENGTH+1];
 
 void *safeMalloc(size_t size){
-	void *ptr=(void *)Xmalloc(size);
+	void *ptr=(void *)TGDSARM9Malloc(size);
 	if(ptr==NULL){
 		printf("safemalloc(%d) fail allocate error. ",size);
 		return(NULL);
@@ -34,7 +33,7 @@ void *safeRealloc(void *ptr, size_t size){
 }
 
 void* safeCalloc (size_t num, size_t size){
-	void *ptr=(void *)Xcalloc((const int)size, (const int)num);
+	void *ptr=(void *)TGDSARM9Calloc((const int)size, (const int)num);
 	if(ptr==NULL){
 		printf("safecalloc(%d) fail allocate error. ",size);
 		return(NULL);
@@ -43,7 +42,7 @@ void* safeCalloc (size_t num, size_t size){
 }
 
 void safeFree(void *ptr){
-	Xfree((const void *)ptr);
+	TGDSARM9Free((const void *)ptr);
 }
 
 void enableVBlank()

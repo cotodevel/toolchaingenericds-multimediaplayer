@@ -82,6 +82,7 @@ export DIRS_ARM9_SRC = data/	\
 			source/	\
 			source/interrupts/	\
 			source/gui/	\
+			source/TGDSMemoryAllocator/	\
 			source/aac/	\
 			source/aac/pub/	\
 			source/aac/real/	\
@@ -112,6 +113,7 @@ export DIRS_ARM9_HEADER = data/	\
 			build/	\
 			include/	\
 			source/gui/	\
+			source/TGDSMemoryAllocator/	\
 			source/aac/	\
 			source/aac/pub/	\
 			source/aac/real/	\
