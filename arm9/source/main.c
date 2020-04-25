@@ -400,14 +400,14 @@ void menuShow(){
 	printf("Supported Formats: WAV/MP3/AAC/Ogg");
 	printf("/FLAC/NSF/SPC/GBS/+ others");
 	printf("                              ");
-	printf("(Start): File Browser -> (A) to play audio file");
+	printf("(Start): File Browser, (A): play audio file");
 	printf("(L): Recent Playlist ");
 	printf("(R): Random audio file playback ");
 	if(keypadDisabled == false){
-		printf("(A): Disable keypad");
+		printf("(A): Keypad Enabled. >%d", TGDSPrintfColor_Green);
 	}
 	else{
-		printf("(A): Enable keypad");
+		printf("(A): Keypad Disabled. >%d", TGDSPrintfColor_Red);
 	}
 	printf("(B): Stop audio playback ");
 	printf("(X): Mandelbrot demo ");
@@ -417,10 +417,10 @@ void menuShow(){
 	printf("(Touchscreen): Swap Screens");
 	printf("Available heap memory: %d", getMaxRam());
 	if(soundLoaded == false){
-		printf("Playback: Stopped.");
+		printf("Playback: Stopped. >%d", TGDSPrintfColor_Brown);
 	}
 	else{
-		printf("Playing: %s", curChosenBrowseFile);
+		printf("Playing: %s >%d", curChosenBrowseFile, TGDSPrintfColor_Yellow);
 	}
 	printf("Current Volume: %d", (int)getVolume());
 	//printarm7DebugBuffer();
