@@ -63,7 +63,17 @@ void mallocData(int size)
 	strpcmR1 = (s16 *)TGDSARM7Malloc(size);
 	
 	// clear vram d bank to not have sound leftover
-	dmaFillHalfWord(3, 0, (uint32)VRAM_D, (uint32)(128*1024));
+	int i = 0;
+	
+	for(i=0;i<(size);++i)
+	{
+		strpcmL0[i] = 0;
+	}
+	
+	for(i=0;i<(size);++i)
+	{
+		strpcmR0[i] = 0;
+	}
 }
 
 void freeData()
