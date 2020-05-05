@@ -2203,27 +2203,24 @@ bool loadSound(char *fName)
 			return false;		
 		}
 		
-		fseek(fp, (headerChunk.chunkSize + 8) + 12, 0); // seek to next chunk
+		//rewind
+		fseek(fp, 0, SEEK_SET);
+		int wavStartOffset = parseWaveData(fp);
 		
-		char fmtHeader[5];
-		
-		fread(fmtHeader, 1, 4, fp);
-		fmtHeader[4] = 0;
-		
-		if(strcmp(fmtHeader, "data") != 0)
+		if(wavStartOffset < 0)
 		{
-			// wrong chunk next, sorry, doing strict only
-			
+			// wav block not found
 			fclose(fp);
 			return false;
 		}
 		
-		uint len = 0;
+		u32 len = 0;
 		fread(&len, 1, sizeof(len), fp);
+		wavStartOffset+=4;
 		
 		soundData.len = len;
 		soundData.loc = 0;
-		soundData.dataOffset = ftell(fp);		
+		soundData.dataOffset = wavStartOffset;		
 		soundData.filePointer = fp;
 		bufCursor = 0;
 		
@@ -3788,4 +3785,41 @@ void setSoundFrequency(u32 freq)
 void setSoundInterpolation(u32 mult)
 {
 	SendFIFOWords(ARM7COMMAND_SOUND_SETMULT, mult);
+}
+
+//Returns the next offset right after "data". Which is the raw Waveform length (4 bytes) and then the raw Waveform
+int parseWaveData(FILE * fh){
+    u32 bytes=0;
+	int fileOffset = 0;
+	
+	// Read first 4 bytes.
+	// (Should be RIFF descriptor.)
+	if (fread((u8*)&bytes, 1, 4, fh) < 0) {
+		return -1;
+	}
+	
+	fileOffset+=4;
+	
+	// First subchunk will always be at byte 12.
+	// (There is no other dependable constant.)
+	fseek(fh, 8, SEEK_CUR);
+	fileOffset+=8;
+	
+	for (;;) {
+		// Read chunk length.
+		if (fread((u8*)&bytes, 1, 4, fh) < 0) {
+			return -1;
+		}
+		
+		//64[3] 61[2] 74[1] 61[0]	== "data"
+		if((u32)bytes == (u32)0x61746164){
+			// Skip the length of this chunk.
+			// Next bytes should be another descriptor or EOF.
+			//int length = (((bytes>>0) & 0xff) | (((bytes>>8) & 0xff) << 8) | (((bytes>>16) & 0xff) << 16) | (((bytes>>24) & 0xff) << 24));
+			//fseek(fh, length, SEEK_CUR);
+			return (fileOffset+4);
+		}
+		fileOffset+=4;
+	}
+	return -1;
 }

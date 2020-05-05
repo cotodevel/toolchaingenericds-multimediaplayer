@@ -30,8 +30,8 @@ USA
 	////////[Custom Memory implementation ]////////
 
 //Definition that overrides the weaksymbol expected from toolchain to init ARM9's TGDS memory allocation
-AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(){
-	AllocatorInstance * customMemoryAllocator = &CustomAllocatorInstance;
+struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(){
+	struct AllocatorInstance * customMemoryAllocator = &CustomAllocatorInstance;
 	memset((u8*)customMemoryAllocator, 0, sizeof(CustomAllocatorInstance));
 	
 	customMemoryAllocator->ARM9MallocStartaddress = (u32)sbrk(0);

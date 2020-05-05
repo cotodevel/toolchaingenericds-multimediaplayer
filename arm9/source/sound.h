@@ -241,6 +241,7 @@ extern sndData soundData;
 extern void updateStreamLoop();
 extern void checkEndSound();
 extern bool soundLoaded;
+extern int parseWaveData(FILE * fh);
 
 #ifdef __cplusplus
 }
