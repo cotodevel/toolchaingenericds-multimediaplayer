@@ -41,15 +41,6 @@ USA
 #include "click_raw.h"
 #include "soundTGDS.h"
 
-static inline s16 checkClipping(int data)
-{
-	if(data > 32767)
-		return 32767;
-	if(data < -32768)
-		return -32768;
-	
-	return data;
-}
 
 #endif
 
@@ -70,118 +61,6 @@ void HandleFifoNotEmptyWeakRef(uint32 data0, uint32 data1){
 	switch (data0) {
 		//NDS7: 
 		#ifdef ARM7
-		//Sound Player Context / Mic
-		case ARM7COMMAND_SOUND_SETLEN:{
-			sampleLen = (data1);
-		}
-		break;
-		case ARM7COMMAND_SOUND_SETRATE:{
-			sndRate = (data1);
-		}
-		break;
-		case ARM7COMMAND_SOUND_SETMULT:{
-			multRate = (data1);
-		}
-		break;
-		case ARM7COMMAND_START_SOUND:{
-			SetupSound();
-		}
-		break;
-		case ARM7COMMAND_STOP_SOUND:{
-			StopSound();
-		}
-		break;
-		case ARM7COMMAND_SOUND_COPY:
-		{
-			s16 *lbuf = NULL;
-			s16 *rbuf = NULL;
-			
-			if(!sndCursor)
-			{
-				lbuf = strpcmL0;
-				rbuf = strpcmR0;
-			}
-			else
-			{
-				lbuf = strpcmL1;
-				rbuf = strpcmR1;
-			}
-			
-			u32 i;
-			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
-			int vMul = soundPlayerCtx->volume;
-			int lSample = 0;
-			int rSample = 0;
-			s16 *arm9LBuf = soundPlayerCtx->arm9L;
-			s16 *arm9RBuf = soundPlayerCtx->arm9R;
-			
-			switch(multRate)
-			{
-				case 1:{
-					for(i=0;i<sampleLen;++i)
-					{
-						lSample = ((*arm9LBuf++) * vMul) >> 2;
-						rSample = ((*arm9RBuf++) * vMul) >> 2;
-						
-						*lbuf++ = checkClipping(lSample);
-						*rbuf++ = checkClipping(rSample);
-					}
-				}	
-				break;
-				case 2:{
-					for(i=0;i<sampleLen;++i)
-					{
-						lSample = ((*arm9LBuf++) * vMul) >> 2;
-						rSample = ((*arm9RBuf++) * vMul) >> 2;
-						
-						int midLSample = (lastL + lSample) >> 1;
-						int midRSample = (lastR + rSample) >> 1;
-						
-						*lbuf++ = checkClipping(midLSample);
-						*rbuf++ = checkClipping(midRSample);
-						*lbuf++ = checkClipping(lSample);
-						*rbuf++ = checkClipping(rSample);
-						
-						lastL = lSample;
-						lastR = rSample;
-					}
-				}	
-				break;
-				case 4:{
-					// unrolling this one out completely because it's soo much slower
-					
-					for(i=0;i<sampleLen;++i)
-					{
-						lSample = ((*arm9LBuf++) * vMul) >> 2;
-						rSample = ((*arm9RBuf++) * vMul) >> 2;
-						
-						int midLSample = (lastL + lSample) >> 1;
-						int midRSample = (lastR + rSample) >> 1;
-						
-						int firstLSample = (lastL + midLSample) >> 1;
-						int firstRSample = (lastR + midRSample) >> 1;
-						
-						int secondLSample = (midLSample + lSample) >> 1;
-						int secondRSample = (midRSample + rSample) >> 1;
-						
-						*lbuf++ = checkClipping(firstLSample);
-						*rbuf++ = checkClipping(firstRSample);
-						*lbuf++ = checkClipping(midLSample);
-						*rbuf++ = checkClipping(midRSample);
-						*lbuf++ = checkClipping(secondLSample);
-						*rbuf++ = checkClipping(secondRSample);
-						*lbuf++ = checkClipping(lSample);
-						*rbuf++ = checkClipping(rSample);							
-						
-						lastL = lSample;
-						lastR = rSample;							
-					}
-				}	
-				break;
-			}
-			VblankUser();
-		}
-		break;
 		case ARM7COMMAND_SOUND_DEINTERLACE:
 		{
 			s16 *lbuf = NULL;
@@ -197,7 +76,7 @@ void HandleFifoNotEmptyWeakRef(uint32 data0, uint32 data1){
 				lbuf = strpcmL1;
 				rbuf = strpcmR1;
 			}
-			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			struct soundPlayerContext * soundPlayerCtx = soundIPC();
 			s16 *iSrc = soundPlayerCtx->interlaced;
 			u32 i = 0;
 			int vMul = soundPlayerCtx->volume;
@@ -308,7 +187,7 @@ void HandleFifoNotEmptyWeakRef(uint32 data0, uint32 data1){
 		break;
 		case ARM7COMMAND_PSG_COMMAND:
 		{				
-			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			struct soundPlayerContext * soundPlayerCtx = soundIPC();
 			SCHANNEL_CR(soundPlayerCtx->psgChannel) = soundPlayerCtx->cr;
 			SCHANNEL_TIMER(soundPlayerCtx->psgChannel) = soundPlayerCtx->timer;
 		}
@@ -319,32 +198,7 @@ void HandleFifoNotEmptyWeakRef(uint32 data0, uint32 data1){
 		//NDS9: 
 		#ifdef ARM9
 		case ARM9COMMAND_UPDATE_BUFFER:{
-			updateRequested = true;
-				
-			// check for formats that can handle not being on an interrupt (better stability)
-			// (these formats are generally decoded faster)
-			switch(soundData.sourceFmt)
-			{
-				case SRC_MP3:
-					// mono sounds are slower than stereo for some reason
-					// so we force them to update faster
-					if(soundData.channels != 1)
-						return;
-					
-					break;
-				case SRC_WAV:
-				case SRC_FLAC:
-				case SRC_STREAM_MP3:
-				case SRC_STREAM_AAC:
-				case SRC_SID:
-					// these will be played next time it hits in the main screen
-					// theres like 4938598345 of the updatestream checks in the 
-					// main code
-					return;
-			}
 			
-			// call immediately if the format needs it
-			updateStreamLoop();
 		}	
 		break;
 		#endif
@@ -357,3 +211,35 @@ __attribute__((section(".itcm")))
 #endif
 void HandleFifoEmptyWeakRef(uint32 data0, uint32 data1){
 }
+
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+void updateSoundContextStreamPlaybackUser(u32 srcFrmt){	//ARM9COMMAND_UPDATE_BUFFER User Req
+	updateRequested = true;
+			
+	// check for formats that can handle not being on an interrupt (better stability)
+	// (these formats are generally decoded faster)
+	switch(soundData.sourceFmt)
+	{
+		case SRC_MP3:
+			// mono sounds are slower than stereo for some reason
+			// so we force them to update faster
+			if(soundData.channels != 1)
+				return;
+			
+			break;
+		case SRC_FLAC:
+		case SRC_STREAM_MP3:
+		case SRC_STREAM_AAC:
+		case SRC_SID:
+			// these will be played next time it hits in the main screen
+			// theres like 4938598345 of the updatestream checks in the 
+			// main code
+			return;
+	}
+	
+	// call immediately if the format needs it
+	updateStreamLoop();
+}
+#endif

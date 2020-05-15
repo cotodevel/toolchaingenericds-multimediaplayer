@@ -27,23 +27,6 @@
 #include "api68.h"
 #include "id3.h"
 
-enum {
-	SRC_NONE,
-	SRC_WAV,
-	SRC_MIKMOD,
-	SRC_MP3,
-	SRC_OGG,
-	SRC_AAC,
-	SRC_FLAC,
-	SRC_SID,
-	SRC_NSF,
-	SRC_SPC,
-	SRC_SNDH,
-	SRC_GBS,
-	SRC_STREAM_MP3,
-	SRC_STREAM_OGG,
-	SRC_STREAM_AAC
-};
 
 #define ARM9COPY 0
 #define ARM7COPY 1
@@ -216,9 +199,7 @@ extern int getCurrentStatus();
 
 // for streaming record interrupt
 //Audio commands: drive Sound Player Context (Note: different from soundTGDS.h -> Sound Sample Context)
-extern void setSoundLength(u32 len);
-extern void setSoundFrequency(u32 freq);
-extern void setSoundInterpolation(u32 mult);
+extern void setSoundLengthDSO(u32 len);
 extern void copyChunk();
 extern void setSoundFrequency(u32 freq);
 
@@ -241,7 +222,6 @@ extern sndData soundData;
 extern void updateStreamLoop();
 extern void checkEndSound();
 extern bool soundLoaded;
-extern int parseWaveData(FILE * fh);
 
 #ifdef __cplusplus
 }

@@ -40,20 +40,11 @@ USA
 #include "posixHandleTGDS.h"
 #include "dmaTGDS.h"
 
-u32 sampleLen = 0;
-int multRate = 1;
-int sndRate = 0;
-u32 sndCursor = 0;
-
-s16 *strpcmL0 = NULL;
-s16 *strpcmL1 = NULL;
-s16 *strpcmR0 = NULL;
-s16 *strpcmR1 = NULL;
-
-int lastL = 0;
-int lastR = 0;
-
-int pollCount = 100; //start with a read
+//These buffers are project specific for ARM7 WAV SoundStream
+u16 strpcmL0Buf[WAV_READ_SIZE];
+u16 strpcmL1Buf[WAV_READ_SIZE];
+u16 strpcmR0Buf[WAV_READ_SIZE];
+u16 strpcmR1Buf[WAV_READ_SIZE];
 
 void mallocData(int size)
 {
@@ -84,33 +75,10 @@ void freeData()
 	TGDSARM7Free((u8*)strpcmR1);
 }
 
-void setSwapChannel()
-{
-	s16 *buf;
-  
-	if(!sndCursor)
-		buf = strpcmL0;
-	else
-		buf = strpcmL1;
-    
-	// Left channel
-	SCHANNEL_SOURCE((sndCursor << 1)) = (uint32)buf;
-	SCHANNEL_CR((sndCursor << 1)) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0) | SOUND_16BIT;
-    	
-	if(!sndCursor)
-		buf = strpcmR0;
-	else
-		buf = strpcmR1;
-	
-	// Right channel
-	SCHANNEL_SOURCE((sndCursor << 1) + 1) = (uint32)buf;
-	SCHANNEL_CR((sndCursor << 1) + 1) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0x3FF) | SOUND_16BIT;
-  
-	sndCursor = 1 - sndCursor;
-}
 
-void SetupSound()
+void SetupSoundUser(u32 srcFrmtInst)
 {
+	srcFrmt = srcFrmtInst;
     sndCursor = 0;
 	if(multRate != 1 && multRate != 2 && multRate != 4){
 		multRate = 1;
@@ -136,19 +104,20 @@ void SetupSound()
 	lastL = 0;
 	lastR = 0;
 	
-	TIMERXDATA(0) = SOUND_FREQ((sndRate * multRate));
-	TIMERXCNT(0) = TIMER_DIV_1 | TIMER_ENABLE;
+	TIMERXDATA(2) = SOUND_FREQ((sndRate * multRate));
+	TIMERXCNT(2) = TIMER_DIV_1 | TIMER_ENABLE;
   
-	//Timer1 go
-	TIMERXDATA(1) = 0x10000 - (sampleLen * 2 * multRate);
-	TIMERXCNT(1) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
+	//Timer3 go
+	TIMERXDATA(3) = 0x10000 - (sampleLen * 2 * multRate);
+	TIMERXCNT(3) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
+	
+	REG_IE|=(IRQ_TIMER3);
 }
 
-void StopSound() 
+void StopSoundUser(u32 srcFrmtInst)	//ARM7 impl.
 {
-	//irqSet(IRQ_TIMER1, 0);
-	TIMERXCNT(0) = 0;
-	TIMERXCNT(1) = 0;
+	TIMERXCNT(2) = 0;
+	TIMERXCNT(3) = 0;
 	
 	SCHANNEL_CR(0) = 0;
 	SCHANNEL_CR(1) = 0;
@@ -159,6 +128,8 @@ void StopSound()
 	//irqSet(IRQ_VBLANK, VblankHandler);
 	//irqEnable(IRQ_VBLANK);
 	EnableIrq(IRQ_VBLANK);
+	
+	REG_IE&=~(IRQ_TIMER3);
 }
 
 
@@ -190,4 +161,29 @@ int main(int _argc, sint8 **_argv) {
 //Custom Button Mapping Handler implementation: IRQ Driven
 void CustomInputMappingHandler(uint32 readKeys){
 	
+}
+
+//Project specific: ARM7 Setup for TGDS sound stream
+void initSoundStreamUser(u32 srcFmt){
+	if(srcFmt == SRC_WAV){
+		//Buffers must be provided here. 
+		//Format: s16 buffer[WAV_READ_SIZE];
+		strpcmL0 = (s16*)&strpcmL0Buf[0];
+		strpcmL1 = (s16*)&strpcmL1Buf[0];
+		strpcmR0 = (s16*)&strpcmR0Buf[0];
+		strpcmR1 = (s16*)&strpcmR1Buf[0];
+		
+		// clear vram d bank to not have sound leftover
+		int i = 0;
+		
+		for(i=0;i<(WAV_READ_SIZE);++i)
+		{
+			strpcmL0[i] = 0;
+		}
+		
+		for(i=0;i<(WAV_READ_SIZE);++i)
+		{
+			strpcmR0[i] = 0;
+		}
+	}
 }

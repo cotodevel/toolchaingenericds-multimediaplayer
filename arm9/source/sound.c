@@ -168,7 +168,6 @@ static int gbsOldTrack;
 // arm7 code, etc
 
 void SendArm7Command(u32 command, u32 data);
-void stopSound();
 void copyRemainingData();
 void fillMadBuffer();
 void fillMadBufferStream();
@@ -187,14 +186,12 @@ void spcDecode();
 void sndhDecode();
 void gbsDecode();
 void mp3Decode();
-void (*wavDecode)() = NULL;
 
 int getSIDTrack();
 int getSIDTotalTracks();
 int getGBSTrack();
 int getGBSTotalTracks();
 char *gbsMeta(int which);
-
 
 // alternate malloc stuff
 static int m_SIWRAM = 0;
@@ -207,7 +204,7 @@ void loadWavToMemory()
 
 void mallocData(int size)
 {
-	struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+	struct soundPlayerContext * soundPlayerCtx = soundIPC();
 	m_SIWRAM = 0;
 	REG_SIWRAMCNT = 0; // arm9 owns both
 	
@@ -221,8 +218,8 @@ void mallocData(int size)
 	lBuffer = SIWRAM0;
 	rBuffer = SIWRAM0 + m_size;
 	
-	soundPlayerCtx->arm9L = NULL; // temporary
-	soundPlayerCtx->arm9R = NULL; // temporary
+	soundPlayerCtx->soundSampleCxt[SOUNDSTREAM_L_BUFFER].arm9data = NULL; // temporary
+	soundPlayerCtx->soundSampleCxt[SOUNDSTREAM_R_BUFFER].arm9data = NULL; // temporary
 	
 	soundPlayerCtx->interlaced = NULL;
 }
@@ -236,7 +233,7 @@ void freeData()
 __attribute__((section(".itcm")))
 void swapData()
 {
-	struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+	struct soundPlayerContext * soundPlayerCtx = soundIPC();
 	
 	m_SIWRAM = 1 - m_SIWRAM;
 	
@@ -248,8 +245,8 @@ void swapData()
 			
 			REG_SIWRAMCNT = 2; // bank 0 to arm9, bank 1 to arm7
 			
-			soundPlayerCtx->arm9L = SIWRAM1;
-			soundPlayerCtx->arm9R = SIWRAM1 + m_size;
+			soundPlayerCtx->soundSampleCxt[SOUNDSTREAM_L_BUFFER].arm9data = SIWRAM1;
+			soundPlayerCtx->soundSampleCxt[SOUNDSTREAM_R_BUFFER].arm9data = SIWRAM1 + m_size;
 			
 			soundPlayerCtx->interlaced = SIWRAM1;
 			break;
@@ -259,8 +256,8 @@ void swapData()
 			
 			REG_SIWRAMCNT = 1; // bank 0 to arm7, bank 1 to arm9
 			
-			soundPlayerCtx->arm9L = SIWRAM0;
-			soundPlayerCtx->arm9R = SIWRAM0 + m_size;
+			soundPlayerCtx->soundSampleCxt[SOUNDSTREAM_L_BUFFER].arm9data = SIWRAM0;
+			soundPlayerCtx->soundSampleCxt[SOUNDSTREAM_R_BUFFER].arm9data = SIWRAM0 + m_size;
 			
 			soundPlayerCtx->interlaced = SIWRAM0;
 			
@@ -379,7 +376,7 @@ static void updateStream()
 	if(lBuffer == NULL || rBuffer == NULL)
 	{
 		// file is done
-		stopSound();
+		stopSound(soundData.sourceFmt);
 		sndPaused = false;
 		return;
 	}
@@ -396,8 +393,7 @@ static void updateStream()
 	if(cutOff)
 	{
 		// file is done
-		
-		stopSound();
+		stopSound(soundData.sourceFmt);
 		sndPaused = false;
 		
 		return;
@@ -407,21 +403,6 @@ static void updateStream()
 	
 	switch(soundData.sourceFmt)
 	{
-		case SRC_WAV:
-		{
-			swapAndSend(ARM7COMMAND_SOUND_COPY);
-			wavDecode();
-			
-			if(memoryLoad)
-			{
-				soundData.loc = 0;
-			}
-			else
-			{
-				soundData.loc = ftell(soundData.filePointer) - soundData.dataOffset;
-			}
-		}
-		break;
 		case SRC_MIKMOD:
 		{
 			//checkKeys();
@@ -484,7 +465,7 @@ static void updateStream()
 		case SRC_OGG:
 		case SRC_STREAM_OGG:
 		{
-			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			struct soundPlayerContext * soundPlayerCtx = soundIPC();
 			soundPlayerCtx->channels = soundData.channels;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
@@ -535,7 +516,7 @@ static void updateStream()
 		case SRC_STREAM_AAC:{
 			bool isSeek = (seekUpdate >= 0);
 			
-			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			struct soundPlayerContext * soundPlayerCtx = soundIPC();
 			soundPlayerCtx->channels = soundData.channels;			
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
@@ -628,7 +609,7 @@ static void updateStream()
 		}
 		break;
 		case SRC_SID:{
-			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			struct soundPlayerContext * soundPlayerCtx = soundIPC();
 			soundPlayerCtx->channels = 1;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
@@ -643,7 +624,7 @@ static void updateStream()
 				memset(lBuffer, 0, NSF_OUT_SIZE * 4);
 			}
 			
-			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			struct soundPlayerContext * soundPlayerCtx = soundIPC();
 			soundPlayerCtx->channels = 1;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
@@ -661,7 +642,7 @@ static void updateStream()
 		}
 		break;
 		case SRC_SNDH:{
-			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			struct soundPlayerContext * soundPlayerCtx = soundIPC();
 			soundPlayerCtx->channels = 2;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
@@ -671,7 +652,7 @@ static void updateStream()
 		}
 		break;
 		case SRC_GBS:{
-			struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+			struct soundPlayerContext * soundPlayerCtx = soundIPC();
 			soundPlayerCtx->channels = 2;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
@@ -713,7 +694,7 @@ void initComplexSound()
 {	
 	soundData.sourceFmt = SRC_NONE;
 	soundData.filePointer = NULL;
-	struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+	struct soundPlayerContext * soundPlayerCtx = soundIPC();
 	soundPlayerCtx->volume = 4;
 	
 	MikMod_RegisterAllDrivers();
@@ -728,19 +709,6 @@ int getSoundLength()
 	return sndLen;
 }
 
-void startSound9()
-{	
-	if(!playing)
-		SendArm7Command(ARM7COMMAND_START_SOUND, 0);
-	playing = true;
-}
-
-void stopSound()
-{
-	if(playing)
-		SendArm7Command(ARM7COMMAND_STOP_SOUND, 0);
-	playing = false;
-}
 
 void freeStreamBuffer(){	
 	if(s_buffer != NULL){
@@ -768,20 +736,11 @@ void allocateStreamBuffer()
 __attribute__((section(".itcm")))
 void freeSound()
 {
-	stopSound();
+	stopSound(soundData.sourceFmt);
 	freeData();
 	
 	switch(soundData.sourceFmt)
 	{
-		case SRC_WAV:
-			if(memoryLoad)
-			{	
-				safeFree(memoryContents);
-				memoryLoad = false;
-			}
-			
-			
-			break;
 		case SRC_MIKMOD:
 			if(module)
 			{
@@ -1211,202 +1170,6 @@ int getSNDHTotalTracks()
 {
 	return sndhTracks = 0 ? 1 : sndhTracks;
 }
-
-u32 getWavData(void *outLoc, int amount, FILE *fh)
-{
-	if(memoryLoad)
-	{
-		u32 actualRead = amount;
-		
-		if((memoryPos + actualRead) > memorySize)
-		{
-			actualRead = memorySize - memoryPos;
-		}
-		
-		memcpy(outLoc, memoryContents + memoryPos, actualRead);
-		memoryPos += actualRead;
-		
-		return actualRead;
-	}
-	else
-	{
-		return fread(outLoc, 1, amount, fh);
-	}
-}
-
-void wavDecode8Bit()
-{
-	// 8bit wav file
-	
-	u8 *s8Data = (u8 *)trackMalloc(WAV_READ_SIZE * soundData.channels, "wav tmp data");
-	int rSize = getWavData(s8Data, (WAV_READ_SIZE * soundData.channels), soundData.filePointer);
-	
-	if(rSize < (WAV_READ_SIZE * soundData.channels))
-	{
-		cutOff = true;
-		memset(s8Data + rSize, 0, (WAV_READ_SIZE * soundData.channels) - rSize);
-	}
-	
-	//checkKeys();
-	
-	u8 *lData = (u8 *)lBuffer + 1;
-	u8 *rData = (u8 *)rBuffer + 1;
-	
-	if(soundData.channels == 2)
-	{
-		uint i=0;
-		for(i=0;i<(WAV_READ_SIZE << 1);i+=2)
-		{
-			lData[i] = (s8Data[i] - 128);
-			rData[i] = (s8Data[i + 1] - 128);
-		}
-	}
-	else
-	{
-		uint i=0,j=0;
-		for(i=0,j=0;i<(WAV_READ_SIZE << 1);i+=2,++j)
-		{
-			lData[i] = (s8Data[j] - 128);
-			rData[i] = lData[i];
-		}
-	}
-	
-	//checkKeys();
-	
-	trackFree(s8Data);
-}
-
-void wavDecode16Bit()
-{
-	// 16bit wav file
-	
-	s16 *tmpData = (s16 *)trackMalloc(WAV_READ_SIZE * 2 * soundData.channels, "wav tmp data");
-	int rSize = getWavData(tmpData, (WAV_READ_SIZE * soundData.channels * 2), soundData.filePointer);
-	
-	if(rSize < (WAV_READ_SIZE * soundData.channels * 2))
-	{
-		cutOff = true;
-		memset(tmpData + (rSize >> 1), 0, (WAV_READ_SIZE * soundData.channels * 2) - rSize);
-	}
-	
-	//checkKeys();
-	
-	if(soundData.channels == 2)
-	{
-		uint i=0;
-		for(i=0;i<WAV_READ_SIZE;++i)
-		{					
-			lBuffer[i] = tmpData[i << 1];
-			rBuffer[i] = tmpData[(i << 1) | 1];
-		}
-	}
-	else
-	{
-		uint i=0;
-		for(i=0;i<WAV_READ_SIZE;++i)
-		{
-			lBuffer[i] = tmpData[i];
-			rBuffer[i] = tmpData[i];
-		}
-	}
-	
-	//checkKeys();
-	
-	trackFree(tmpData);
-}
-
-void wavDecode24Bit()
-{
-	// 24bit wav file
-	
-	u8 *tmpData = (u8 *)trackMalloc(WAV_READ_SIZE * soundData.channels * 3, "wav tmp data");
-	int rSize = getWavData(tmpData, (WAV_READ_SIZE * soundData.channels * 3), soundData.filePointer);	
-	
-	if(rSize < (WAV_READ_SIZE * soundData.channels * 3))
-	{
-		cutOff = true;
-		memset(tmpData + rSize, 0, (WAV_READ_SIZE * soundData.channels * 3) - rSize);
-	}
-	
-	//checkKeys();
-	
-	void *oldPointer = tmpData;
-	
-	u16 tmpVal;
-	s16 *tmpSound = (s16 *)&tmpVal;
-	
-	if(soundData.channels == 2)
-	{
-		uint i=0;
-		for(i=0;i<WAV_READ_SIZE;++i)
-		{					
-			tmpVal = (tmpData[1]) | ((tmpData[2]) << 8);
-			lBuffer[i] = *tmpSound;
-			tmpData+=3;
-			
-			tmpVal = (tmpData[1]) | ((tmpData[2]) << 8);
-			rBuffer[i] = *tmpSound;
-			tmpData+=3;
-		}
-	}
-	else
-	{
-		uint i=0;
-		for(i=0;i<WAV_READ_SIZE;++i)
-		{	
-			tmpVal = (tmpData[1]) | ((tmpData[2]) << 8);
-			
-			lBuffer[i] = *tmpSound;
-			rBuffer[i] = *tmpSound;
-			
-			tmpData+=3;
-		}
-	}
-	
-	//checkKeys();
-	
-	trackFree(oldPointer);
-}
-
-void wavDecode32Bit()
-{
-	// 32bit wav file
-	
-	s16 *tmpData = (s16 *)trackMalloc(WAV_READ_SIZE * 4 * soundData.channels, "wav tmp data");	
-	int rSize = getWavData(tmpData, (WAV_READ_SIZE * soundData.channels * 4), soundData.filePointer);
-	
-	if(rSize < (WAV_READ_SIZE * soundData.channels * 4))
-	{
-		cutOff = true;
-		memset(tmpData + (rSize >> 1), 0, (WAV_READ_SIZE * soundData.channels * 4) - rSize);
-	}
-	
-	//checkKeys();
-	
-	if(soundData.channels == 2)
-	{
-		uint i=0;
-		for(i=0;i<WAV_READ_SIZE;++i)
-		{					
-			lBuffer[i] = tmpData[(i << 2) + 1];
-			rBuffer[i] = tmpData[(i << 2) + 3];
-		}
-	}
-	else
-	{
-		uint i=0;
-		for(i=0;i<WAV_READ_SIZE;++i)
-		{
-			lBuffer[i] = tmpData[(i << 1) + 1];
-			rBuffer[i] = lBuffer[i];
-		}
-	}
-	
-	//checkKeys();
-	
-	trackFree(tmpData);
-}
-
 
 static inline u16 scale(mad_fixed_t sample)
 {
@@ -2121,138 +1884,7 @@ bool loadSound(char *fName)
 	if(strcmp(ext,".wav") == 0)
 	{
 		// wav file!
-		
-		soundData.sourceFmt = SRC_WAV;
-		soundData.bufLoc = 0;
-		
-		wavFormatChunk headerChunk;
-		char header[13];
-		
-		FILE *fp = fopen(fName, "r");
-		fread(header, 1, 12, fp);
-		
-		header[12] = 0;
-		header[4] = ' ';
-		header[5] = ' ';
-		header[6] = ' ';
-		header[7] = ' ';
-		
-		if(strcmp(header, "RIFF    WAVE") != 0)
-		{
-			// wrong header
-			
-			fclose(fp);
-			return false;
-		}		
-		
-		fread(&headerChunk, 1, sizeof(wavFormatChunk), fp);
-		
-		if(strncmp(headerChunk.chunkID, "fmt ", 4) != 0)
-		{
-			// wrong chunk at beginning
-			
-			fclose(fp);
-			return false;
-		}
-		
-		if(headerChunk.wFormatTag != 1)
-		{
-			// compression used, hell no to loading this
-			
-			fclose(fp);
-			return false;
-		}
-		
-		if(headerChunk.wChannels > 2)
-		{
-			// more than 2 channels.... uh no!
-			
-			fclose(fp);
-			return false;
-		}
-		else
-		{
-			soundData.channels = headerChunk.wChannels;
-		}
-		
-		if(headerChunk.wBitsPerSample <= 8)
-		{
-			soundData.bits = 8;
-			wavDecode = wavDecode8Bit;
-		}
-		else if(headerChunk.wBitsPerSample <= 16)
-		{
-			soundData.bits = 16;
-			wavDecode = wavDecode16Bit;
-		}
-		else if(headerChunk.wBitsPerSample <= 24)
-		{
-			soundData.bits = 24;
-			wavDecode = wavDecode24Bit;
-		}
-		else if(headerChunk.wBitsPerSample <= 32)
-		{
-			soundData.bits = 32;
-			wavDecode = wavDecode32Bit;
-		}
-		else
-		{
-			// more than 32bit sound, not supported
-			
-			fclose(fp);
-			return false;		
-		}
-		
-		//rewind
-		fseek(fp, 0, SEEK_SET);
-		int wavStartOffset = parseWaveData(fp);
-		
-		if(wavStartOffset < 0)
-		{
-			// wav block not found
-			fclose(fp);
-			return false;
-		}
-		
-		u32 len = 0;
-		fread(&len, 1, sizeof(len), fp);
-		wavStartOffset+=4;
-		
-		soundData.len = len;
-		soundData.loc = 0;
-		soundData.dataOffset = wavStartOffset;		
-		soundData.filePointer = fp;
-		bufCursor = 0;
-		
-		setSoundInterpolation(1);
-		setSoundFrequency(headerChunk.dwSamplesPerSec);
-		
-		setSoundLength(WAV_READ_SIZE);		
-		mallocData(WAV_READ_SIZE);
-		
-		memoryContents = NULL;
-		if(memoryLoad)
-		{
-			memoryPos = 0;
-			memorySize = flength(fp) - ftell(fp);
-			memoryContents = (char *)safeMalloc(memorySize);
-			
-			if(memoryContents == NULL)
-			{
-				// can't fit into memory, fail
-				
-				fclose(fp);
-				return false;
-			}
-			
-			fread(memoryContents, 1, memorySize, fp);
-			fclose(fp);
-		}
-		
-		wavDecode();
-		startSound9();
-		
-		return true;
+		return initSoundStream(fName);
 	}
 	
 	if(strcmp(ext, ".it") == 0  || strcmp(ext, ".mod") == 0 || strcmp(ext, ".s3m") == 0 || strcmp(ext, ".xm") == 0)
@@ -2269,7 +1901,7 @@ bool loadSound(char *fName)
 		
 		MikMod_Init("");
 		
-		struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+		struct soundPlayerContext * soundPlayerCtx = soundIPC();
 		soundPlayerCtx->channels = 2; // for de-interlacing
 		
 		soundData.sourceFmt = SRC_MIKMOD;
@@ -2284,7 +1916,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(1);
 		setSoundFrequency(MIKMOD_FREQ);
-		setSoundLength(ZEROLEN >> 2);
+		setSoundLengthDSO(ZEROLEN >> 2);
 		
 		mallocData(ZEROLEN >> 2);
 		
@@ -2292,7 +1924,7 @@ bool loadSound(char *fName)
 		soundData.loc = 0;
 		sCursor = 0;
 		
-		startSound9();
+		startSound9(soundData.sourceFmt);
 		
 		return true;		
 	}
@@ -2354,7 +1986,7 @@ bool loadSound(char *fName)
 		mad_synth_init(&Synth);
 		mad_timer_reset(&Timer);
 		
-		setSoundLength(MP3_WRITE_SIZE);
+		setSoundLengthDSO(MP3_WRITE_SIZE);
 		
 		if(strcmp(ext, ".mp3") != 0)
 		{
@@ -2374,7 +2006,7 @@ bool loadSound(char *fName)
 		bytesLeftBuf = NULL;
 		
 		mp3Decode();	//process header frame
-		startSound9();
+		startSound9(soundData.sourceFmt);
 		return true;
 	}
 	
@@ -2411,7 +2043,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(1);
 		setSoundFrequency(vi->rate);		
-		setSoundLength(OGG_READ_SIZE);
+		setSoundLengthDSO(OGG_READ_SIZE);
 		mallocData(OGG_READ_SIZE);		
 		
 		bufCursor = 0;
@@ -2419,7 +2051,7 @@ bool loadSound(char *fName)
 		soundData.len = flength(fp);
 		soundData.loc = 0;
     	
-		startSound9();
+		startSound9(soundData.sourceFmt);
 		
 		return true;
 	}
@@ -2486,7 +2118,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(2);
 		setSoundFrequency(aacFrameInfo.sampRateOut);		
-		setSoundLength(aacFrameInfo.outputSamps / soundData.channels);
+		setSoundLengthDSO(aacFrameInfo.outputSamps / soundData.channels);
 		mallocData(aacFrameInfo.outputSamps / soundData.channels);	
 		
 		memcpy(lBuffer, aacOutBuf, aacFrameInfo.outputSamps / soundData.channels);		
@@ -2498,7 +2130,7 @@ bool loadSound(char *fName)
 		soundData.len = flength(fp);
 		soundData.loc = 0;
 		
-		startSound9();
+		startSound9(soundData.sourceFmt);
 		
 		return true;
 	}
@@ -2627,7 +2259,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(1);
 		setSoundFrequency(aacFrameInfo.sampRateOut);		
-		setSoundLength(aacFrameInfo.outputSamps / soundData.channels);
+		setSoundLengthDSO(aacFrameInfo.outputSamps / soundData.channels);
 		mallocData(aacFrameInfo.outputSamps / soundData.channels);	
 		
 		memcpy(lBuffer, aacOutBuf, aacFrameInfo.outputSamps / soundData.channels);		
@@ -2637,7 +2269,7 @@ bool loadSound(char *fName)
 		aacLength = aacFrameInfo.outputSamps / soundData.channels;
 		soundData.loc = 0;
 		
-		startSound9();
+		startSound9(soundData.sourceFmt);
 		
 		return true;
 	}
@@ -2670,7 +2302,7 @@ bool loadSound(char *fName)
 		
 		setSoundInterpolation(1);
 		setSoundFrequency(fc.samplerate);	
-		setSoundLength(FLAC_OUT_SIZE);
+		setSoundLengthDSO(FLAC_OUT_SIZE);
 		
 		mallocData(FLAC_OUT_SIZE);
 		
@@ -2681,7 +2313,7 @@ bool loadSound(char *fName)
 		bytesLeftBuf = NULL;
     	
 		decodeFlacFrame();
-		startSound9();
+		startSound9(soundData.sourceFmt);
 		
 		return true;
 	}
@@ -2719,7 +2351,7 @@ bool loadSound(char *fName)
 		soundData.channels = 1;
 		setSoundInterpolation(2);
 		setSoundFrequency(SID_FREQ);	
-		setSoundLength(SID_OUT_SIZE);
+		setSoundLengthDSO(SID_OUT_SIZE);
 		
 		mallocData(SID_OUT_SIZE);
 		
@@ -2729,7 +2361,7 @@ bool loadSound(char *fName)
 		sidfile[SID_META_LOC + 95] = 0;
 		
 		sidDecode();
-		startSound9();		
+		startSound9(soundData.sourceFmt);		
 		
 		return true;
 	}	
@@ -2782,13 +2414,13 @@ bool loadSound(char *fName)
 		soundData.channels = 1;
 		setSoundInterpolation(2);
 		setSoundFrequency(NSF_FREQ);	
-		setSoundLength(NSF_OUT_SIZE/2);
+		setSoundLengthDSO(NSF_OUT_SIZE/2);
 		
 		mallocData(NSF_OUT_SIZE);
 		
 		StopFade();
 		nsfDecode();
-		startSound9();	
+		startSound9(soundData.sourceFmt);	
 		
 		return true;
 	}
@@ -2816,12 +2448,12 @@ bool loadSound(char *fName)
 		soundData.channels = 2;
 		setSoundInterpolation(2);
 		setSoundFrequency(SPC_FREQ);	
-		setSoundLength(SPC_OUT_SIZE);
+		setSoundLengthDSO(SPC_OUT_SIZE);
 		
 		mallocData(SPC_OUT_SIZE);
 		
 		spcDecode();
-		startSound9();
+		startSound9(soundData.sourceFmt);
 		
 		return true;
 	}
@@ -2871,13 +2503,13 @@ bool loadSound(char *fName)
 		soundData.channels = 1;
 		setSoundInterpolation(1);
 		setSoundFrequency(init68.sampling_rate);	
-		setSoundLength(SNDH_OUT_SIZE);
+		setSoundLengthDSO(SNDH_OUT_SIZE);
 		
 		mallocData(SNDH_OUT_SIZE);
 		
 		sndhDecode();
 		
-		startSound9();
+		startSound9(soundData.sourceFmt);
 		
 		return true;
 	}
@@ -2909,12 +2541,12 @@ bool loadSound(char *fName)
 		soundData.channels = 2;
 		setSoundInterpolation(1);
 		setSoundFrequency(GBS_FREQ);	
-		setSoundLength(GBS_OUT_SIZE);		
+		setSoundLengthDSO(GBS_OUT_SIZE);		
 		mallocData(GBS_OUT_SIZE);
 		
 		gbsDecode();
 		
-		startSound9();
+		startSound9(soundData.sourceFmt);
 		
 		return true;
 	}
@@ -3258,7 +2890,7 @@ void startStreamAudio()
 			mad_synth_init(&Synth);
 			mad_timer_reset(&Timer);
 			
-			setSoundLength(MP3_WRITE_SIZE);
+			setSoundLengthDSO(MP3_WRITE_SIZE);
 			mallocData(MP3_WRITE_SIZE);
 			
 			mp3Buf = (unsigned char *)trackMalloc(STREAM_MP3_READ_SIZE, "mp3 stream buf");
@@ -3297,7 +2929,7 @@ void startStreamAudio()
 				bufCursor = 0;
 				streamOpened = true;
 				
-				startSound9();
+				startSound9(soundData.sourceFmt);
 			}
 			
 			break;
@@ -3324,13 +2956,13 @@ void startStreamAudio()
 			
 			setSoundInterpolation(1);
 			setSoundFrequency(vi->rate);		
-			setSoundLength(OGG_READ_SIZE);
+			setSoundLengthDSO(OGG_READ_SIZE);
 			mallocData(OGG_READ_SIZE);		
 			
 			bufCursor = 0;
 			streamOpened = true;
 			
-			startSound9();
+			startSound9(soundData.sourceFmt);
 			break;
 		}
 		case SRC_STREAM_AAC:
@@ -3388,7 +3020,7 @@ void startStreamAudio()
 			
 			setSoundInterpolation(1);
 			setSoundFrequency(aacFrameInfo.sampRateOut);		
-			setSoundLength(aacFrameInfo.outputSamps / soundData.channels);
+			setSoundLengthDSO(aacFrameInfo.outputSamps / soundData.channels);
 			mallocData(aacFrameInfo.outputSamps / soundData.channels);	
 			
 			memcpy(lBuffer, aacOutBuf, aacFrameInfo.outputSamps / soundData.channels);		
@@ -3397,7 +3029,7 @@ void startStreamAudio()
 			
 			aacLength = aacFrameInfo.outputSamps / soundData.channels;
 			
-			startSound9();
+			startSound9(soundData.sourceFmt);
 			streamOpened = true;
 			
 			break;
@@ -3549,10 +3181,6 @@ void setSoundLoc(u32 loc)
 	
 	switch(soundData.sourceFmt)
 	{
-		case SRC_WAV:			
-			soundData.loc = loc & (~((WAV_READ_SIZE * 2) - 1));
-			fseek(soundData.filePointer, (s32)(soundData.loc + soundData.dataOffset), SEEK_CUR);
-			break;
 		case SRC_MIKMOD:
 			if(loc < soundData.len)
 			{
@@ -3625,7 +3253,7 @@ int getStreamLead()
 
 u8 getVolume()
 {
-	struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+	struct soundPlayerContext * soundPlayerCtx = soundIPC();
 	return soundPlayerCtx->volume;
 }
 
@@ -3639,7 +3267,7 @@ void setVolume(u8 volume)
 	if(volume > 16)
 		volume = 16;
 	
-	struct sSoundPlayerStruct * soundPlayerCtx = soundIPC();
+	struct soundPlayerContext * soundPlayerCtx = soundIPC();
 	soundPlayerCtx->volume = volume;
 }
 
@@ -3771,55 +3399,8 @@ void checkEndSound()
 }
 
 //Audio commands: drive Sound Player Context (Note: different from soundTGDS.h -> Sound Sample Context)
-void setSoundLength(u32 len)
+void setSoundLengthDSO(u32 len)
 {
-	SendFIFOWords(ARM7COMMAND_SOUND_SETLEN, len);
+	setSoundLength(len);
 	sndLen = len;
-}
-
-void setSoundFrequency(u32 freq)
-{
-	SendFIFOWords(ARM7COMMAND_SOUND_SETRATE, freq);
-}
-
-void setSoundInterpolation(u32 mult)
-{
-	SendFIFOWords(ARM7COMMAND_SOUND_SETMULT, mult);
-}
-
-//Returns the next offset right after "data". Which is the raw Waveform length (4 bytes) and then the raw Waveform
-int parseWaveData(FILE * fh){
-    u32 bytes=0;
-	int fileOffset = 0;
-	
-	// Read first 4 bytes.
-	// (Should be RIFF descriptor.)
-	if (fread((u8*)&bytes, 1, 4, fh) < 0) {
-		return -1;
-	}
-	
-	fileOffset+=4;
-	
-	// First subchunk will always be at byte 12.
-	// (There is no other dependable constant.)
-	fseek(fh, 8, SEEK_CUR);
-	fileOffset+=8;
-	
-	for (;;) {
-		// Read chunk length.
-		if (fread((u8*)&bytes, 1, 4, fh) < 0) {
-			return -1;
-		}
-		
-		//64[3] 61[2] 74[1] 61[0]	== "data"
-		if((u32)bytes == (u32)0x61746164){
-			// Skip the length of this chunk.
-			// Next bytes should be another descriptor or EOF.
-			//int length = (((bytes>>0) & 0xff) | (((bytes>>8) & 0xff) << 8) | (((bytes>>16) & 0xff) << 16) | (((bytes>>24) & 0xff) << 24));
-			//fseek(fh, length, SEEK_CUR);
-			return (fileOffset+4);
-		}
-		fileOffset+=4;
-	}
-	return -1;
 }

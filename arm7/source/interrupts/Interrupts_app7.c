@@ -55,7 +55,6 @@ __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void Timer1handlerUser(){
-	TIMER1Handler();	//Audio playback handler
 }
 
 #ifdef ARM9

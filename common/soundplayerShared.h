@@ -29,10 +29,9 @@
 //#define MIC_16
 
 //TGDS Shared Sound Player Context
-static inline struct sSoundPlayerStruct * soundIPC(){
-		
-	struct sSoundPlayerStruct * sndPlayerctx = (struct sSoundPlayerStruct *)&TGDSUSERIPC->sndPlayerCtx;
-	return sndPlayerctx;
+static inline struct soundPlayerContext * soundIPC(){
+	struct soundPlayerContext * soundPlayerCtx = (struct soundPlayerContext *)&TGDSIPC->sndPlayerCtx;
+	return soundPlayerCtx;
 }
 
 #endif

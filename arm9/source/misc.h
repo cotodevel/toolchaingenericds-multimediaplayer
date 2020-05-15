@@ -30,8 +30,6 @@ extern void safeFree(void *p);
 extern void enableVBlank();
 extern void disableVBlank();
 extern u32 flength(FILE* fh);
-extern void separateExtension(char *str, char *ext);
-
 
 //DS Networking: either one of these modes.
 

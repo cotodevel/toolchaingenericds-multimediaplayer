@@ -24,12 +24,7 @@ USA
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "ipcfifoTGDSUser.h"
-
-static inline void TIMER1Handler()
-{	
-	setSwapChannel();
-	SendFIFOWords(ARM9COMMAND_UPDATE_BUFFER, 0);
-}
+#include "soundTGDS.h"
 
 #endif
 
@@ -39,25 +34,14 @@ extern "C" {
 #endif
 
 extern int main(int _argc, sint8 **_argv);
-extern s16 *strpcmL0;
-extern s16 *strpcmL1;
-extern s16 *strpcmR0;
-extern s16 *strpcmR1;
-
-extern int lastL;
-extern int lastR;
-extern int pollCount; //start with a read
-
 extern void mallocData(int size);
 extern void freeData();
-extern void setSwapChannel();
-extern void SetupSound();
-extern void StopSound();
-
-extern u32 sampleLen;
-extern int multRate;
-extern int sndRate;
-extern u32 sndCursor;
+extern void SetupSoundUser(u32 srcFrmtInst);
+extern void StopSound(u32 srcFrmtInst);	//ARM7 impl.
+extern u16 strpcmL0Buf[WAV_READ_SIZE];
+extern u16 strpcmL1Buf[WAV_READ_SIZE];
+extern u16 strpcmR0Buf[WAV_READ_SIZE];
+extern u16 strpcmR1Buf[WAV_READ_SIZE];
 
 #ifdef __cplusplus
 }
