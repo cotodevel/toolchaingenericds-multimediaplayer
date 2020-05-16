@@ -27,6 +27,43 @@
 #include "api68.h"
 #include "id3.h"
 
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "gui_console_connector.h"
+#include "soundTGDS.h"
+#include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
+#include "click_raw.h"
+#include "global_settings.h"
+#include "xmem.h"
+#include "posixHandleTGDS.h"
+
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ivorbiscodec.h>
+#include <ivorbisfile.h>
+#include <spc.h>
+#include "mikmod_build.h"
+#include "sid.h"
+#include "nsf.h"
+#include "gme.h"
+#include "mixer68.h"
+#include "mp4ff.h"
+#include "misc.h"
+#include "http.h"
+#include "id3.h"
+#include "ipcfifoTGDSUser.h"
+#include "videoTGDS.h"
+#include "InterruptsARMCores_h.h"
+#include "nds_cp15_misc.h"
+#include "mad.h"
+#include "flac.h"
+#include "aacdec.h"
+#include "main.h"
+#include "soundplayerShared.h"
 
 #define ARM9COPY 0
 #define ARM7COPY 1
@@ -36,8 +73,6 @@
 #define STATE_STOPPED 2
 #define STATE_UNLOADED 3
 
-// 2048 creates the crash bug in fat_fread
-#define WAV_READ_SIZE 4096
 
 #define MP3_READ_SIZE 8192
 #define MP3_WRITE_SIZE 2048
@@ -154,18 +189,12 @@ typedef struct
 #define EOS 0
 #define SCRATCH_START (*(void *)0x06880000)
 
-#endif
-
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 extern char *strlwr(char *str);
-
 extern ID3V1_TYPE id3Data;
-
 extern void initComplexSound();
 extern void setSoundInterrupt();
 
@@ -219,10 +248,367 @@ extern void clearLoop();
 
 extern bool updateRequested;
 extern sndData soundData;
-extern void updateStreamLoop();
 extern void checkEndSound();
 extern bool soundLoaded;
 
+// sound out
+extern s16 *lBuffer;
+extern s16 *rBuffer;
+
+extern bool cutOff ;
+extern bool sndPaused ;
+extern bool playing ;
+extern bool seekSpecial ;
+extern bool updateRequested ;
+extern int sndLen ;
+extern int seekUpdate ;
+extern ID3V1_TYPE id3Data;
+
+extern int m_SIWRAM ;
+extern int m_size ;
+
+// mikmod
+extern MODULE *module ;
+extern bool madFinished ;
+extern int sCursor ;
+extern bool allowEQ ;
+
+extern OggVorbis_File vf;
+extern int current_section;
+
+// aac
+extern HAACDecoder *hAACDecoder;
+extern unsigned char *aacReadBuf ;
+extern unsigned char *aacReadPtr ;
+extern s16 *aacOutBuf ;
+extern AACFrameInfo aacFrameInfo;
+extern int aacBytesLeft, aacRead, aacErr, aacEofReached;
+extern int aacLength;
+extern bool isRawAAC;
+extern mp4ff_t *mp4file;
+extern mp4ff_callback_t mp4cb;
+extern int mp4track;
+extern int sampleId;
+
+//flac
+extern FLACContext fc;
+extern uint8_t *flacInBuf ;
+extern int flacBLeft ;
+extern int32_t *decoded0 ;
+extern int32_t *decoded1 ;
+extern bool flacFinished ;
+
+extern bool isSwitching;
+extern bool amountLeftOver();
+
 #ifdef __cplusplus
 }
+#endif
+
+
+// update function
+static inline void updateStream()
+{	
+	if(!updateRequested)
+	{
+		// exit if nothing is needed
+		return;
+	}
+	
+	// clear flag for update
+	updateRequested = false;
+	
+	if(lBuffer == NULL || rBuffer == NULL)
+	{
+		// file is done
+		stopSound(soundData.sourceFmt);
+		sndPaused = false;
+		return;
+	}
+	
+	if(sndPaused || seekSpecial)
+	{
+		memset(lBuffer, 0, m_size * 2);
+		memset(rBuffer, 0, m_size * 2);
+		
+		swapAndSend(ARM7COMMAND_SOUND_COPY);
+		return;
+	}
+	
+	if(cutOff)
+	{
+		// file is done
+		stopSound(soundData.sourceFmt);
+		sndPaused = false;
+		
+		return;
+	}
+	
+	//checkKeys();
+	
+	switch(soundData.sourceFmt)
+	{
+		case SRC_MIKMOD:
+		{
+			//checkKeys();
+			if(Player_Active())
+			{
+				swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
+				
+				if(seekUpdate >= 0)
+				{
+					soundData.loc = seekUpdate;
+					seekUpdate = -1;
+					
+					Player_SetPosition(soundData.loc);
+				}
+				
+				soundData.loc = module->sngpos;
+				
+				setBuffer(lBuffer);
+				MikMod_Update();
+			}
+			else
+			{
+				cutOff = true;
+			}
+		}
+		break;
+		case SRC_MP3:		
+		{
+			swapAndSend(ARM7COMMAND_SOUND_COPY);
+			
+			mp3Decode();			
+			soundData.loc = ftell(soundData.filePointer);
+			
+			if(soundData.loc > soundData.len)
+				soundData.loc = soundData.len;
+		}
+		break;
+		case SRC_STREAM_MP3:
+		{
+			swapAndSend(ARM7COMMAND_SOUND_COPY);	
+			
+			if(amountLeftOver())
+				recieveStream(-1);
+			
+			madFinished = false;	
+			
+			copyRemainingData();
+			
+			while(!madFinished)
+			{
+				fillMadBufferStream(); // should take ~ 1024 bytes
+				decodeMadBufferStream(1);
+				//checkKeys();		
+			}
+			
+			if(amountLeftOver())
+				recieveStream(-1);
+		}
+		break;
+		case SRC_OGG:
+		case SRC_STREAM_OGG:
+		{
+			struct soundPlayerContext * soundPlayerCtx = soundIPC();
+			soundPlayerCtx->channels = soundData.channels;
+			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
+			
+			if(soundData.sourceFmt == SRC_STREAM_OGG)
+			{
+				if(amountLeftOver())
+					recieveStream(-1);
+			}
+			
+			u8 *readBuf = (u8 *)lBuffer;			
+			int readAmount = 0;
+			
+			while(readAmount < OGG_READ_SIZE) // loop until we got it all
+			{
+				long ret;
+				ret = ov_read(&vf, readBuf, ((OGG_READ_SIZE - readAmount) * 2 * soundData.channels), &current_section);
+				
+				if(ret == 0)
+				{ 
+					if(soundData.sourceFmt == SRC_OGG)
+					{
+						cutOff = true;
+					}
+					
+					break;
+				}
+				else if (ret > 0)
+				{	
+					readBuf += ret;
+					readAmount += ret / (2 * soundData.channels);
+				}
+				
+				//checkKeys();
+			}
+			
+			if(soundData.sourceFmt == SRC_STREAM_OGG)
+			{
+				if(amountLeftOver())
+					recieveStream(-1);
+			}
+			else
+			{
+				soundData.loc = ftell(soundData.filePointer);
+			}
+		}
+		break;
+		case SRC_AAC:
+		case SRC_STREAM_AAC:{
+			bool isSeek = (seekUpdate >= 0);
+			
+			struct soundPlayerContext * soundPlayerCtx = soundIPC();
+			soundPlayerCtx->channels = soundData.channels;			
+			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
+			
+			if(soundData.sourceFmt == SRC_STREAM_AAC)
+			{
+				if(amountLeftOver())
+				{
+					recieveStream(-1);
+				}
+				
+				isSeek = false;
+			}
+			else if(isSeek)
+			{
+				aacReadPtr = aacReadBuf;
+				aacBytesLeft = 0;
+				aacEofReached = 0;
+				
+				soundData.loc = seekUpdate;
+				seekUpdate = -1;
+				
+				if(!isRawAAC)
+				{
+					sampleId = soundData.loc;
+				}
+			}	
+			
+			aacFillBuffer();
+			aacErr = AACDecode(hAACDecoder, &aacReadPtr, &aacBytesLeft, lBuffer);
+			
+			if(soundData.sourceFmt == SRC_STREAM_AAC)
+			{
+				if(amountLeftOver())
+				{
+					recieveStream(-1);
+				}
+			}
+			else
+			{
+				if(isRawAAC)
+					soundData.loc = ftell(soundData.filePointer);
+				else
+					soundData.loc = sampleId;
+			}
+			
+			switch (aacErr) 
+			{
+				case ERR_AAC_NONE:
+					break;
+				default:
+					if(isSeek)
+					{
+						fseek(soundData.filePointer, 4, SEEK_CUR);
+						seekUpdate = ftell(soundData.filePointer);
+						
+						memset(lBuffer, 0, m_size * 2);
+						memset(rBuffer, 0, m_size * 2);
+						break;
+					}
+					
+					cutOff = true;
+					
+					break;
+			}
+		}
+		break;
+		case SRC_FLAC:{
+			swapAndSend(ARM7COMMAND_SOUND_COPY);
+			
+			if(seekUpdate >= 0)
+			{
+				soundData.loc = seekUpdate;
+				seekUpdate = -1;
+				
+				seekFlac();
+			}
+			
+			flacFinished = false;
+			
+			//checkKeys();
+			copyRemainingData();
+			decodeFlacFrame();
+			//checkKeys();
+			
+			soundData.loc = ftell(soundData.filePointer);
+			
+			if(soundData.loc > soundData.len)
+				soundData.loc = soundData.len;
+			
+		}
+		break;
+		case SRC_SID:{
+			struct soundPlayerContext * soundPlayerCtx = soundIPC();
+			soundPlayerCtx->channels = 1;
+			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
+			
+			//checkKeys();
+			sidDecode();
+			//checkKeys();
+		}
+		break;
+		case SRC_NSF:{
+			if(isSwitching)
+			{
+				memset(lBuffer, 0, NSF_OUT_SIZE * 4);
+			}
+			
+			struct soundPlayerContext * soundPlayerCtx = soundIPC();
+			soundPlayerCtx->channels = 1;
+			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
+			
+			//checkKeys();			
+			nsfDecode();
+			//checkKeys();
+		}
+		break;
+		case SRC_SPC:{
+			swapAndSend(ARM7COMMAND_SOUND_COPY);
+			
+			//checkKeys();			
+			spcDecode();
+			//checkKeys();
+		}
+		break;
+		case SRC_SNDH:{
+			struct soundPlayerContext * soundPlayerCtx = soundIPC();
+			soundPlayerCtx->channels = 2;
+			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
+			
+			//checkKeys();			
+			sndhDecode();
+			//checkKeys();
+		}
+		break;
+		case SRC_GBS:{
+			struct soundPlayerContext * soundPlayerCtx = soundIPC();
+			soundPlayerCtx->channels = 2;
+			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
+			
+			//checkKeys();			
+			gbsDecode();
+			//checkKeys();
+		}
+		break;
+	}
+	
+	//checkKeys();
+}
+
 #endif

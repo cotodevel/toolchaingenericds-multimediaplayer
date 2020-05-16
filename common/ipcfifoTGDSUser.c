@@ -197,6 +197,13 @@ void HandleFifoNotEmptyWeakRef(uint32 data0, uint32 data1){
 		
 		//NDS9: 
 		#ifdef ARM9
+		case ARM9COMMAND_HANDLEINPUT:
+		{				
+			
+		}
+		break;
+		
+		
 		#endif
 	}
 	
@@ -229,13 +236,11 @@ void updateSoundContextStreamPlaybackUser(u32 srcFrmt){	//ARM9COMMAND_UPDATE_BUF
 		case SRC_STREAM_MP3:
 		case SRC_STREAM_AAC:
 		case SRC_SID:
-			// these will be played next time it hits in the main screen
-			// theres like 4938598345 of the updatestream checks in the 
-			// main code
+			// the rest is handled somewhere else
 			return;
 	}
 	
 	// call immediately if the format needs it
-	updateStreamLoop();
+	updateStream();
 }
 #endif

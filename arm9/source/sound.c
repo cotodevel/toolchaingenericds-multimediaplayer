@@ -59,13 +59,13 @@ static int bytesLeft = 0;
 static s16 *bytesLeftBuf = NULL;
 static int maxBytes = 0;
 
-static bool cutOff = false;
-static bool sndPaused = false;
-static bool playing = false;
-static bool seekSpecial = false;
+bool cutOff = false;
+bool sndPaused = false;
+bool playing = false;
+bool seekSpecial = false;
 bool updateRequested = false;
-static int sndLen = 0;
-static int seekUpdate = -1;
+int sndLen = 0;
+int seekUpdate = -1;
 extern ID3V1_TYPE id3Data;
 
 // sound out
@@ -79,9 +79,9 @@ static u32 memoryPos = 0;
 static u32 memorySize = 0;
 	
 // mikmod
-static MODULE *module = NULL;
-static bool madFinished = false;
-static int sCursor = 0;
+MODULE *module = NULL;
+bool madFinished = false;
+int sCursor = 0;
 bool allowEQ = true;
 
 // mp3
@@ -92,8 +92,8 @@ static mad_timer_t Timer;
 static unsigned char *mp3Buf = NULL;
 
 // ogg
-static OggVorbis_File vf;
-static int current_section;
+OggVorbis_File vf;
+int current_section;
 
 // streaming
 URL_TYPE curSite;
@@ -114,26 +114,26 @@ static int tmpAmount = 0;
 static int recAmount = 0;
 
 // aac
-static HAACDecoder *hAACDecoder;
-static unsigned char *aacReadBuf = NULL;
-static unsigned char *aacReadPtr = NULL;
-static s16 *aacOutBuf = NULL;
-static AACFrameInfo aacFrameInfo;
-static int aacBytesLeft, aacRead, aacErr, aacEofReached;
-static int aacLength;
-static bool isRawAAC;
-static mp4ff_t *mp4file;
-static mp4ff_callback_t mp4cb;
-static int mp4track;
-static int sampleId;
+HAACDecoder *hAACDecoder;
+unsigned char *aacReadBuf = NULL;
+unsigned char *aacReadPtr = NULL;
+s16 *aacOutBuf = NULL;
+AACFrameInfo aacFrameInfo;
+int aacBytesLeft, aacRead, aacErr, aacEofReached;
+int aacLength;
+bool isRawAAC;
+mp4ff_t *mp4file;
+mp4ff_callback_t mp4cb;
+int mp4track;
+int sampleId;
 
 //flac
-static FLACContext fc;
-static uint8_t *flacInBuf = NULL;
-static int flacBLeft = 0;
-static int32_t *decoded0 = NULL;
-static int32_t *decoded1 = NULL;
-static bool flacFinished = false;
+FLACContext fc;
+uint8_t *flacInBuf = NULL;
+int flacBLeft = 0;
+int32_t *decoded0 = NULL;
+int32_t *decoded1 = NULL;
+bool flacFinished = false;
 
 //sid
 static char *sidfile = NULL;
@@ -146,7 +146,7 @@ static int nSamplesRendered, nSamplesPerCall, nSamplesToRender;
 static uint8_t *nsffile = NULL;
 static u32 nsfLength = 0;
 static volatile bool inTrack = false;
-static volatile bool isSwitching = false;
+bool isSwitching = false;
 
 //spc
 static uint8_t *spcfile = NULL;
@@ -175,7 +175,7 @@ void decodeMadBuffer(int mode);
 void decodeMadBufferStream(int mode);
 void startStream();
 void recieveStream(int amount);
-bool amountLeftOver();
+
 void aacFillBuffer();
 size_t callbacks_read_func_stream(void *ptr, size_t size, size_t nmemb, void *datasource);
 void decodeFlacFrame();
@@ -194,8 +194,8 @@ int getGBSTotalTracks();
 char *gbsMeta(int which);
 
 // alternate malloc stuff
-static int m_SIWRAM = 0;
-static int m_size = 0;
+int m_SIWRAM = 0;
+int m_size = 0;
 
 void loadWavToMemory()
 {
@@ -360,321 +360,9 @@ void swapAndSend(u32 type)
 	SendArm7Command(type,0);
 }
 
-// update function
-__attribute__((section(".itcm")))
-static void updateStream()
-{	
-	if(!updateRequested)
-	{
-		// exit if nothing is needed
-		return;
-	}
-	
-	// clear flag for update
-	updateRequested = false;
-	
-	if(lBuffer == NULL || rBuffer == NULL)
-	{
-		// file is done
-		stopSound(soundData.sourceFmt);
-		sndPaused = false;
-		return;
-	}
-	
-	if(sndPaused || seekSpecial)
-	{
-		memset(lBuffer, 0, m_size * 2);
-		memset(rBuffer, 0, m_size * 2);
-		
-		swapAndSend(ARM7COMMAND_SOUND_COPY);
-		return;
-	}
-	
-	if(cutOff)
-	{
-		// file is done
-		stopSound(soundData.sourceFmt);
-		sndPaused = false;
-		
-		return;
-	}
-	
-	//checkKeys();
-	
-	switch(soundData.sourceFmt)
-	{
-		case SRC_MIKMOD:
-		{
-			//checkKeys();
-			if(Player_Active())
-			{
-				swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-				
-				if(seekUpdate >= 0)
-				{
-					soundData.loc = seekUpdate;
-					seekUpdate = -1;
-					
-					Player_SetPosition(soundData.loc);
-				}
-				
-				soundData.loc = module->sngpos;
-				
-				setBuffer(lBuffer);
-				MikMod_Update();
-			}
-			else
-			{
-				cutOff = true;
-			}
-		}
-		break;
-		case SRC_MP3:		
-		{
-			swapAndSend(ARM7COMMAND_SOUND_COPY);
-			
-			mp3Decode();			
-			soundData.loc = ftell(soundData.filePointer);
-			
-			if(soundData.loc > soundData.len)
-				soundData.loc = soundData.len;
-		}
-		break;
-		case SRC_STREAM_MP3:
-		{
-			swapAndSend(ARM7COMMAND_SOUND_COPY);	
-			
-			if(amountLeftOver())
-				recieveStream(-1);
-			
-			madFinished = false;	
-			
-			copyRemainingData();
-			
-			while(!madFinished)
-			{
-				fillMadBufferStream(); // should take ~ 1024 bytes
-				decodeMadBufferStream(1);
-				//checkKeys();		
-			}
-			
-			if(amountLeftOver())
-				recieveStream(-1);
-		}
-		break;
-		case SRC_OGG:
-		case SRC_STREAM_OGG:
-		{
-			struct soundPlayerContext * soundPlayerCtx = soundIPC();
-			soundPlayerCtx->channels = soundData.channels;
-			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-			
-			if(soundData.sourceFmt == SRC_STREAM_OGG)
-			{
-				if(amountLeftOver())
-					recieveStream(-1);
-			}
-			
-			u8 *readBuf = (u8 *)lBuffer;			
-			int readAmount = 0;
-			
-			while(readAmount < OGG_READ_SIZE) // loop until we got it all
-			{
-				long ret;
-				ret = ov_read(&vf, readBuf, ((OGG_READ_SIZE - readAmount) * 2 * soundData.channels), &current_section);
-				
-				if(ret == 0)
-				{ 
-					if(soundData.sourceFmt == SRC_OGG)
-					{
-						cutOff = true;
-					}
-					
-					break;
-				}
-				else if (ret > 0)
-				{	
-					readBuf += ret;
-					readAmount += ret / (2 * soundData.channels);
-				}
-				
-				//checkKeys();
-			}
-			
-			if(soundData.sourceFmt == SRC_STREAM_OGG)
-			{
-				if(amountLeftOver())
-					recieveStream(-1);
-			}
-			else
-			{
-				soundData.loc = ftell(soundData.filePointer);
-			}
-		}
-		break;
-		case SRC_AAC:
-		case SRC_STREAM_AAC:{
-			bool isSeek = (seekUpdate >= 0);
-			
-			struct soundPlayerContext * soundPlayerCtx = soundIPC();
-			soundPlayerCtx->channels = soundData.channels;			
-			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-			
-			if(soundData.sourceFmt == SRC_STREAM_AAC)
-			{
-				if(amountLeftOver())
-				{
-					recieveStream(-1);
-				}
-				
-				isSeek = false;
-			}
-			else if(isSeek)
-			{
-				aacReadPtr = aacReadBuf;
-				aacBytesLeft = 0;
-				aacEofReached = 0;
-				
-				soundData.loc = seekUpdate;
-				seekUpdate = -1;
-				
-				if(!isRawAAC)
-				{
-					sampleId = soundData.loc;
-				}
-			}	
-			
-			aacFillBuffer();
-			aacErr = AACDecode(hAACDecoder, &aacReadPtr, &aacBytesLeft, lBuffer);
-			
-			if(soundData.sourceFmt == SRC_STREAM_AAC)
-			{
-				if(amountLeftOver())
-				{
-					recieveStream(-1);
-				}
-			}
-			else
-			{
-				if(isRawAAC)
-					soundData.loc = ftell(soundData.filePointer);
-				else
-					soundData.loc = sampleId;
-			}
-			
-			switch (aacErr) 
-			{
-				case ERR_AAC_NONE:
-					break;
-				default:
-					if(isSeek)
-					{
-						fseek(soundData.filePointer, 4, SEEK_CUR);
-						seekUpdate = ftell(soundData.filePointer);
-						
-						memset(lBuffer, 0, m_size * 2);
-						memset(rBuffer, 0, m_size * 2);
-						break;
-					}
-					
-					cutOff = true;
-					
-					break;
-			}
-		}
-		break;
-		case SRC_FLAC:{
-			swapAndSend(ARM7COMMAND_SOUND_COPY);
-			
-			if(seekUpdate >= 0)
-			{
-				soundData.loc = seekUpdate;
-				seekUpdate = -1;
-				
-				seekFlac();
-			}
-			
-			flacFinished = false;
-			
-			//checkKeys();
-			copyRemainingData();
-			decodeFlacFrame();
-			//checkKeys();
-			
-			soundData.loc = ftell(soundData.filePointer);
-			
-			if(soundData.loc > soundData.len)
-				soundData.loc = soundData.len;
-			
-		}
-		break;
-		case SRC_SID:{
-			struct soundPlayerContext * soundPlayerCtx = soundIPC();
-			soundPlayerCtx->channels = 1;
-			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-			
-			//checkKeys();
-			sidDecode();
-			//checkKeys();
-		}
-		break;
-		case SRC_NSF:{
-			if(isSwitching)
-			{
-				memset(lBuffer, 0, NSF_OUT_SIZE * 4);
-			}
-			
-			struct soundPlayerContext * soundPlayerCtx = soundIPC();
-			soundPlayerCtx->channels = 1;
-			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-			
-			//checkKeys();			
-			nsfDecode();
-			//checkKeys();
-		}
-		break;
-		case SRC_SPC:{
-			swapAndSend(ARM7COMMAND_SOUND_COPY);
-			
-			//checkKeys();			
-			spcDecode();
-			//checkKeys();
-		}
-		break;
-		case SRC_SNDH:{
-			struct soundPlayerContext * soundPlayerCtx = soundIPC();
-			soundPlayerCtx->channels = 2;
-			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-			
-			//checkKeys();			
-			sndhDecode();
-			//checkKeys();
-		}
-		break;
-		case SRC_GBS:{
-			struct soundPlayerContext * soundPlayerCtx = soundIPC();
-			soundPlayerCtx->channels = 2;
-			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-			
-			//checkKeys();			
-			gbsDecode();
-			//checkKeys();
-		}
-		break;
-	}
-	
-	//checkKeys();
-}
-
 //----------------------
 // sound streaming stuff
 //----------------------
-
-__attribute__((section(".itcm")))
-void updateStreamLoop()
-{
-	updateStream();
-}
 
 __attribute__((section(".itcm")))
 void SendArm7Command(u32 command, u32 data){

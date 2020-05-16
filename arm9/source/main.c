@@ -740,7 +740,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){	//MUST
 
 static int curFileIndex = 0;
 static bool drawMandelbrt = false;
-__attribute__((section(".itcm")))	
+
 void handleInput(){
 	if(pendingPlay == true){
 		soundLoaded = loadSound((char*)curChosenBrowseFile);
@@ -774,8 +774,8 @@ void handleInput(){
 			bool SaveConsoleContext = false;	//no effect because directFB == true
 			u8 * FBSaveContext = NULL;			//no effect because directFB == true
 			TGDSLCDSwap(disableTSCWhenTGDSConsoleTop, isDirectFramebuffer, SaveConsoleContext, FBSaveContext);
-			u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
-			setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
+			u8 channel = SOUNDSTREAM_FREE_CHANNEL;
+			startSound(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
 			scanKeys();
 			while(keysPressed() & KEY_TOUCH){
 				scanKeys();
@@ -944,8 +944,7 @@ void handleInput(){
 			}
 		}
 	}
-	//Audio playback here....
-	updateStreamLoop();	//runs once per hblank line
+	updateStream();
 }
 
 
@@ -987,6 +986,7 @@ int main(int _argc, sint8 **_argv) {
 	disableVBlank();
 	//We keep HBLANK IRQs to let CPU sleep as long the PPU triggers IRQs
 	initComplexSound(); // initialize sound variables
+	DisableSoundSampleContext();	//ARM7 clicks too much
 	
 	//Init TGDS FS Directory Iterator Context(s). Mandatory to init them like this!! Otherwise several functions won't work correctly.
 	

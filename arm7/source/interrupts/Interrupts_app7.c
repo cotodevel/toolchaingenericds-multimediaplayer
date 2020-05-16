@@ -100,6 +100,7 @@ void VcounterUser(){
 			TurnOnScreens();
 		}
 	}
+	SendFIFOWords(ARM9COMMAND_HANDLEINPUT, 0);
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
