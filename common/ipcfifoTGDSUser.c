@@ -197,10 +197,6 @@ void HandleFifoNotEmptyWeakRef(uint32 data0, uint32 data1){
 		
 		//NDS9: 
 		#ifdef ARM9
-		case ARM9COMMAND_UPDATE_BUFFER:{
-			
-		}	
-		break;
 		#endif
 	}
 	
