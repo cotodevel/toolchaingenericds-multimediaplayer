@@ -1575,6 +1575,7 @@ bool loadSound(char *fName)
 		return initSoundStream(fName);
 	}
 	
+	DisableSoundSampleContext();	//Disable ARM7 TGDS Sound stuff because decoders require a lot of power
 	if(strcmp(ext, ".it") == 0  || strcmp(ext, ".mod") == 0 || strcmp(ext, ".s3m") == 0 || strcmp(ext, ".xm") == 0)
 	{
 		// tracker file!

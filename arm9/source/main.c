@@ -986,7 +986,6 @@ int main(int _argc, sint8 **_argv) {
 	disableVBlank();
 	//We keep HBLANK IRQs to let CPU sleep as long the PPU triggers IRQs
 	initComplexSound(); // initialize sound variables
-	DisableSoundSampleContext();	//ARM7 clicks too much
 	
 	//Init TGDS FS Directory Iterator Context(s). Mandatory to init them like this!! Otherwise several functions won't work correctly.
 	
