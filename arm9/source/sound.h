@@ -195,7 +195,6 @@ extern "C" {
 
 extern char *strlwr(char *str);
 extern ID3V1_TYPE id3Data;
-extern void initComplexSound();
 extern void setSoundInterrupt();
 
 // playback

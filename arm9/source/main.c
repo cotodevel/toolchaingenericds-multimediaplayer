@@ -985,7 +985,9 @@ int main(int _argc, sint8 **_argv) {
 	DisableIrq(IRQ_VCOUNT);
 	disableVBlank();
 	//We keep HBLANK IRQs to let CPU sleep as long the PPU triggers IRQs
-	initComplexSound(); // initialize sound variables
+	
+	MikMod_RegisterAllDrivers();
+	MikMod_RegisterAllLoaders();
 	
 	//Init TGDS FS Directory Iterator Context(s). Mandatory to init them like this!! Otherwise several functions won't work correctly.
 	

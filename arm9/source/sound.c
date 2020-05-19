@@ -369,7 +369,6 @@ void SendArm7Command(u32 command, u32 data){
 	SendFIFOWords((uint32)command, (uint32)data);
 }
 
-
 void setSoundInterrupt()
 {
 	//irqSet(IRQ_FIFO_NOT_EMPTY, FIFO_Receive);
@@ -378,25 +377,10 @@ void setSoundInterrupt()
 	//REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR | IPC_FIFO_RECV_IRQ;
 }
 
-void initComplexSound()
-{	
-	soundData.sourceFmt = SRC_NONE;
-	soundData.filePointer = NULL;
-	struct soundPlayerContext * soundPlayerCtx = soundIPC();
-	soundPlayerCtx->volume = 4;
-	
-	MikMod_RegisterAllDrivers();
-	MikMod_RegisterAllLoaders();
-	
-}
-
-
-
 int getSoundLength()
 {
 	return sndLen;
 }
-
 
 void freeStreamBuffer(){	
 	if(s_buffer != NULL){
@@ -424,9 +408,6 @@ void allocateStreamBuffer()
 __attribute__((section(".itcm")))
 void freeSound()
 {
-	stopSound(soundData.sourceFmt);
-	freeData();
-	
 	switch(soundData.sourceFmt)
 	{
 		case SRC_MIKMOD:
@@ -609,6 +590,9 @@ void freeSound()
 		soundData.filePointer = NULL;	
 		soundData.sourceFmt = SRC_NONE;	
 	}
+	
+	stopSound(soundData.sourceFmt);
+	freeData();
 	
 }
 
@@ -1521,6 +1505,9 @@ bool loadSound(char *fName)
 	strlwr(ext);
 	
 	freeSound();	
+	lBuffer = NULL;
+	rBuffer = NULL;
+	
 	cutOff = false;
 	sndPaused = false;
 	playing = false;
@@ -1593,6 +1580,7 @@ bool loadSound(char *fName)
 		struct soundPlayerContext * soundPlayerCtx = soundIPC();
 		soundPlayerCtx->channels = 2; // for de-interlacing
 		
+		
 		soundData.sourceFmt = SRC_MIKMOD;
 		soundData.bufLoc = 0;
 		
@@ -1612,7 +1600,6 @@ bool loadSound(char *fName)
 		soundData.len = module->numpos;
 		soundData.loc = 0;
 		sCursor = 0;
-		
 		startSound9(soundData.sourceFmt);
 		
 		return true;		
@@ -1739,7 +1726,6 @@ bool loadSound(char *fName)
 		
 		soundData.len = flength(fp);
 		soundData.loc = 0;
-    	
 		startSound9(soundData.sourceFmt);
 		
 		return true;
@@ -1818,7 +1804,6 @@ bool loadSound(char *fName)
 		
 		soundData.len = flength(fp);
 		soundData.loc = 0;
-		
 		startSound9(soundData.sourceFmt);
 		
 		return true;
@@ -1957,7 +1942,6 @@ bool loadSound(char *fName)
 		
 		aacLength = aacFrameInfo.outputSamps / soundData.channels;
 		soundData.loc = 0;
-		
 		startSound9(soundData.sourceFmt);
 		
 		return true;
@@ -2197,7 +2181,6 @@ bool loadSound(char *fName)
 		mallocData(SNDH_OUT_SIZE);
 		
 		sndhDecode();
-		
 		startSound9(soundData.sourceFmt);
 		
 		return true;
@@ -2234,7 +2217,6 @@ bool loadSound(char *fName)
 		mallocData(GBS_OUT_SIZE);
 		
 		gbsDecode();
-		
 		startSound9(soundData.sourceFmt);
 		
 		return true;

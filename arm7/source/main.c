@@ -75,64 +75,6 @@ void freeData()
 	TGDSARM7Free((u8*)strpcmR1);
 }
 
-
-void SetupSoundUser(u32 srcFrmtInst)
-{
-	srcFrmt = srcFrmtInst;
-    sndCursor = 0;
-	if(multRate != 1 && multRate != 2 && multRate != 4){
-		multRate = 1;
-	}
-	
-	mallocData(sampleLen * 2 * multRate);
-    
-	//irqSet(IRQ_TIMER1, TIMER1Handler);
-	int ch;
-	
-	for(ch=0;ch<4;++ch)
-	{
-		SCHANNEL_CR(ch) = 0;
-		SCHANNEL_TIMER(ch) = SOUND_FREQ((sndRate * multRate));
-		SCHANNEL_LENGTH(ch) = (sampleLen * multRate) >> 1;
-		SCHANNEL_REPEAT_POINT(ch) = 0;
-	}
-
-	//irqSet(IRQ_VBLANK, 0);
-	//irqDisable(IRQ_VBLANK);
-	DisableIrq(IRQ_VBLANK);
-	
-	lastL = 0;
-	lastR = 0;
-	
-	TIMERXDATA(2) = SOUND_FREQ((sndRate * multRate));
-	TIMERXCNT(2) = TIMER_DIV_1 | TIMER_ENABLE;
-  
-	//Timer3 go
-	TIMERXDATA(3) = 0x10000 - (sampleLen * 2 * multRate);
-	TIMERXCNT(3) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
-	
-	REG_IE|=(IRQ_TIMER3);
-}
-
-void StopSoundUser(u32 srcFrmtInst)	//ARM7 impl.
-{
-	TIMERXCNT(2) = 0;
-	TIMERXCNT(3) = 0;
-	
-	SCHANNEL_CR(0) = 0;
-	SCHANNEL_CR(1) = 0;
-	SCHANNEL_CR(2) = 0;
-	SCHANNEL_CR(3) = 0;
-	
-	freeData();
-	//irqSet(IRQ_VBLANK, VblankHandler);
-	//irqEnable(IRQ_VBLANK);
-	EnableIrq(IRQ_VBLANK);
-	
-	REG_IE&=~(IRQ_TIMER3);
-}
-
-
 //---------------------------------------------------------------------------------
 int main(int _argc, sint8 **_argv) {
 //---------------------------------------------------------------------------------

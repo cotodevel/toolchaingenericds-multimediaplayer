@@ -31,6 +31,7 @@ USA
 #include "dsregs_asm.h"
 #include "InterruptsARMCores_h.h"
 #include "soundplayerShared.h"
+#include "timerTGDS.h"
 
 #ifdef ARM7
 #include <string.h>
@@ -40,8 +41,6 @@ USA
 #include "spifwTGDS.h"
 #include "click_raw.h"
 #include "soundTGDS.h"
-
-
 #endif
 
 #ifdef ARM9
@@ -197,12 +196,6 @@ void HandleFifoNotEmptyWeakRef(uint32 data0, uint32 data1){
 		
 		//NDS9: 
 		#ifdef ARM9
-		case ARM9COMMAND_HANDLEINPUT:
-		{				
-			
-		}
-		break;
-		
 		
 		#endif
 	}
@@ -217,6 +210,8 @@ void HandleFifoEmptyWeakRef(uint32 data0, uint32 data1){
 
 
 #ifdef ARM9
+//Callback update sample implementation
+
 __attribute__((section(".itcm")))
 void updateSoundContextStreamPlaybackUser(u32 srcFrmt){	//ARM9COMMAND_UPDATE_BUFFER User Req
 	updateRequested = true;
@@ -244,3 +239,67 @@ void updateSoundContextStreamPlaybackUser(u32 srcFrmt){	//ARM9COMMAND_UPDATE_BUF
 	updateStream();
 }
 #endif
+
+void setupSoundUser(u32 srcFrmtInst){
+	#ifdef ARM7
+	srcFrmt = srcFrmtInst;
+    sndCursor = 0;
+	if(multRate != 1 && multRate != 2 && multRate != 4){
+		multRate = 1;
+	}
+	
+	mallocData(sampleLen * 2 * multRate);
+    
+	//irqSet(IRQ_TIMER1, TIMER1Handler);
+	int ch;
+	
+	for(ch=0;ch<4;++ch)
+	{
+		SCHANNEL_CR(ch) = 0;
+		SCHANNEL_TIMER(ch) = SOUND_FREQ((sndRate * multRate));
+		SCHANNEL_LENGTH(ch) = (sampleLen * multRate) >> 1;
+		SCHANNEL_REPEAT_POINT(ch) = 0;
+	}
+
+	//irqSet(IRQ_VBLANK, 0);
+	//irqDisable(IRQ_VBLANK);
+	DisableIrq(IRQ_VBLANK);
+	
+	lastL = 0;
+	lastR = 0;
+	
+	TIMERXDATA(2) = SOUND_FREQ((sndRate * multRate));
+	TIMERXCNT(2) = TIMER_DIV_1 | TIMER_ENABLE;
+  
+	//Timer3 go
+	TIMERXDATA(3) = 0x10000 - (sampleLen * 2 * multRate);
+	TIMERXCNT(3) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
+	
+	REG_IE|=(IRQ_TIMER3);
+	#endif
+	
+	#ifdef ARM9
+	#endif
+}
+
+void stopSoundUser(u32 srcFrmt){
+	#ifdef ARM7
+	TIMERXCNT(2) = 0;
+	TIMERXCNT(3) = 0;
+	
+	SCHANNEL_CR(0) = 0;
+	SCHANNEL_CR(1) = 0;
+	SCHANNEL_CR(2) = 0;
+	SCHANNEL_CR(3) = 0;
+	
+	freeData();
+	//irqSet(IRQ_VBLANK, VblankHandler);
+	//irqEnable(IRQ_VBLANK);
+	EnableIrq(IRQ_VBLANK);
+	
+	REG_IE&=~(IRQ_TIMER3);
+	#endif
+	
+	#ifdef ARM9
+	#endif
+}

@@ -37,7 +37,6 @@ extern int main(int _argc, sint8 **_argv);
 extern void mallocData(int size);
 extern void freeData();
 extern void SetupSoundUser(u32 srcFrmtInst);
-extern void StopSound(u32 srcFrmtInst);	//ARM7 impl.
 extern u16 strpcmL0Buf[WAV_READ_SIZE];
 extern u16 strpcmL1Buf[WAV_READ_SIZE];
 extern u16 strpcmR0Buf[WAV_READ_SIZE];
