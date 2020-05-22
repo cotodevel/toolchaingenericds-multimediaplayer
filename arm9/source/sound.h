@@ -238,9 +238,6 @@ extern int getStreamLag();
 extern int getStreamLead();
 //extern char *sidMeta(int which);
 
-extern void volumeUp(int x, int y);
-extern void volumeDown(int x, int y);
-
 // for about screen to set or clear the ability to loop modules
 extern void setLoop();
 extern void clearLoop();

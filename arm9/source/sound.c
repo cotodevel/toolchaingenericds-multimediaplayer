@@ -2922,40 +2922,9 @@ int getStreamLead()
 	return s_cursor;
 }
 
-u8 getVolume()
-{
-	struct soundPlayerContext * soundPlayerCtx = soundIPC();
-	return soundPlayerCtx->volume;
-}
-
 u32 getSoundChannels()
 {
 	return soundData.channels;
-}
-
-void setVolume(u8 volume)
-{
-	if(volume > 16)
-		volume = 16;
-	
-	struct soundPlayerContext * soundPlayerCtx = soundIPC();
-	soundPlayerCtx->volume = volume;
-}
-
-void volumeUp(int x, int y)
-{
-	if(getVolume() < 16)
-	{
-		setVolume(getVolume() + 1);
-	}
-}
-
-void volumeDown(int x, int y)
-{
-	if(getVolume() > 0)
-	{
-		setVolume(getVolume() - 1);
-	}
 }
  
 int getSIDTrack()
