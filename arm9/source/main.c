@@ -35,6 +35,7 @@ USA
 #include "xmem.h"
 #include "posixHandleTGDS.h"
 #include "TGDSMemoryAllocator.h"
+#include "ipcfifoTGDSUser.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * menuIteratorfileClassListCtx = NULL;			//Menu Directory Iterator
