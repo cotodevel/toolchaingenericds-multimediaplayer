@@ -369,6 +369,7 @@ static inline int getRand(int size){
 
 
 static bool pendingPlay = false;
+static int audioMode = 0;	//1 == shuffle mode / 2 == playlist mode
 
 __attribute__((section(".itcm")))
 void drawMandel(float factor){
@@ -398,10 +399,9 @@ bool keypadDisabled = false;
 void menuShow(){
 	clrscr();
 	printf("                              ");
-	printf("Supported Formats: WAV/MP3/AAC/Ogg");
-	printf("/FLAC/NSF/SPC/GBS/+ others");
-	printf("                              ");
+	printf("Audio Formats: WAV/MP3/AAC/Ogg/FLAC/NSF/SPC/GBS");
 	printf("(Start): File Browser, (A): play audio file");
+	printf("(Select): this menu");
 	printf("(L): Recent Playlist ");
 	printf("(R): Random audio file playback ");
 	if(keypadDisabled == false){
@@ -412,22 +412,29 @@ void menuShow(){
 	}
 	printf("(B): Stop audio playback ");
 	printf("(X): Mandelbrot demo ");
+	printf("(Y): Change playback mode ");
 	printf("(D-PAD: Down): Volume - ");
 	printf("(D-PAD: Up): Volume + ");
-	printf("(Select): this menu");
 	printf("(Touchscreen): Swap Screens");
 	printf("Available heap memory: %d", getMaxRam());
 	if(soundLoaded == false){
-		printf("Playback: Stopped. >%d", TGDSPrintfColor_Brown);
+		printf("Playback: Stopped. >%d", TGDSPrintfColor_Cyan);
 	}
 	else{
 		printf("Playing: %s >%d", curChosenBrowseFile, TGDSPrintfColor_Yellow);
 	}
-	printf("Current Volume: %d", (int)getVolume());
-	//printarm7DebugBuffer();
+	if(audioMode == 1){
+		printf("Audio mode: Shuffle Mode -- Current Volume: %d", (int)getVolume());
+	}
+	else if(audioMode == 2){
+		printf("Audio mode: Playlist Mode -- Current Volume: %d", (int)getVolume());
+	}
+	else{
+		printf("Audio mode: Unknown Mode");
+	}
 }
 
-static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){	//MUST be same as the template one at "fileBrowse.h" but added some custom code
+static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileIndex){	//MUST be same as the template one at "fileBrowse.h" but added some custom code
 	scanKeys();
 	while((keysPressed() & KEY_START) || (keysPressed() & KEY_A) || (keysPressed() & KEY_B)){
 		scanKeys();
@@ -469,6 +476,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay){	//MUST
 	
 	int j = 1;
 	int startFromIndex = 1;
+	*curFileIndex = startFromIndex;
 	struct FileClass * fileClassInst = NULL;
 	fileClassInst = FAT_FindFirstFile(curPath, menuIteratorfileClassListCtx, startFromIndex);
 	while(fileClassInst != NULL){
@@ -821,23 +829,42 @@ void handleInput(){
 				}
 				break;
 				default:{
-					if(getCurrentDirectoryCount(playlistfileClassListCtx) > 0){
-						if(curFileIndex > 1){
-							curFileIndex-=2;
+					
+					if(audioMode == 1){
+						if(getCurrentDirectoryCount(playlistfileClassListCtx) > 0){
+							if(curFileIndex > 1){
+								curFileIndex-=2;
+							}
+							strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
+							pendingPlay = true;
 						}
-						strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
-						pendingPlay = true;
+						else{
+							clrscr();
+							printfCoords(0, 6, "No audio files in recent Shuffled playlist. Play some first. ");
+						}
 					}
-					else{
-						clrscr();
-						printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
+					
+					else if(audioMode == 2){
+						if(getCurrentDirectoryCount(menuIteratorfileClassListCtx) > 0){
+							if(curFileIndex > 1){
+								curFileIndex--;
+							}
+							strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, menuIteratorfileClassListCtx)->fd_namefullPath);
+							pendingPlay = true;
+						}
+						else{
+							clrscr();
+							printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
+						}
+					}
+					
+					scanKeys();
+					while(keysPressed() & KEY_L){
 						scanKeys();
-						while(keysPressed() & KEY_L){
-							scanKeys();
-							IRQWait(IRQ_HBLANK);
-						}
-						menuShow();
+						IRQWait(IRQ_HBLANK);
 					}
+					menuShow();
+					
 				}
 				break;
 			}
@@ -862,16 +889,32 @@ void handleInput(){
 				}
 				break;
 				default:{
-					//Play next (random sorted) song from current folder
-					int lstSize = getCurrentDirectoryCount(playlistfileClassListCtx);
-					if(lstSize > 0){
-						closeSound();
-						
-						strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
-						pendingPlay = true;
-						
-						if(curFileIndex < lstSize){
-							curFileIndex++;
+					if(audioMode == 1){
+						//Play (random sorted) next song from current folder
+						int lstSize = getCurrentDirectoryCount(playlistfileClassListCtx);
+						if(lstSize > 0){
+							closeSound();
+							
+							if(curFileIndex < lstSize){
+								curFileIndex++;
+							}
+							
+							strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
+							pendingPlay = true;
+						}
+					}
+					else if(audioMode == 2){
+						//Play next song from current folder
+						int lstSize = getCurrentDirectoryCount(menuIteratorfileClassListCtx);
+						if(lstSize > 1){	//starts from idx 1
+							closeSound();
+							
+							if(curFileIndex < lstSize){
+								curFileIndex++;
+							}
+							
+							strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, menuIteratorfileClassListCtx)->fd_namefullPath);
+							pendingPlay = true;
 						}
 					}
 				}
@@ -890,7 +933,7 @@ void handleInput(){
 				disableSleepMode();	//Prevent accidental backlight power off while we choose a file
 				char startPath[MAX_TGDSFILENAME_LENGTH+1];
 				strcpy(startPath,"/");
-				while( ShowBrowserC((char *)startPath, curChosenBrowseFile, &pendingPlay) == true ){	//as long you keep using directories ShowBrowser will be true
+				while( ShowBrowserC((char *)startPath, curChosenBrowseFile, &pendingPlay, &curFileIndex) == true ){	//as long you keep using directories ShowBrowser will be true
 					//navigating DIRs here...
 				}
 				//Shuffle List
@@ -940,6 +983,24 @@ void handleInput(){
 			
 			scanKeys();
 			while(keysPressed() & KEY_X){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
+		}
+		
+		
+		if (keysPressed() & KEY_Y){
+			
+			if(audioMode == 1){
+				audioMode = 2;
+			}
+			else{
+				audioMode = 1;
+			}
+			
+			menuShow();
+			scanKeys();
+			while(keysPressed() & KEY_Y){
 				scanKeys();
 				IRQWait(IRQ_HBLANK);
 			}
@@ -1000,6 +1061,7 @@ int main(int _argc, sint8 **_argv) {
 	
 	enableSleepMode();
 	
+	audioMode = 2;	//1 == shuffle mode / 2 == playlist mode
 	menuShow();
 	keypadDisabled = false;
 	
