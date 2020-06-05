@@ -739,6 +739,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 		//printf("you chose Dir:%s",outBuf);
 	}
 	else{
+		*curFileIndex = (j+curjoffset);	//Update Current index in the playlist
 		*pendingPlay = true;
 	}
 	
