@@ -1068,6 +1068,13 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 	menuShow();
 	keypadDisabled = false;
 	
+	//ARGV Support: 
+	if (argc > 1) {
+		strcpy(curChosenBrowseFile, (const char *)argv[1]);
+		curFileIndex=1;
+		pendingPlay = true;
+	}
+	
 	while (1){
 		handleInput();
 		if(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){
