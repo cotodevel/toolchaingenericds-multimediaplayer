@@ -40,40 +40,6 @@ USA
 #include "posixHandleTGDS.h"
 #include "dmaTGDS.h"
 
-//These buffers are project specific for ARM7 WAV SoundStream
-u16 strpcmL0Buf[WAV_READ_SIZE];
-u16 strpcmL1Buf[WAV_READ_SIZE];
-u16 strpcmR0Buf[WAV_READ_SIZE];
-u16 strpcmR1Buf[WAV_READ_SIZE];
-
-void mallocData(int size)
-{
-	strpcmL0 = (s16 *)TGDSARM7Malloc(size);
-	strpcmL1 = (s16 *)TGDSARM7Malloc(size);
-	strpcmR0 = (s16 *)TGDSARM7Malloc(size);
-	strpcmR1 = (s16 *)TGDSARM7Malloc(size);
-	
-	// clear vram d bank to not have sound leftover
-	int i = 0;
-	
-	for(i=0;i<(size);++i)
-	{
-		strpcmL0[i] = 0;
-	}
-	
-	for(i=0;i<(size);++i)
-	{
-		strpcmR0[i] = 0;
-	}
-}
-
-void freeData()
-{	
-	TGDSARM7Free((u8*)strpcmL0);
-	TGDSARM7Free((u8*)strpcmL1);
-	TGDSARM7Free((u8*)strpcmR0);
-	TGDSARM7Free((u8*)strpcmR1);
-}
 
 //---------------------------------------------------------------------------------
 int main(int _argc, sint8 **_argv) {
@@ -106,25 +72,5 @@ void CustomInputMappingHandler(uint32 readKeys){
 
 //Project specific: ARM7 Setup for TGDS sound stream
 void initSoundStreamUser(u32 srcFmt){
-	if(srcFmt == SRC_WAV){
-		//Buffers must be provided here. 
-		//Format: s16 buffer[WAV_READ_SIZE];
-		strpcmL0 = (s16*)&strpcmL0Buf[0];
-		strpcmL1 = (s16*)&strpcmL1Buf[0];
-		strpcmR0 = (s16*)&strpcmR0Buf[0];
-		strpcmR1 = (s16*)&strpcmR1Buf[0];
-		
-		// clear vram d bank to not have sound leftover
-		int i = 0;
-		
-		for(i=0;i<(WAV_READ_SIZE);++i)
-		{
-			strpcmL0[i] = 0;
-		}
-		
-		for(i=0;i<(WAV_READ_SIZE);++i)
-		{
-			strpcmR0[i] = 0;
-		}
-	}
+	
 }
