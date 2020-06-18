@@ -74,7 +74,7 @@ typedef sint16 int16;
 
 #ifdef ARM9
 //Used by ARM9. Required internally by ARM7
-#define TGDSDLDI_ARM7_ADDRESS (u32)(0x06000000 + (96*1024))
+#define TGDSDLDI_ARM7_ADDRESS (u32)(0x06000000 + (112*1024))
 #endif
 
 #endif

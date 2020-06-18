@@ -39,6 +39,7 @@ USA
 #include "keypadTGDS.h"
 #include "posixHandleTGDS.h"
 #include "dmaTGDS.h"
+#include "biosTGDS.h"
 
 
 //---------------------------------------------------------------------------------
