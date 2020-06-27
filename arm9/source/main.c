@@ -901,9 +901,11 @@ void handleInput(){
 							if(curFileIndex < lstSize){
 								curFileIndex++;
 							}
-							
-							strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
-							pendingPlay = true;
+							char * nextFilename = getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath;
+							if(nextFilename != NULL){
+								strcpy(curChosenBrowseFile, (const char *)nextFilename);
+								pendingPlay = true;
+							}
 						}
 					}
 					else if(audioMode == 2){

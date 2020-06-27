@@ -49,7 +49,23 @@ USA
 #include "main.h"
 #include "wifi_arm9.h"
 #include "sound.h"
-
+#include <spc.h>
+#include "mikmod_build.h"
+#include "sid.h"
+#include "nsf.h"
+#include "gme.h"
+#include "mixer68.h"
+#include "mp4ff.h"
+#include "misc.h"
+#include "http.h"
+#include "id3.h"
+#include "videoTGDS.h"
+#include "nds_cp15_misc.h"
+#include "mad.h"
+#include "flac.h"
+#include "aacdec.h"
+#include <ivorbiscodec.h>
+#include <ivorbisfile.h>
 #endif
 
 #ifdef ARM9
@@ -301,5 +317,187 @@ void stopSoundUser(u32 srcFrmt){
 	#endif
 	
 	#ifdef ARM9
+	switch(srcFrmt)
+	{
+		case SRC_MIKMOD:
+			if(module)
+			{
+				Player_Stop();
+				Player_Free(module);
+			}
+			
+			module = NULL;
+			
+			MikMod_Exit();
+			
+			break;
+		case SRC_MP3:			
+			if(mp3Buf)
+				trackFree(mp3Buf);
+				
+			if(bytesLeftBuf)
+				trackFree(bytesLeftBuf);
+			
+			mad_synth_finish(&Synth);
+			mad_frame_finish(&Frame);
+			mad_stream_finish(&Stream);	
+			
+			mp3Buf = NULL;
+			bytesLeftBuf = NULL;
+			
+			break;
+		case SRC_STREAM_OGG:
+			freeStreamBuffer();
+			
+			if(streamOpened)				
+			{
+				bool closeOGGFileHandleInternally = false;	//there is no file Handle to close since this is a Stream.
+				ov_clear(&vf, closeOGGFileHandleInternally);
+			}
+				
+			if(tmpMeta)
+			{
+				trackFree(tmpMeta);
+			}
+			
+			tmpMeta = NULL;
+			
+			destroyURL(&curSite);
+			
+			streamMode = STREAM_TRYNEXT;
+			
+			break;
+		case SRC_OGG:{
+				bool closeOGGFileHandleInternally = false;	//no, can't close the filehandle here through callbacks. Close it through the DRAGON_xxxx library
+				ov_clear(&vf, closeOGGFileHandleInternally);
+			}
+			break;
+		case SRC_FLAC:
+			
+			if(flacInBuf)
+				trackFree(flacInBuf);			
+			flacInBuf = NULL;
+			
+			if(decoded0)
+				trackFree(decoded0);	
+			decoded0 = NULL;
+			
+			if(decoded1)
+				trackFree(decoded1);	
+			decoded1 = NULL;
+			
+			if(bytesLeftBuf)
+				trackFree(bytesLeftBuf);
+			bytesLeftBuf = NULL;
+			
+			break;
+		case SRC_STREAM_MP3:
+			freeStreamBuffer();
+				
+			if(mp3Buf)
+				trackFree(mp3Buf);
+				
+			if(tmpMeta)
+				trackFree(tmpMeta);
+			
+			if(bytesLeftBuf)
+				trackFree(bytesLeftBuf);
+			
+			bytesLeftBuf = NULL;
+			tmpMeta = NULL;			
+			mp3Buf = NULL;
+			
+			mad_synth_finish(&Synth);
+			mad_frame_finish(&Frame);
+			mad_stream_finish(&Stream);
+			
+			destroyURL(&curSite);
+			
+			streamMode = STREAM_TRYNEXT;
+			
+		break;
+		case SRC_STREAM_AAC:
+			freeStreamBuffer();
+			
+			if(streamOpened)
+			{
+				AACFreeDecoder(hAACDecoder);
+				hAACDecoder = NULL;
+				
+				if(aacReadBuf)
+					trackFree(aacReadBuf);			
+					
+				aacReadBuf = NULL;			
+			}
+			
+			if(tmpMeta)
+				trackFree(tmpMeta);
+			
+			tmpMeta = NULL;
+			
+			destroyURL(&curSite);
+			
+			streamMode = STREAM_TRYNEXT;
+			
+			break;
+		case SRC_AAC:
+			
+			if(!isRawAAC && mp4file)
+				mp4ff_close(mp4file);
+				
+			AACFreeDecoder(hAACDecoder);
+			hAACDecoder = NULL;
+			
+			if(aacReadBuf)
+				trackFree(aacReadBuf);			
+				
+			aacReadBuf = NULL;			
+			
+			break;
+		case SRC_SID:
+			if(sidfile)
+				trackFree(sidfile);
+			
+			sidfile = NULL;
+			
+			c64Close();			
+			break;
+		case SRC_NSF:
+			if(nsffile)
+				trackFree(nsffile);
+			
+			nsffile = NULL;
+			
+			NSFCore_Free();
+			break;
+		case SRC_SPC:
+			if(spcfile)
+				trackFree(spcfile);
+			
+			spcfile = NULL;
+			
+			spcFree();
+			
+			break;
+		case SRC_SNDH:		
+			api68_stop(sc68);
+			api68_shutdown(sc68);
+			
+			if(sndhfile)
+				trackFree(sndhfile);
+			
+			sndhfile = NULL;
+			
+			break;
+		case SRC_GBS:
+			gme_delete(emu);
+			break;
+	}
+	
+	if(soundData.filePointer != NULL){
+		fclose(soundData.filePointer);
+		soundData.filePointer = NULL;	
+		TGDSIPC->sndPlayerCtx.sourceFmt = soundData.sourceFmt = SRC_NONE;	
+	}
 	#endif
 }

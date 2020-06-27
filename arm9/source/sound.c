@@ -56,7 +56,7 @@ sndData soundData;
 
 static int bufCursor;
 static int bytesLeft = 0;
-static s16 *bytesLeftBuf = NULL;
+s16 *bytesLeftBuf = NULL;
 static int maxBytes = 0;
 
 bool cutOff = false;
@@ -88,8 +88,8 @@ bool allowEQ = true;
 struct mad_stream Stream;
 struct mad_frame Frame;
 struct mad_synth Synth;
-static mad_timer_t Timer;
-static unsigned char *mp3Buf = NULL;
+mad_timer_t Timer;
+unsigned char *mp3Buf = NULL;
 
 // ogg
 OggVorbis_File vf;
@@ -136,31 +136,31 @@ int32_t *decoded1 = NULL;
 bool flacFinished = false;
 
 //sid
-static char *sidfile = NULL;
+char *sidfile = NULL;
 static u32 sidLength = 0;
 static unsigned short sid_load_addr, sid_init_addr, sid_play_addr;
 static unsigned char sid_subSongsMax, sid_subSong, sid_song_speed;
 static int nSamplesRendered, nSamplesPerCall, nSamplesToRender;
 
 //nsf
-static uint8_t *nsffile = NULL;
+uint8_t *nsffile = NULL;
 static u32 nsfLength = 0;
 static volatile bool inTrack = false;
 bool isSwitching = false;
 
 //spc
-static uint8_t *spcfile = NULL;
+uint8_t *spcfile = NULL;
 static u32 spcLength = 0;
 
 //sndh
-static uint8_t *sndhfile = NULL;
+uint8_t *sndhfile = NULL;
 static u32 sndhLength = 0;
 static api68_init_t init68;
-static api68_t * sc68 = 0;
+api68_t * sc68 = 0;
 static int sndhTracks = 0;
 
 //gbs
-static Music_Emu* emu;
+Music_Emu* emu;
 static track_info_t info;
 static int gbsTrack;
 static int gbsOldTrack;
@@ -408,192 +408,8 @@ void allocateStreamBuffer()
 __attribute__((section(".itcm")))
 void freeSound()
 {
-	switch(soundData.sourceFmt)
-	{
-		case SRC_MIKMOD:
-			if(module)
-			{
-				Player_Stop();
-				Player_Free(module);
-			}
-			
-			module = NULL;
-			
-			MikMod_Exit();
-			
-			break;
-		case SRC_MP3:			
-			if(mp3Buf)
-				trackFree(mp3Buf);
-				
-			if(bytesLeftBuf)
-				trackFree(bytesLeftBuf);
-			
-			mad_synth_finish(&Synth);
-			mad_frame_finish(&Frame);
-			mad_stream_finish(&Stream);	
-			
-			mp3Buf = NULL;
-			bytesLeftBuf = NULL;
-			
-			break;
-		case SRC_STREAM_OGG:
-			freeStreamBuffer();
-			
-			if(streamOpened)				
-			{
-				bool closeOGGFileHandleInternally = false;	//there is no file Handle to close since this is a Stream.
-				ov_clear(&vf, closeOGGFileHandleInternally);
-			}
-				
-			if(tmpMeta)
-			{
-				trackFree(tmpMeta);
-			}
-			
-			tmpMeta = NULL;
-			
-			destroyURL(&curSite);
-			
-			streamMode = STREAM_TRYNEXT;
-			
-			break;
-		case SRC_OGG:{
-				bool closeOGGFileHandleInternally = false;	//no, can't close the filehandle here through callbacks. Close it through the DRAGON_xxxx library
-				ov_clear(&vf, closeOGGFileHandleInternally);
-			}
-			break;
-		case SRC_FLAC:
-			
-			if(flacInBuf)
-				trackFree(flacInBuf);			
-			flacInBuf = NULL;
-			
-			if(decoded0)
-				trackFree(decoded0);	
-			decoded0 = NULL;
-			
-			if(decoded1)
-				trackFree(decoded1);	
-			decoded1 = NULL;
-			
-			if(bytesLeftBuf)
-				trackFree(bytesLeftBuf);
-			bytesLeftBuf = NULL;
-			
-			break;
-		case SRC_STREAM_MP3:
-			freeStreamBuffer();
-				
-			if(mp3Buf)
-				trackFree(mp3Buf);
-				
-			if(tmpMeta)
-				trackFree(tmpMeta);
-			
-			if(bytesLeftBuf)
-				trackFree(bytesLeftBuf);
-			
-			bytesLeftBuf = NULL;
-			tmpMeta = NULL;			
-			mp3Buf = NULL;
-			
-			mad_synth_finish(&Synth);
-			mad_frame_finish(&Frame);
-			mad_stream_finish(&Stream);
-			
-			destroyURL(&curSite);
-			
-			streamMode = STREAM_TRYNEXT;
-			
-		break;
-		case SRC_STREAM_AAC:
-			freeStreamBuffer();
-			
-			if(streamOpened)
-			{
-				AACFreeDecoder(hAACDecoder);
-				hAACDecoder = NULL;
-				
-				if(aacReadBuf)
-					trackFree(aacReadBuf);			
-					
-				aacReadBuf = NULL;			
-			}
-			
-			if(tmpMeta)
-				trackFree(tmpMeta);
-			
-			tmpMeta = NULL;
-			
-			destroyURL(&curSite);
-			
-			streamMode = STREAM_TRYNEXT;
-			
-			break;
-		case SRC_AAC:
-			
-			if(!isRawAAC && mp4file)
-				mp4ff_close(mp4file);
-				
-			AACFreeDecoder(hAACDecoder);
-			hAACDecoder = NULL;
-			
-			if(aacReadBuf)
-				trackFree(aacReadBuf);			
-				
-			aacReadBuf = NULL;			
-			
-			break;
-		case SRC_SID:
-			if(sidfile)
-				trackFree(sidfile);
-			
-			sidfile = NULL;
-			
-			c64Close();			
-			break;
-		case SRC_NSF:
-			if(nsffile)
-				trackFree(nsffile);
-			
-			nsffile = NULL;
-			
-			NSFCore_Free();
-			break;
-		case SRC_SPC:
-			if(spcfile)
-				trackFree(spcfile);
-			
-			spcfile = NULL;
-			
-			spcFree();
-			
-			break;
-		case SRC_SNDH:		
-			api68_stop(sc68);
-			api68_shutdown(sc68);
-			
-			if(sndhfile)
-				trackFree(sndhfile);
-			
-			sndhfile = NULL;
-			
-			break;
-		case SRC_GBS:
-			gme_delete(emu);
-			break;
-	}
-	
-	if(soundData.filePointer != NULL){
-		fclose(soundData.filePointer);
-		soundData.filePointer = NULL;	
-		soundData.sourceFmt = SRC_NONE;	
-	}
-	
-	stopSound(soundData.sourceFmt);
+	stopSound(TGDSIPC->sndPlayerCtx.sourceFmt); //ARM9
 	freeData();
-	
 }
 
 void yield()
@@ -1581,7 +1397,7 @@ bool loadSound(char *fName)
 		soundPlayerCtx->channels = 2; // for de-interlacing
 		
 		
-		soundData.sourceFmt = SRC_MIKMOD;
+		TGDSIPC->sndPlayerCtx.sourceFmt = soundData.sourceFmt = SRC_MIKMOD;
 		soundData.bufLoc = 0;
 		
 		module = Player_Load(fName, 256, 0);
@@ -1609,7 +1425,7 @@ bool loadSound(char *fName)
 	{
 		// mp3 file
 		
-		soundData.sourceFmt = SRC_MP3;
+		TGDSIPC->sndPlayerCtx.sourceFmt = soundData.sourceFmt = SRC_MP3;
 		soundData.bufLoc = 0;
 		
 		mad_stream_init(&Stream);
@@ -1690,7 +1506,7 @@ bool loadSound(char *fName)
 	{
 		// ogg file
 		
-		soundData.sourceFmt = SRC_OGG;
+		TGDSIPC->sndPlayerCtx.sourceFmt = soundData.sourceFmt = SRC_OGG;
 		soundData.bufLoc = 0;
 		
 		FILE *fp = fopen(fName, "r");
@@ -1735,7 +1551,7 @@ bool loadSound(char *fName)
 	{
 		// raw aac file
 		
-		soundData.sourceFmt = SRC_AAC;
+		TGDSIPC->sndPlayerCtx.sourceFmt = soundData.sourceFmt = SRC_AAC;
 		soundData.bufLoc = 0;
 		
 		hAACDecoder = (HAACDecoder *)AACInitDecoder();
@@ -1813,7 +1629,7 @@ bool loadSound(char *fName)
 	{
 		// raw apple wrapper around aac file
 		
-		soundData.sourceFmt = SRC_AAC;
+		TGDSIPC->sndPlayerCtx.sourceFmt = soundData.sourceFmt = SRC_AAC;
 		soundData.bufLoc = 0;
 		
 		hAACDecoder = (HAACDecoder *)AACInitDecoder();
@@ -1951,7 +1767,7 @@ bool loadSound(char *fName)
 	{
 		// flac audio file
 		
-		soundData.sourceFmt = SRC_FLAC;
+		TGDSIPC->sndPlayerCtx.sourceFmt = soundData.sourceFmt = SRC_FLAC;
 		soundData.bufLoc = 0;
 		
 		soundData.filePointer = fopen(fName,"r");
@@ -1995,7 +1811,7 @@ bool loadSound(char *fName)
 	{
 		// sid audio file
 		
-		soundData.sourceFmt = SRC_SID;
+		TGDSIPC->sndPlayerCtx.sourceFmt = soundData.sourceFmt = SRC_SID;
 		soundData.bufLoc = 0;
 		
 		FILE *df = fopen(fName,"r");
@@ -2043,7 +1859,7 @@ bool loadSound(char *fName)
 	{
 		// NES audio file
 		
-		soundData.sourceFmt = SRC_NSF;
+		TGDSIPC->sndPlayerCtx.sourceFmt = soundData.sourceFmt = SRC_NSF;
 		soundData.bufLoc = 0;
 		FILE *df = fopen(fName,"r");
 		nsfLength = flength(df);
@@ -2102,7 +1918,7 @@ bool loadSound(char *fName)
 	{
 		// SNES audio file
 		
-		soundData.sourceFmt = SRC_SPC;
+		TGDSIPC->sndPlayerCtx.sourceFmt = soundData.sourceFmt = SRC_SPC;
 		soundData.bufLoc = 0;
 		
 		FILE *df = fopen(fName,"r");
@@ -2135,7 +1951,7 @@ bool loadSound(char *fName)
 	{
 		// Atari ST audio file
 		
-		soundData.sourceFmt = SRC_SNDH;
+		TGDSIPC->sndPlayerCtx.sourceFmt = soundData.sourceFmt = SRC_SNDH;
 		soundData.bufLoc = 0;
 		
 		FILE *df = fopen(fName,"r");
@@ -2190,7 +2006,7 @@ bool loadSound(char *fName)
 	{
 		// GameBoy audio file
 		
-		soundData.sourceFmt = SRC_GBS;
+		TGDSIPC->sndPlayerCtx.sourceFmt = soundData.sourceFmt = SRC_GBS;
 		soundData.bufLoc = 0;
 		
 		FILE *df = fopen(fName,"r");

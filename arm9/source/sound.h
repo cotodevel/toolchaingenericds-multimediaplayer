@@ -204,7 +204,7 @@ extern void pauseSound(bool pause);
 extern void getSoundLoc(u32 *loc, u32 *max);
 extern void setSoundLoc(u32 loc);
 extern void closeSound();
-extern void freeSound(); // should not be called unless absolutely necessary
+extern void freeSound();
 extern int getState();
 extern int getSoundLength();
 extern int getSourceFmt();
@@ -296,6 +296,26 @@ extern bool flacFinished ;
 
 extern bool isSwitching;
 extern bool amountLeftOver();
+extern unsigned char *mp3Buf;
+extern s16 *bytesLeftBuf;
+extern struct mad_stream Stream;
+extern struct mad_frame Frame;
+extern struct mad_synth Synth;
+extern mad_timer_t Timer;
+extern bool streamOpened;
+extern char *tmpMeta;
+extern URL_TYPE curSite;
+extern int streamMode;
+extern int s_socket;
+extern int s_cursor;
+extern int lagCursor;
+extern char *s_buffer;
+extern char *sidfile;
+extern uint8_t *nsffile;
+extern uint8_t *spcfile;
+extern uint8_t *sndhfile;
+extern Music_Emu* emu;
+extern api68_t * sc68;
 
 #ifdef __cplusplus
 }
