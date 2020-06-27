@@ -49,6 +49,7 @@ extern struct FileClassList * menuIteratorfileClassListCtx;			//Menu Directory I
 extern struct FileClassList * playlistfileClassListCtx;				//Playlist Directory Iterator
 
 extern bool keypadDisabled;
+extern char globalPath[MAX_TGDSFILENAME_LENGTH+1];
 
 #ifdef __cplusplus
 }

@@ -934,9 +934,7 @@ void handleInput(){
 		if (keysPressed() & KEY_START){
 			if(soundLoaded == false){
 				disableSleepMode();	//Prevent accidental backlight power off while we choose a file
-				char startPath[MAX_TGDSFILENAME_LENGTH+1];
-				strcpy(startPath,"/");
-				while( ShowBrowserC((char *)startPath, curChosenBrowseFile, &pendingPlay, &curFileIndex) == true ){	//as long you keep using directories ShowBrowser will be true
+				while( ShowBrowserC((char *)globalPath, curChosenBrowseFile, &pendingPlay, &curFileIndex) == true ){	//as long you keep using directories ShowBrowser will be true
 					//navigating DIRs here...
 				}
 				//Shuffle List
@@ -1012,6 +1010,7 @@ void handleInput(){
 	updateStream();
 }
 
+char globalPath[MAX_TGDSFILENAME_LENGTH+1];
 
 __attribute__((section(".itcm")))
 int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
@@ -1067,6 +1066,8 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 	audioMode = 2;	//1 == shuffle mode / 2 == playlist mode
 	menuShow();
 	keypadDisabled = false;
+	memset(globalPath, 0, sizeof(globalPath));
+	strcpy(globalPath,"/");
 	
 	//ARGV Support: 
 	if (argc > 1) {
