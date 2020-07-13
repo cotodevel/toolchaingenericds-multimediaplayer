@@ -272,7 +272,7 @@ void setupSoundUser(u32 srcFrmtInst){
 		multRate = 1;
 	}
 	
-	mallocData(sampleLen * 2 * multRate);
+	mallocData7TGDS(sampleLen * 2 * multRate);
     
 	//irqSet(IRQ_TIMER1, TIMER1Handler);
 	int ch;
@@ -316,7 +316,7 @@ void stopSoundUser(u32 srcFrmt){
 	SCHANNEL_CR(2) = 0;
 	SCHANNEL_CR(3) = 0;
 	
-	freeData();
+	freeData7TGDS();
 	//irqSet(IRQ_VBLANK, VblankHandler);
 	//irqEnable(IRQ_VBLANK);
 	EnableIrq(IRQ_VBLANK);

@@ -35,8 +35,6 @@ extern "C" {
 
 extern int main(int _argc, sint8 **_argv);
 extern void SetupSoundUser(u32 srcFrmtInst);
-extern void freeData();
-extern void mallocData(int size);
 
 #ifdef __cplusplus
 }

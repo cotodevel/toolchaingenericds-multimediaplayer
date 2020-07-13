@@ -41,35 +41,6 @@ USA
 #include "dmaTGDS.h"
 #include "biosTGDS.h"
 
-void mallocData(int size)
-{
-	strpcmL0 = (s16 *)TGDSARM7Malloc(size);
-	strpcmL1 = (s16 *)TGDSARM7Malloc(size);
-	strpcmR0 = (s16 *)TGDSARM7Malloc(size);
-	strpcmR1 = (s16 *)TGDSARM7Malloc(size);
-	
-	// clear vram d bank to not have sound leftover
-	int i = 0;
-	
-	for(i=0;i<(size);++i)
-	{
-		strpcmL0[i] = 0;
-	}
-	
-	for(i=0;i<(size);++i)
-	{
-		strpcmR0[i] = 0;
-	}
-}
-
-void freeData()
-{	
-	TGDSARM7Free((u8*)strpcmL0);
-	TGDSARM7Free((u8*)strpcmL1);
-	TGDSARM7Free((u8*)strpcmR0);
-	TGDSARM7Free((u8*)strpcmR1);
-}
-
 //---------------------------------------------------------------------------------
 int main(int _argc, sint8 **_argv) {
 //---------------------------------------------------------------------------------
