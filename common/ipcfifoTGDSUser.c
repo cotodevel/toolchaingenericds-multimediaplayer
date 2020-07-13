@@ -22,8 +22,8 @@ USA
 //TGDS required version: IPC Version: 1.3
 
 //IPC FIFO Description: 
-//		TGDSIPC 		= 	Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
-//		TGDSUSERIPC		=	Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
+//		getsIPCSharedTGDS() 		= 	Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
+//		getsIPCSharedTGDSSpecific()	=	Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
 
 #include "ipcfifoTGDS.h"
 #include "ipcfifoTGDSUser.h"
@@ -67,6 +67,14 @@ USA
 #include <ivorbiscodec.h>
 #include <ivorbisfile.h>
 #endif
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
+	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(getUserIPCAddress());
+	return sIPCSharedTGDSSpecificInst;
+}
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
@@ -497,6 +505,7 @@ void stopSoundUser(u32 srcFrmt){
 	if(soundData.filePointer != NULL){
 		fclose(soundData.filePointer);
 		soundData.filePointer = NULL;	
+		struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 		TGDSIPC->sndPlayerCtx.sourceFmt = soundData.sourceFmt = SRC_NONE;	
 	}
 	#endif

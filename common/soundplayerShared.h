@@ -30,6 +30,7 @@
 
 //TGDS Shared Sound Player Context
 static inline struct soundPlayerContext * soundIPC(){
+	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 	struct soundPlayerContext * soundPlayerCtx = (struct soundPlayerContext *)&TGDSIPC->sndPlayerCtx;
 	return soundPlayerCtx;
 }

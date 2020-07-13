@@ -29,13 +29,15 @@ USA
 #include <malloc.h>
 #include <ctype.h>
 #include "ipcfifoTGDSUser.h"
+
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "consoleTGDS.h"
 #include "biosTGDS.h"
 #include "InterruptsARMCores_h.h"
 #include "dmaTGDS.h"
-#include "utilsTGDS.h"
+
+#include "posixHandleTGDS.h"
 #include "fatfslayerTGDS.h"
 #include "keypadTGDS.h"
 #include "videoTGDS.h"
@@ -49,12 +51,12 @@ extern "C" {
 ////////[Default Console implementation is selected, thus stubs are implemented here]////////
 
 //Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
-extern ConsoleInstance * DEFAULT_CONSOLE_ENGINE_A_VRAMSETUP();
+extern vramSetup * getProjectSpecificVRAMSetup();
 
 //Custom console VRAM layout setup
 
 //1) VRAM Layout
-extern ConsoleInstance * getProjectSpecificVRAMSetup();
+extern bool InitProjectSpecificConsole();
 
 #ifdef __cplusplus
 }

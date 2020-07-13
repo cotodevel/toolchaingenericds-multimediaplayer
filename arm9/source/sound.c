@@ -408,6 +408,7 @@ void allocateStreamBuffer()
 __attribute__((section(".itcm")))
 void freeSound()
 {
+	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 	stopSound(TGDSIPC->sndPlayerCtx.sourceFmt); //ARM9
 	freeData();
 }
@@ -1315,6 +1316,7 @@ bool loadSound(char *fName)
 {	
 	char tmpName[256];
 	char ext[256];
+	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 	
 	strcpy(tmpName, fName);	
 	separateExtension(tmpName, ext);

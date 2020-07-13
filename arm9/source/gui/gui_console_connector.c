@@ -20,38 +20,41 @@ USA
 //This file abstracts specific TGDS console code which allows for easy DS console setup.
 
 #include "gui_console_connector.h"
-#include "consoleTGDS.h"
 
 ////////[For custom Console implementation]:////////
 //You need to override :
-	//ConsoleInstance * getProjectSpecificVRAMSetup()
+	//vramSetup * getProjectSpecificVRAMSetup()
 	//Which provides a proper custom 2D VRAM setup
 
 //Then override :
-	//bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst)
+	//bool InitProjectSpecificConsole()
 	//Which provides the console init code, example not available here, checkout projects that support Custom console implementation.
 
 //After that you can call :
-	//bool isTGDSCustomConsole = true;
-	//GUI_init(isTGDSCustomConsole);
+	//bool project_specific_console = true;
+	//GUI_init(project_specific_console);
 
 
 ////////[For default Console implementation simply call]:////////
-	//bool isTGDSCustomConsole = false;
-	//GUI_init(isTGDSCustomConsole);
+	//bool project_specific_console = false;
+	//GUI_init(project_specific_console);
+
+
+
 
 
 	////////[Default Console implementation is selected, thus stubs are implemented here]////////
 
 
 //Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
-ConsoleInstance * getProjectSpecificVRAMSetup(){
+vramSetup * getProjectSpecificVRAMSetup(){
 	return NULL;
 }
 
 
 //2) Uses subEngine: VRAM Layout -> Console Setup
-bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst){
-	UpdateConsoleSettings(ConsoleInstanceInst);
+bool InitProjectSpecificConsole(){
+	DefaultSessionConsole = (ConsoleInstance *)(&CustomConsole);
+	InitializeConsole(DefaultSessionConsole);
 	return true;
 }

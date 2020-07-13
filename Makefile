@@ -16,7 +16,7 @@
 #USA
 #
 
-#TGDS1.5 compatible Makefile
+#TGDS1.6 compatible Makefile
 
 #ToolchainGenericDS specific: 
 #Non FPIC Code: Use Makefiles from either TGDS, or custom
