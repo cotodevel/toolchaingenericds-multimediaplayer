@@ -1,3 +1,5 @@
+![ToolchainGenericDS](img/TGDS-Logo.png)
+
 This is the ToolchainGenericDS-audioplayer project:
 
 Compile Toolchain: To compile this project you will need to follow the steps at https://bitbucket.org/Coto88/toolchaingenericds : Then simply extract the project somewhere.
