@@ -49,7 +49,7 @@ struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(u32 ARM7Malloc
 	xmemsize = xmemsize - (xmemsize/XMEM_BS) - 1024;
 	xmemsize = xmemsize - (xmemsize%1024);
 	XmemSetup(xmemsize, XMEM_BS);
-	XmemInit();
+	XmemInit(customMemoryAllocator->ARM9MallocStartaddress, (u32)customMemoryAllocator->memoryToAllocate);
 	
 	return customMemoryAllocator;
 }

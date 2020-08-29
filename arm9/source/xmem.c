@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-
+#include "typedefsTGDS.h"
 #include "xmem.h"
 
 // default use 2.35 MB
@@ -19,10 +19,10 @@ unsigned int XMEMTOTALSIZE = (2350*1024);
 unsigned short XMEM_BLOCKSIZE = 128;
 
 // Number of blocks to create (mem/bs)
-#define XMEM_BLOCKCOUNT (XMEMTOTALSIZE/XMEM_BLOCKSIZE)
+unsigned int XMEM_BLOCKCOUNT = 0;
 
 // Size of Table in bytes
-#define XMEM_TABLESIZE XMEM_BLOCKCOUNT
+unsigned int XMEM_TABLESIZE = 0;
 
 #define XMEM_STARTBLOCK 0x01
 #define XMEM_ENDBLOCK 0x02
@@ -40,13 +40,17 @@ void XmemSetup(unsigned int size, unsigned short blocks) {
 	
 }
 
-void XmemInit() {
-
+void XmemInit(unsigned int mallocLinearMemoryStart, unsigned int mallocLinearMemorySize) {
 	// init XMEM
-//	void *XT;
-	// grab all the DS's memory!
+	memset((u8*)mallocLinearMemoryStart, 0, mallocLinearMemorySize);
 	
-	//XT =  malloc(1024*1024);
+	//Must be generated here
+	// Number of blocks to create (mem/bs)
+	XMEM_BLOCKCOUNT = ((int)mallocLinearMemorySize/XMEM_BLOCKSIZE);
+
+	// Size of Table in bytes
+	XMEM_TABLESIZE = XMEM_BLOCKCOUNT;
+	
 	xmem_table = (unsigned char *) calloc(1,XMEM_TABLESIZE);
 	xmem_blocks = (unsigned char *) malloc(XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT);
 	
