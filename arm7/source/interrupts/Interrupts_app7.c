@@ -92,15 +92,7 @@ __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void VcounterUser(){
-	//Handle Sleep-wakeup events. This is enabled in VBLANK IRQ Handler but TGDS-audioplayer disables it, so must run here.
-	uint16 buttonsARM7 = REG_KEYXY;
-	uint32 readKeys = (uint32)(( ((~KEYINPUT)&0x3ff) | (((~buttonsARM7)&3)<<10) | (((~buttonsARM7)<<6) & (KEY_TOUCH|KEY_LID) ))^KEY_LID);
-	if(sleepModeEnabled == true){
-		if (readKeys & (KEY_LEFT | KEY_RIGHT | KEY_UP | KEY_DOWN | KEY_A | KEY_B | KEY_X | KEY_Y | KEY_L | KEY_R | KEY_TOUCH)){
-			TurnOnScreens();
-		}
-	}
-	SendFIFOWords(ARM9COMMAND_HANDLEINPUT, 0);
+	
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware

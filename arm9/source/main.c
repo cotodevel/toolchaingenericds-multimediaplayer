@@ -1052,7 +1052,6 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 	
 	//Init sound
 	DisableIrq(IRQ_VCOUNT);
-	disableVBlank();
 	//We keep HBLANK IRQs to let CPU sleep as long the PPU triggers IRQs
 	
 	MikMod_RegisterAllDrivers();
@@ -1066,7 +1065,7 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 	menuIteratorfileClassListCtx = initFileList();	
 	cleanFileList(menuIteratorfileClassListCtx);
 	
-	enableSleepMode();
+	disableSleepMode();
 	
 	audioMode = 2;	//1 == shuffle mode / 2 == playlist mode
 	menuShow();
@@ -1080,6 +1079,9 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 		curFileIndex=1;
 		pendingPlay = true;
 	}
+	
+	REG_DISPSTAT = (DISP_HBLANK_IRQ);
+	REG_IE = IRQ_HBLANK | IRQ_RECVFIFO_NOT_EMPTY;
 	
 	while (1){
 		handleInput();

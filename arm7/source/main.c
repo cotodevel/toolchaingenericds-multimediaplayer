@@ -58,7 +58,11 @@ int main(int _argc, sint8 **_argv) {
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
 
 	SoundPowerON(127);		//volume
-    while (1) {
+    
+	REG_DISPSTAT = (DISP_HBLANK_IRQ);
+	REG_IE = IRQ_HBLANK | IRQ_RECVFIFO_NOT_EMPTY;
+	
+	while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
 		IRQWait(IRQ_HBLANK);
 	}

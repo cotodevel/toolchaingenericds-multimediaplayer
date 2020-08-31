@@ -205,7 +205,6 @@ void HandleFifoNotEmptyWeakRef(uint32 data0, uint32 data1){
 				}	
 				break;
 			}
-			VblankUser();
 		}
 		break;
 		case ARM7COMMAND_PSG_COMMAND:
@@ -292,11 +291,11 @@ void setupSoundUser(u32 srcFrmtInst){
 	lastL = 0;
 	lastR = 0;
 	
-	TIMERXDATA(2) = SOUND_FREQ((sndRate * multRate));
+	TIMERXDATA(2) = TIMER_FREQ(sndRate * multRate);
 	TIMERXCNT(2) = TIMER_DIV_1 | TIMER_ENABLE;
   
 	//Timer3 go
-	TIMERXDATA(3) = 0x10000 - (sampleLen * 2 * multRate);
+	TIMERXDATA(3) = 0x100000 - (sampleLen * multRate);
 	TIMERXCNT(3) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
 	
 	REG_IE|=(IRQ_TIMER3);
