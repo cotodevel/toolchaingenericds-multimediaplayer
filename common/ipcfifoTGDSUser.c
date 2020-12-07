@@ -30,7 +30,6 @@ USA
 #include "dsregs.h"
 #include "dsregs_asm.h"
 #include "InterruptsARMCores_h.h"
-#include "soundplayerShared.h"
 #include "timerTGDS.h"
 
 #ifdef ARM7
@@ -99,7 +98,7 @@ void HandleFifoNotEmptyWeakRef(uint32 data0, uint32 data1){
 				lbuf = strpcmL1;
 				rbuf = strpcmR1;
 			}
-			struct soundPlayerContext * soundPlayerCtx = soundIPC();
+			struct soundPlayerContext * soundPlayerCtx = &TGDSIPC->sndPlayerCtx;
 			s16 *iSrc = soundPlayerCtx->interlaced;
 			u32 i = 0;
 			int vMul = soundPlayerCtx->volume;
@@ -209,7 +208,7 @@ void HandleFifoNotEmptyWeakRef(uint32 data0, uint32 data1){
 		break;
 		case ARM7COMMAND_PSG_COMMAND:
 		{				
-			struct soundPlayerContext * soundPlayerCtx = soundIPC();
+			struct soundPlayerContext * soundPlayerCtx = &TGDSIPC->sndPlayerCtx;
 			SCHANNEL_CR(soundPlayerCtx->psgChannel) = soundPlayerCtx->cr;
 			SCHANNEL_TIMER(soundPlayerCtx->psgChannel) = soundPlayerCtx->timer;
 		}
@@ -241,12 +240,12 @@ void updateSoundContextStreamPlaybackUser(u32 srcFrmt){	//ARM9COMMAND_UPDATE_BUF
 			
 	// check for formats that can handle not being on an interrupt (better stability)
 	// (these formats are generally decoded faster)
-	switch(soundData.sourceFmt)
+	switch(TGDSIPC->sndPlayerCtx.sourceFmt)
 	{
 		case SRC_MP3:
 			// mono sounds are slower than stereo for some reason
 			// so we force them to update faster
-			if(soundData.channels != 1)
+			if(TGDSIPC->sndPlayerCtx.channels != 1)
 				return;
 			
 			break;
@@ -501,11 +500,10 @@ void stopSoundUser(u32 srcFrmt){
 			break;
 	}
 	
-	if(soundData.filePointer != NULL){
-		fclose(soundData.filePointer);
-		soundData.filePointer = NULL;	
-		struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
-		TGDSIPC->sndPlayerCtx.sourceFmt = soundData.sourceFmt = SRC_NONE;	
+	if(TGDSIPC->sndPlayerCtx.filePointer != NULL){
+		fclose(TGDSIPC->sndPlayerCtx.filePointer);
+		TGDSIPC->sndPlayerCtx.filePointer = NULL;	
+		TGDSIPC->sndPlayerCtx.sourceFmt = SRC_NONE;	
 	}
 	#endif
 }

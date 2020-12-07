@@ -820,7 +820,7 @@ void handleInput(){
 		}
 		
 		if (keysPressed() & KEY_L){
-			switch(soundData.sourceFmt){
+			switch(TGDSIPC->sndPlayerCtx.sourceFmt){
 				case(SRC_NSF):
 				case(SRC_SNDH):
 				case(SRC_SID):
@@ -880,7 +880,7 @@ void handleInput(){
 		}
 		
 		if (keysPressed() & KEY_R){	
-			switch(soundData.sourceFmt){
+			switch(TGDSIPC->sndPlayerCtx.sourceFmt){
 				case(SRC_NSF):
 				case(SRC_SNDH):
 				case(SRC_SID):

@@ -37,12 +37,11 @@ USA
 
 #define VRAM_D		((s16*)0x06000000)
 #define SIWRAM		((s16*)0x037F8000)
-
 #define ARM7COMMAND_PSG_COMMAND (uint32)(0xFFFFFF23)
 #define ARM7COMMAND_SOUND_DEINTERLACE (uint32)(0xFFFFFF16)
 #define ARM9COMMAND_HANDLEINPUT (uint32)(0xFFFFFF31)
-
 #define BIT(n) (1 << (n))
+#define TGDSIPC ((struct sIPCSharedTGDS*)0x027FF000)
 
 //---------------------------------------------------------------------------------
 typedef struct sIPCSharedTGDSSpecific{

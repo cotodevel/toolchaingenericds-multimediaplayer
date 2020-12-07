@@ -19,13 +19,13 @@
  
 #ifndef _SOUND_INCLUDED
 #define _SOUND_INCLUDED
-
-#include "ipcfifoTGDSUser.h"
 #include <aacdec.h>
 #include "misc.h"
 #include "http.h"
 #include "api68.h"
 #include "id3.h"
+#include "ipcfifoTGDS.h"
+#include "ipcfifoTGDSUser.h"
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
@@ -36,7 +36,6 @@
 #include "global_settings.h"
 #include "xmem.h"
 #include "posixHandleTGDS.h"
-
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
@@ -55,7 +54,6 @@
 #include "misc.h"
 #include "http.h"
 #include "id3.h"
-#include "ipcfifoTGDSUser.h"
 #include "videoTGDS.h"
 #include "InterruptsARMCores_h.h"
 #include "nds_cp15_misc.h"
@@ -63,7 +61,6 @@
 #include "flac.h"
 #include "aacdec.h"
 #include "main.h"
-#include "soundplayerShared.h"
 
 #define ARM9COPY 0
 #define ARM7COPY 1
@@ -72,7 +69,6 @@
 #define STATE_PAUSED 1
 #define STATE_STOPPED 2
 #define STATE_UNLOADED 3
-
 
 #define MP3_READ_SIZE 8192
 #define MP3_WRITE_SIZE 2048
@@ -129,7 +125,7 @@
 // mikmod
 #include "drv_nos.h"
 
-
+/*
 typedef struct
 {
 	int sourceFmt;
@@ -143,6 +139,7 @@ typedef struct
 	u32 dataLen;
 	int mp3SampleRate;
 } sndData;
+*/
 
 // sound stuff
 
@@ -243,7 +240,6 @@ extern void setLoop();
 extern void clearLoop();
 
 extern bool updateRequested;
-extern sndData soundData;
 extern void checkEndSound();
 extern bool soundLoaded;
 
@@ -337,7 +333,7 @@ static inline void updateStream()
 	if(lBuffer == NULL || rBuffer == NULL)
 	{
 		// file is done
-		stopSound(soundData.sourceFmt);
+		stopSound(TGDSIPC->sndPlayerCtx.sourceFmt);
 		sndPaused = false;
 		return;
 	}
@@ -354,7 +350,7 @@ static inline void updateStream()
 	if(cutOff)
 	{
 		// file is done
-		stopSound(soundData.sourceFmt);
+		stopSound(TGDSIPC->sndPlayerCtx.sourceFmt);
 		sndPaused = false;
 		
 		return;
@@ -362,7 +358,7 @@ static inline void updateStream()
 	
 	//checkKeys();
 	
-	switch(soundData.sourceFmt)
+	switch(TGDSIPC->sndPlayerCtx.sourceFmt)
 	{
 		case SRC_MIKMOD:
 		{
@@ -373,13 +369,13 @@ static inline void updateStream()
 				
 				if(seekUpdate >= 0)
 				{
-					soundData.loc = seekUpdate;
+					TGDSIPC->sndPlayerCtx.loc = seekUpdate;
 					seekUpdate = -1;
 					
-					Player_SetPosition(soundData.loc);
+					Player_SetPosition(TGDSIPC->sndPlayerCtx.loc);
 				}
 				
-				soundData.loc = module->sngpos;
+				TGDSIPC->sndPlayerCtx.loc = module->sngpos;
 				
 				setBuffer(lBuffer);
 				MikMod_Update();
@@ -395,10 +391,10 @@ static inline void updateStream()
 			swapAndSend(ARM7COMMAND_SOUND_COPY);
 			
 			mp3Decode();			
-			soundData.loc = ftell(soundData.filePointer);
+			TGDSIPC->sndPlayerCtx.loc = ftell(TGDSIPC->sndPlayerCtx.filePointer);
 			
-			if(soundData.loc > soundData.len)
-				soundData.loc = soundData.len;
+			if(TGDSIPC->sndPlayerCtx.loc > TGDSIPC->sndPlayerCtx.len)
+				TGDSIPC->sndPlayerCtx.loc = TGDSIPC->sndPlayerCtx.len;
 		}
 		break;
 		case SRC_STREAM_MP3:
@@ -426,11 +422,11 @@ static inline void updateStream()
 		case SRC_OGG:
 		case SRC_STREAM_OGG:
 		{
-			struct soundPlayerContext * soundPlayerCtx = soundIPC();
-			soundPlayerCtx->channels = soundData.channels;
+			struct soundPlayerContext * soundPlayerCtx = &TGDSIPC->sndPlayerCtx;
+			soundPlayerCtx->channels = TGDSIPC->sndPlayerCtx.channels;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
-			if(soundData.sourceFmt == SRC_STREAM_OGG)
+			if(TGDSIPC->sndPlayerCtx.sourceFmt == SRC_STREAM_OGG)
 			{
 				if(amountLeftOver())
 					recieveStream(-1);
@@ -442,11 +438,11 @@ static inline void updateStream()
 			while(readAmount < OGG_READ_SIZE) // loop until we got it all
 			{
 				long ret;
-				ret = ov_read(&vf, readBuf, ((OGG_READ_SIZE - readAmount) * 2 * soundData.channels), &current_section);
+				ret = ov_read(&vf, readBuf, ((OGG_READ_SIZE - readAmount) * 2 * TGDSIPC->sndPlayerCtx.channels), &current_section);
 				
 				if(ret == 0)
 				{ 
-					if(soundData.sourceFmt == SRC_OGG)
+					if(TGDSIPC->sndPlayerCtx.sourceFmt == SRC_OGG)
 					{
 						cutOff = true;
 					}
@@ -456,20 +452,20 @@ static inline void updateStream()
 				else if (ret > 0)
 				{	
 					readBuf += ret;
-					readAmount += ret / (2 * soundData.channels);
+					readAmount += ret / (2 * TGDSIPC->sndPlayerCtx.channels);
 				}
 				
 				//checkKeys();
 			}
 			
-			if(soundData.sourceFmt == SRC_STREAM_OGG)
+			if(TGDSIPC->sndPlayerCtx.sourceFmt == SRC_STREAM_OGG)
 			{
 				if(amountLeftOver())
 					recieveStream(-1);
 			}
 			else
 			{
-				soundData.loc = ftell(soundData.filePointer);
+				TGDSIPC->sndPlayerCtx.loc = ftell(TGDSIPC->sndPlayerCtx.filePointer);
 			}
 		}
 		break;
@@ -477,11 +473,10 @@ static inline void updateStream()
 		case SRC_STREAM_AAC:{
 			bool isSeek = (seekUpdate >= 0);
 			
-			struct soundPlayerContext * soundPlayerCtx = soundIPC();
-			soundPlayerCtx->channels = soundData.channels;			
+			struct soundPlayerContext * soundPlayerCtx = &TGDSIPC->sndPlayerCtx;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
-			if(soundData.sourceFmt == SRC_STREAM_AAC)
+			if(TGDSIPC->sndPlayerCtx.sourceFmt == SRC_STREAM_AAC)
 			{
 				if(amountLeftOver())
 				{
@@ -496,19 +491,19 @@ static inline void updateStream()
 				aacBytesLeft = 0;
 				aacEofReached = 0;
 				
-				soundData.loc = seekUpdate;
+				TGDSIPC->sndPlayerCtx.loc = seekUpdate;
 				seekUpdate = -1;
 				
 				if(!isRawAAC)
 				{
-					sampleId = soundData.loc;
+					sampleId = TGDSIPC->sndPlayerCtx.loc;
 				}
 			}	
 			
 			aacFillBuffer();
 			aacErr = AACDecode(hAACDecoder, &aacReadPtr, &aacBytesLeft, lBuffer);
 			
-			if(soundData.sourceFmt == SRC_STREAM_AAC)
+			if(TGDSIPC->sndPlayerCtx.sourceFmt == SRC_STREAM_AAC)
 			{
 				if(amountLeftOver())
 				{
@@ -518,9 +513,9 @@ static inline void updateStream()
 			else
 			{
 				if(isRawAAC)
-					soundData.loc = ftell(soundData.filePointer);
+					TGDSIPC->sndPlayerCtx.loc = ftell(TGDSIPC->sndPlayerCtx.filePointer);
 				else
-					soundData.loc = sampleId;
+					TGDSIPC->sndPlayerCtx.loc = sampleId;
 			}
 			
 			switch (aacErr) 
@@ -530,8 +525,8 @@ static inline void updateStream()
 				default:
 					if(isSeek)
 					{
-						fseek(soundData.filePointer, 4, SEEK_CUR);
-						seekUpdate = ftell(soundData.filePointer);
+						fseek(TGDSIPC->sndPlayerCtx.filePointer, 4, SEEK_CUR);
+						seekUpdate = ftell(TGDSIPC->sndPlayerCtx.filePointer);
 						
 						memset(lBuffer, 0, m_size * 2);
 						memset(rBuffer, 0, m_size * 2);
@@ -549,7 +544,7 @@ static inline void updateStream()
 			
 			if(seekUpdate >= 0)
 			{
-				soundData.loc = seekUpdate;
+				TGDSIPC->sndPlayerCtx.loc = seekUpdate;
 				seekUpdate = -1;
 				
 				seekFlac();
@@ -562,15 +557,15 @@ static inline void updateStream()
 			decodeFlacFrame();
 			//checkKeys();
 			
-			soundData.loc = ftell(soundData.filePointer);
+			TGDSIPC->sndPlayerCtx.loc = ftell(TGDSIPC->sndPlayerCtx.filePointer);
 			
-			if(soundData.loc > soundData.len)
-				soundData.loc = soundData.len;
+			if(TGDSIPC->sndPlayerCtx.loc > TGDSIPC->sndPlayerCtx.len)
+				TGDSIPC->sndPlayerCtx.loc = TGDSIPC->sndPlayerCtx.len;
 			
 		}
 		break;
 		case SRC_SID:{
-			struct soundPlayerContext * soundPlayerCtx = soundIPC();
+			struct soundPlayerContext * soundPlayerCtx = &TGDSIPC->sndPlayerCtx;
 			soundPlayerCtx->channels = 1;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
@@ -585,7 +580,7 @@ static inline void updateStream()
 				memset(lBuffer, 0, NSF_OUT_SIZE * 4);
 			}
 			
-			struct soundPlayerContext * soundPlayerCtx = soundIPC();
+			struct soundPlayerContext * soundPlayerCtx = &TGDSIPC->sndPlayerCtx;
 			soundPlayerCtx->channels = 1;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
@@ -603,7 +598,7 @@ static inline void updateStream()
 		}
 		break;
 		case SRC_SNDH:{
-			struct soundPlayerContext * soundPlayerCtx = soundIPC();
+			struct soundPlayerContext * soundPlayerCtx = &TGDSIPC->sndPlayerCtx;
 			soundPlayerCtx->channels = 2;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
@@ -613,7 +608,7 @@ static inline void updateStream()
 		}
 		break;
 		case SRC_GBS:{
-			struct soundPlayerContext * soundPlayerCtx = soundIPC();
+			struct soundPlayerContext * soundPlayerCtx = &TGDSIPC->sndPlayerCtx;
 			soundPlayerCtx->channels = 2;
 			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 			
