@@ -19,49 +19,14 @@
  
 #ifndef _SOUND_INCLUDED
 #define _SOUND_INCLUDED
+
+#include "ipcfifoTGDSUser.h"
 #include <aacdec.h>
 #include "misc.h"
 #include "http.h"
 #include "api68.h"
 #include "id3.h"
-#include "ipcfifoTGDS.h"
-#include "ipcfifoTGDSUser.h"
-
-#include "typedefsTGDS.h"
-#include "dsregs.h"
-#include "gui_console_connector.h"
 #include "soundTGDS.h"
-#include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
-#include "click_raw.h"
-#include "global_settings.h"
-#include "xmem.h"
-#include "posixHandleTGDS.h"
-#include "typedefsTGDS.h"
-#include "dsregs.h"
-#include "dsregs_asm.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ivorbiscodec.h>
-#include <ivorbisfile.h>
-#include <spc.h>
-#include "mikmod_build.h"
-#include "sid.h"
-#include "nsf.h"
-#include "gme.h"
-#include "mixer68.h"
-#include "mp4ff.h"
-#include "misc.h"
-#include "http.h"
-#include "id3.h"
-#include "videoTGDS.h"
-#include "InterruptsARMCores_h.h"
-#include "nds_cp15_misc.h"
-#include "mad.h"
-#include "flac.h"
-#include "aacdec.h"
-#include "main.h"
-
 #define ARM9COPY 0
 #define ARM7COPY 1
 
@@ -118,28 +83,9 @@
 
 #define ICY_HEADER_SIZE 2048
 
-#define REG_SIWRAMCNT (*(vu8*)0x04000247)
-#define SIWRAM0 ((s16 *)0x037F8000)
-#define SIWRAM1 ((s16 *)0x037FC000)
 
 // mikmod
 #include "drv_nos.h"
-
-/*
-typedef struct
-{
-	int sourceFmt;
-	int bufLoc;
-	int channels;
-	FILE *filePointer;
-	int bits;
-	u32 len;
-	u32 loc;
-	u32 dataOffset;
-	u32 dataLen;
-	int mp3SampleRate;
-} sndData;
-*/
 
 // sound stuff
 
@@ -174,7 +120,6 @@ typedef struct
 	char description[32];
 } MALLOC_LIST;
 
-
 //globals.h
 #define FILENAME_SIZE 256
 #define SCREEN_WIDTH 256
@@ -185,6 +130,7 @@ typedef struct
 #define LF 0x0A
 #define EOS 0
 #define SCRATCH_START (*(void *)0x06880000)
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -192,16 +138,15 @@ extern "C" {
 
 extern char *strlwr(char *str);
 extern ID3V1_TYPE id3Data;
-extern void setSoundInterrupt();
 
 // playback
+extern bool initSoundStreamUser(char * fName, char * ext);
 extern bool loadSound(char *fName);
 extern void loadSoundGeneric(u32 wPlugin, int rate, int multiplicity, int sampleLength);
 extern void pauseSound(bool pause);
 extern void getSoundLoc(u32 *loc, u32 *max);
 extern void setSoundLoc(u32 loc);
-extern void closeSound();
-extern void freeSound();
+extern void closeSoundUser();
 extern int getState();
 extern int getSoundLength();
 extern int getSourceFmt();
@@ -223,14 +168,7 @@ extern int getCurrentStatus();
 //extern ICY_HEADER *getStreamData();
 
 // for streaming record interrupt
-//Audio commands: drive Sound Player Context (Note: different from soundTGDS.h -> Sound Sample Context)
-extern void setSoundLengthDSO(u32 len);
 extern void copyChunk();
-extern void setSoundFrequency(u32 freq);
-
-extern u32 getSoundChannels();
-extern u8 getVolume();
-extern void setVolume(u8 volume);
 extern int getStreamLag();
 extern int getStreamLead();
 //extern char *sidMeta(int which);
@@ -238,388 +176,10 @@ extern int getStreamLead();
 // for about screen to set or clear the ability to loop modules
 extern void setLoop();
 extern void clearLoop();
-
-extern bool updateRequested;
 extern void checkEndSound();
-extern bool soundLoaded;
 
-// sound out
-extern s16 *lBuffer;
-extern s16 *rBuffer;
-
-extern bool cutOff ;
-extern bool sndPaused ;
-extern bool playing ;
-extern bool seekSpecial ;
-extern bool updateRequested ;
-extern int sndLen ;
-extern int seekUpdate ;
-extern ID3V1_TYPE id3Data;
-
-extern int m_SIWRAM ;
-extern int m_size ;
-
-// mikmod
-extern MODULE *module ;
-extern bool madFinished ;
-extern int sCursor ;
-extern bool allowEQ ;
-
-extern OggVorbis_File vf;
-extern int current_section;
-
-// aac
-extern HAACDecoder *hAACDecoder;
-extern unsigned char *aacReadBuf ;
-extern unsigned char *aacReadPtr ;
-extern s16 *aacOutBuf ;
-extern AACFrameInfo aacFrameInfo;
-extern int aacBytesLeft, aacRead, aacErr, aacEofReached;
-extern int aacLength;
-extern bool isRawAAC;
-extern mp4ff_t *mp4file;
-extern mp4ff_callback_t mp4cb;
-extern int mp4track;
-extern int sampleId;
-
-//flac
-extern FLACContext fc;
-extern uint8_t *flacInBuf ;
-extern int flacBLeft ;
-extern int32_t *decoded0 ;
-extern int32_t *decoded1 ;
-extern bool flacFinished ;
-
-extern bool isSwitching;
-extern bool amountLeftOver();
-extern unsigned char *mp3Buf;
-extern s16 *bytesLeftBuf;
-extern struct mad_stream Stream;
-extern struct mad_frame Frame;
-extern struct mad_synth Synth;
-extern mad_timer_t Timer;
-extern bool streamOpened;
-extern char *tmpMeta;
-extern URL_TYPE curSite;
-extern int streamMode;
-extern int s_socket;
-extern int s_cursor;
-extern int lagCursor;
-extern char *s_buffer;
-extern char *sidfile;
-extern uint8_t *nsffile;
-extern uint8_t *spcfile;
-extern uint8_t *sndhfile;
-extern Music_Emu* emu;
-extern api68_t * sc68;
+extern u32 getSoundChannels();
 
 #ifdef __cplusplus
 }
-#endif
-
-
-// update function
-static inline void updateStream()
-{	
-	if(!updateRequested)
-	{
-		// exit if nothing is needed
-		return;
-	}
-	
-	// clear flag for update
-	updateRequested = false;
-	
-	if(lBuffer == NULL || rBuffer == NULL)
-	{
-		// file is done
-		stopSound(TGDSIPC->sndPlayerCtx.sourceFmt);
-		sndPaused = false;
-		return;
-	}
-	
-	if(sndPaused || seekSpecial)
-	{
-		memset(lBuffer, 0, m_size * 2);
-		memset(rBuffer, 0, m_size * 2);
-		
-		swapAndSend(ARM7COMMAND_SOUND_COPY);
-		return;
-	}
-	
-	if(cutOff)
-	{
-		// file is done
-		stopSound(TGDSIPC->sndPlayerCtx.sourceFmt);
-		sndPaused = false;
-		
-		return;
-	}
-	
-	//checkKeys();
-	
-	switch(TGDSIPC->sndPlayerCtx.sourceFmt)
-	{
-		case SRC_MIKMOD:
-		{
-			//checkKeys();
-			if(Player_Active())
-			{
-				swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-				
-				if(seekUpdate >= 0)
-				{
-					TGDSIPC->sndPlayerCtx.loc = seekUpdate;
-					seekUpdate = -1;
-					
-					Player_SetPosition(TGDSIPC->sndPlayerCtx.loc);
-				}
-				
-				TGDSIPC->sndPlayerCtx.loc = module->sngpos;
-				
-				setBuffer(lBuffer);
-				MikMod_Update();
-			}
-			else
-			{
-				cutOff = true;
-			}
-		}
-		break;
-		case SRC_MP3:		
-		{
-			swapAndSend(ARM7COMMAND_SOUND_COPY);
-			
-			mp3Decode();			
-			TGDSIPC->sndPlayerCtx.loc = ftell(TGDSIPC->sndPlayerCtx.filePointer);
-			
-			if(TGDSIPC->sndPlayerCtx.loc > TGDSIPC->sndPlayerCtx.len)
-				TGDSIPC->sndPlayerCtx.loc = TGDSIPC->sndPlayerCtx.len;
-		}
-		break;
-		case SRC_STREAM_MP3:
-		{
-			swapAndSend(ARM7COMMAND_SOUND_COPY);	
-			
-			if(amountLeftOver())
-				recieveStream(-1);
-			
-			madFinished = false;	
-			
-			copyRemainingData();
-			
-			while(!madFinished)
-			{
-				fillMadBufferStream(); // should take ~ 1024 bytes
-				decodeMadBufferStream(1);
-				//checkKeys();		
-			}
-			
-			if(amountLeftOver())
-				recieveStream(-1);
-		}
-		break;
-		case SRC_OGG:
-		case SRC_STREAM_OGG:
-		{
-			struct soundPlayerContext * soundPlayerCtx = &TGDSIPC->sndPlayerCtx;
-			soundPlayerCtx->channels = TGDSIPC->sndPlayerCtx.channels;
-			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-			
-			if(TGDSIPC->sndPlayerCtx.sourceFmt == SRC_STREAM_OGG)
-			{
-				if(amountLeftOver())
-					recieveStream(-1);
-			}
-			
-			u8 *readBuf = (u8 *)lBuffer;			
-			int readAmount = 0;
-			
-			while(readAmount < OGG_READ_SIZE) // loop until we got it all
-			{
-				long ret;
-				ret = ov_read(&vf, readBuf, ((OGG_READ_SIZE - readAmount) * 2 * TGDSIPC->sndPlayerCtx.channels), &current_section);
-				
-				if(ret == 0)
-				{ 
-					if(TGDSIPC->sndPlayerCtx.sourceFmt == SRC_OGG)
-					{
-						cutOff = true;
-					}
-					
-					break;
-				}
-				else if (ret > 0)
-				{	
-					readBuf += ret;
-					readAmount += ret / (2 * TGDSIPC->sndPlayerCtx.channels);
-				}
-				
-				//checkKeys();
-			}
-			
-			if(TGDSIPC->sndPlayerCtx.sourceFmt == SRC_STREAM_OGG)
-			{
-				if(amountLeftOver())
-					recieveStream(-1);
-			}
-			else
-			{
-				TGDSIPC->sndPlayerCtx.loc = ftell(TGDSIPC->sndPlayerCtx.filePointer);
-			}
-		}
-		break;
-		case SRC_AAC:
-		case SRC_STREAM_AAC:{
-			bool isSeek = (seekUpdate >= 0);
-			
-			struct soundPlayerContext * soundPlayerCtx = &TGDSIPC->sndPlayerCtx;
-			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-			
-			if(TGDSIPC->sndPlayerCtx.sourceFmt == SRC_STREAM_AAC)
-			{
-				if(amountLeftOver())
-				{
-					recieveStream(-1);
-				}
-				
-				isSeek = false;
-			}
-			else if(isSeek)
-			{
-				aacReadPtr = aacReadBuf;
-				aacBytesLeft = 0;
-				aacEofReached = 0;
-				
-				TGDSIPC->sndPlayerCtx.loc = seekUpdate;
-				seekUpdate = -1;
-				
-				if(!isRawAAC)
-				{
-					sampleId = TGDSIPC->sndPlayerCtx.loc;
-				}
-			}	
-			
-			aacFillBuffer();
-			aacErr = AACDecode(hAACDecoder, &aacReadPtr, &aacBytesLeft, lBuffer);
-			
-			if(TGDSIPC->sndPlayerCtx.sourceFmt == SRC_STREAM_AAC)
-			{
-				if(amountLeftOver())
-				{
-					recieveStream(-1);
-				}
-			}
-			else
-			{
-				if(isRawAAC)
-					TGDSIPC->sndPlayerCtx.loc = ftell(TGDSIPC->sndPlayerCtx.filePointer);
-				else
-					TGDSIPC->sndPlayerCtx.loc = sampleId;
-			}
-			
-			switch (aacErr) 
-			{
-				case ERR_AAC_NONE:
-					break;
-				default:
-					if(isSeek)
-					{
-						fseek(TGDSIPC->sndPlayerCtx.filePointer, 4, SEEK_CUR);
-						seekUpdate = ftell(TGDSIPC->sndPlayerCtx.filePointer);
-						
-						memset(lBuffer, 0, m_size * 2);
-						memset(rBuffer, 0, m_size * 2);
-						break;
-					}
-					
-					cutOff = true;
-					
-					break;
-			}
-		}
-		break;
-		case SRC_FLAC:{
-			swapAndSend(ARM7COMMAND_SOUND_COPY);
-			
-			if(seekUpdate >= 0)
-			{
-				TGDSIPC->sndPlayerCtx.loc = seekUpdate;
-				seekUpdate = -1;
-				
-				seekFlac();
-			}
-			
-			flacFinished = false;
-			
-			//checkKeys();
-			copyRemainingData();
-			decodeFlacFrame();
-			//checkKeys();
-			
-			TGDSIPC->sndPlayerCtx.loc = ftell(TGDSIPC->sndPlayerCtx.filePointer);
-			
-			if(TGDSIPC->sndPlayerCtx.loc > TGDSIPC->sndPlayerCtx.len)
-				TGDSIPC->sndPlayerCtx.loc = TGDSIPC->sndPlayerCtx.len;
-			
-		}
-		break;
-		case SRC_SID:{
-			struct soundPlayerContext * soundPlayerCtx = &TGDSIPC->sndPlayerCtx;
-			soundPlayerCtx->channels = 1;
-			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-			
-			//checkKeys();
-			sidDecode();
-			//checkKeys();
-		}
-		break;
-		case SRC_NSF:{
-			if(isSwitching)
-			{
-				memset(lBuffer, 0, NSF_OUT_SIZE * 4);
-			}
-			
-			struct soundPlayerContext * soundPlayerCtx = &TGDSIPC->sndPlayerCtx;
-			soundPlayerCtx->channels = 1;
-			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-			
-			//checkKeys();			
-			nsfDecode();
-			//checkKeys();
-		}
-		break;
-		case SRC_SPC:{
-			swapAndSend(ARM7COMMAND_SOUND_COPY);
-			
-			//checkKeys();			
-			spcDecode();
-			//checkKeys();
-		}
-		break;
-		case SRC_SNDH:{
-			struct soundPlayerContext * soundPlayerCtx = &TGDSIPC->sndPlayerCtx;
-			soundPlayerCtx->channels = 2;
-			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-			
-			//checkKeys();			
-			sndhDecode();
-			//checkKeys();
-		}
-		break;
-		case SRC_GBS:{
-			struct soundPlayerContext * soundPlayerCtx = &TGDSIPC->sndPlayerCtx;
-			soundPlayerCtx->channels = 2;
-			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-			
-			//checkKeys();			
-			gbsDecode();
-			//checkKeys();
-		}
-		break;
-	}
-	
-	//checkKeys();
-}
-
 #endif

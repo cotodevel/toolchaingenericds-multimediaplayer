@@ -35,47 +35,22 @@ USA
 #include "spifwTGDS.h"
 #include "powerTGDS.h"
 #include "utilsTGDS.h"
-#include "soundTGDS.h"
-#include "keypadTGDS.h"
-#include "posixHandleTGDS.h"
-#include "dmaTGDS.h"
 #include "biosTGDS.h"
 
 //---------------------------------------------------------------------------------
 int main(int _argc, sint8 **_argv) {
 //---------------------------------------------------------------------------------
-	/*			TGDS 1.6 Standard ARM7 Init code start	*/
-	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
+	//wait for VRAM Block to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
 	while (!(*((vuint8*)0x04000240) & 0x2));
-		
-	installWifiFIFO();		
-		
-	int argBuffer[MAXPRINT7ARGVCOUNT];
-	memset((unsigned char *)&argBuffer[0], 0, sizeof(argBuffer));
-	argBuffer[0] = 0xc070ffff;
-	writeDebugBuffer7("TGDS ARM7.bin Boot OK!", 1, (int*)&argBuffer[0]);
-		
-	/*			TGDS 1.6 Standard ARM7 Init code end	*/
-
-	SoundPowerON(127);		//volume
-    
-	REG_DISPSTAT = (DISP_HBLANK_IRQ);
-	REG_IE = IRQ_HBLANK | IRQ_RECVFIFO_NOT_EMPTY;
 	
-	while (1) {
+	/*			TGDS 1.5 Standard ARM7 Init code start	*/
+	installWifiFIFO();		
+	/*			TGDS 1.5 Standard ARM7 Init code end	*/
+	
+    while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
 		IRQWait(IRQ_HBLANK);
 	}
    
 	return 0;
-}
-
-//Custom Button Mapping Handler implementation: IRQ Driven
-void CustomInputMappingHandler(uint32 readKeys){
-	
-}
-
-//Project specific: ARM7 Setup for TGDS sound stream
-void initSoundStreamUser(u32 srcFmt){
-	
 }

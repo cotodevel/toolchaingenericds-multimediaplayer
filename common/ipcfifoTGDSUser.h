@@ -21,12 +21,13 @@ USA
 //TGDS required version: IPC Version: 1.3
 
 //IPC FIFO Description: 
-//		getsIPCSharedTGDS() 		= 	Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
-//		getsIPCSharedTGDSSpecific()	=	Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
+//		struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 														// Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
+//		struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;		// Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
+
 
 //inherits what is defined in: ipcfifoTGDS.h
-#ifndef __ipcfifoTGDSUser_h__
-#define __ipcfifoTGDSUser_h__
+#ifndef __specific_shared_h__
+#define __specific_shared_h__
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
@@ -35,20 +36,10 @@ USA
 #include "dswnifi.h"
 #include "utilsTGDS.h"
 
-#define VRAM_D		((s16*)0x06000000)
-#define SIWRAM		((s16*)0x037F8000)
-#define ARM7COMMAND_PSG_COMMAND (uint32)(0xFFFFFF23)
-#define ARM7COMMAND_SOUND_DEINTERLACE (uint32)(0xFFFFFF16)
-#define ARM9COMMAND_HANDLEINPUT (uint32)(0xFFFFFF31)
-#define BIT(n) (1 << (n))
-#define TGDSIPC ((struct sIPCSharedTGDS*)0x027FF000)
-
-//---------------------------------------------------------------------------------
-typedef struct sIPCSharedTGDSSpecific{
-//---------------------------------------------------------------------------------
+struct sIPCSharedTGDSSpecific {
 	uint32 frameCounter7;	//VBLANK counter7
 	uint32 frameCounter9;	//VBLANK counter9
-}  IPCSharedTGDSSpecific	__attribute__((aligned (4)));
+};
 
 //types used by DSOrganize
 typedef sint16 int16;
@@ -58,7 +49,7 @@ typedef sint16 int16;
 #define VRAM_0        ((uint16*)0x6000000)
 #define VRAM_A        ((uint16*)0x6800000)
 #define VRAM_B        ((uint16*)0x6820000)
-//#define VRAM_C        ((uint16*)0x6840000)
+#define VRAM_C        ((uint16*)0x6840000)
 //#define VRAM_D        ((uint16*)0x6860000)
 #define VRAM_E        ((uint16*)0x6880000)
 #define VRAM_F        ((uint16*)0x6890000)
@@ -80,7 +71,6 @@ typedef sint16 int16;
 extern "C" {
 #endif
 
-extern struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific();
 //NOT weak symbols : the implementation of these is project-defined (here)
 extern void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);

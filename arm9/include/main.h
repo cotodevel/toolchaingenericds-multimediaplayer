@@ -24,8 +24,6 @@ USA
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "limitsTGDS.h"
-#include "fatfslayerTGDS.h"
-#include "utilsTGDS.h"
 
 struct rgbMandel{
 	int r;
@@ -41,15 +39,14 @@ struct rgbMandel{
 extern "C" {
 #endif
 
-extern int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]);
+extern int main(int _argc, sint8 **_argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
+extern char globalPath[MAX_TGDSFILENAME_LENGTH+1];
 
 //TGDS Dir API: Directory Iterator(s)
+extern struct FileClassList * RecentPlaylistfileClassListCtx;		//Recent Played
 extern struct FileClassList * menuIteratorfileClassListCtx;			//Menu Directory Iterator
 extern struct FileClassList * playlistfileClassListCtx;				//Playlist Directory Iterator
-
-extern bool keypadDisabled;
-extern char globalPath[MAX_TGDSFILENAME_LENGTH+1];
 
 #ifdef __cplusplus
 }

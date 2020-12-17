@@ -1,4 +1,4 @@
-![ToolchainGenericDS](img/TGDS-Logo.png)
+SDK: TGDS1.6
 
 This is the ToolchainGenericDS-audioplayer project:
 
@@ -13,22 +13,21 @@ Project Specific description:
 TGDS Audio Player, supported formats are:
 -	WAV/MP3/AAC/Ogg/FLAC/NSF/SPC/GBS/+ others working.  Streaming mp3, ogg and acc is stripped since it´s 2019 and the DS does not support HTTPS (TLS1.2+)
 
-Button (Start): File Browser -> (A) to play audio file
-Button (L): Recent Playlist 
-Button (R): Random audio file playback
-Button (A): Enable/Disable keypad
-Button (B): Stop audio playback
-Button (X): Mandelbrot demo
+Button (Start): Reads a file named filelist.txt
+Button (X): Builds a list of the current root sd card files/directories into a file named filelist.txt
+Button (L): Dump the dldi driver (if exists), into the SD card.
+Button (Start): 	Choose a file from a given directory, use D-PAD UP or D-PAD DOWN, D-PAD LEFT or D-PAD RIGHT to navigate directories faster, press A to play: audio files.
+Button (B): 		Stop audio playback.
+Button (L):      Recent Playlist
 Button (D-PAD Down):		Volume Down (-)
 Button (D-PAD Up):		Volume Up (+)
 Button (Select): This menu screen
-Touchscreen : Swap screens
 
 
 /release folder has the latest binary precompiled for your convenience.
 
 Notes:
- - Audio files may take a few retries before playback, this is a bug due to interrupts.
+ - Mp3 may take a few retries before playback, this is a bug due to interrupts
  - Be careful to NOT to set the volume too high! Prevent Ear damages!
 
 Many thanks to DSOrganize and it's author(s), since the audio player code was taken from there... except there is no memory issues this time to play audio files at all!!!!

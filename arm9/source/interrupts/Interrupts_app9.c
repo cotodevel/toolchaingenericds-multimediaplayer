@@ -27,18 +27,6 @@ USA
 #include "utilsTGDS.h"
 #include "spifwTGDS.h"
 
-#include "typedefsTGDS.h"
-#include "dsregs.h"
-#include "gui_console_connector.h"
-#include "misc.h"
-#include "sound.h"
-#include "soundTGDS.h"
-#include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
-#include "click_raw.h"
-#include "global_settings.h"
-#include "xmem.h"
-#include "posixHandleTGDS.h"
-
 //User Handler Definitions
 
 #ifdef ARM9

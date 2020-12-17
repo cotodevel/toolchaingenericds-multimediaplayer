@@ -26,9 +26,6 @@ extern void *safeMalloc(size_t size);
 extern void *safeRealloc(void *ptr, size_t size);
 extern void* safeCalloc(size_t num, size_t size);
 extern void safeFree(void *p);
-
-extern void enableVBlank();
-extern void disableVBlank();
 extern u32 flength(FILE* fh);
 
 //DS Networking: either one of these modes.

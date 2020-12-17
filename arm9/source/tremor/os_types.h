@@ -27,8 +27,7 @@
 #  define LOOKUP_T const ogg_int32_t
 #endif
 
-/* make it easy on the folks that want to compile the libs with a
-   different malloc than stdlib */
+/* make it easy on the folks that want to compile the libs with a different memory allocator than stdlib */
 #define _ogg_malloc  safeMalloc
 #define _ogg_calloc  safeCalloc
 #define _ogg_realloc safeRealloc

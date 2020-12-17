@@ -26,7 +26,6 @@ USA
 #include "spifwTGDS.h"
 #include "wifi_arm7.h"
 #include "main.h"
-#include "eventsTGDS.h"
 
 //User Handler Definitions
 #ifdef ARM9
@@ -55,6 +54,7 @@ __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void Timer1handlerUser(){
+	
 }
 
 #ifdef ARM9
@@ -92,7 +92,7 @@ __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void VcounterUser(){
-	
+
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
@@ -101,7 +101,9 @@ __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void screenLidHasOpenedhandlerUser(){
-	TurnOnScreens();
+	setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);	//both lit screens
+	SetLedState(LED_ON);
+	isArm7ClosedLid = false;
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
@@ -110,5 +112,6 @@ __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void screenLidHasClosedhandlerUser(){
-	TurnOffScreens();
+	setBacklight(0);
+	SetLedState(LED_LONGBLINK);
 }

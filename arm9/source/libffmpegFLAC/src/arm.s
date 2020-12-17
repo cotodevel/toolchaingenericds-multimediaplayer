@@ -23,11 +23,7 @@
    All LPC filtering up to order 9 is done in specially optimised unrolled
    loops, while every order above this is handled by a slower default routine.
  */
-    
-.text
-.arch	armv5te
-.cpu	arm946e-s
-	
+    .text
     .global lpc_decode_arm
 lpc_decode_arm:
     stmdb sp!, { r4-r11, lr }

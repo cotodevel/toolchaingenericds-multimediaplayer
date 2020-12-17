@@ -1,13 +1,13 @@
-#include "misc.h"
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
 
+#include "misc.h"
 #include "InterruptsARMCores_h.h"
 #include "ipcfifoTGDSUser.h"
 #include "main.h"
 #include "dswnifi_lib.h"
-#include "TGDSMemoryAllocator.h"
+#include "posixHandleTGDS.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -17,46 +17,37 @@ char fileName[MAX_TGDSFILENAME_LENGTH+1];
 char curDir[MAX_TGDSFILENAME_LENGTH+1];
 
 void *safeMalloc(size_t size){
-	void *ptr=(void *)TGDSARM9Malloc(size);
-	if(ptr==NULL){
-		printf("safemalloc(%d) fail allocate error. ",size);
-		return(NULL);
+	void *tmp = TGDSARM9Malloc(size);
+	if(!tmp)
+	{
+		exit(-100);
 	}
-	return ptr;
+	else{
+		memset(tmp, 0, size);
+	}
+	return tmp;
 }
 
 void *safeRealloc(void *ptr, size_t size){
-	if(ptr!=NULL){
-		safeFree(ptr);
+	void *tmp = TGDSARM9Realloc(ptr, size);
+	if(!tmp)
+	{
+		exit(-101);
 	}
-	return safeMalloc(size);
+	return tmp;
 }
 
 void* safeCalloc (size_t num, size_t size){
-	void *ptr=(void *)TGDSARM9Calloc((const int)size, (const int)num);
-	if(ptr==NULL){
-		printf("safecalloc(%d) fail allocate error. ",size);
-		return(NULL);
+	void *tmp = TGDSARM9Calloc(num, size);
+	if(!tmp)
+	{
+		exit(-102);
 	}
-	return ptr;
+	return tmp;
 }
 
-void safeFree(void *ptr){
-	TGDSARM9Free((const void *)ptr);
-}
-
-void enableVBlank()
-{
-    //irqSet(IRQ_VBLANK, vBlank);
-	//irqEnable(IRQ_VBLANK);	
-	REG_IE|=IRQ_VBLANK;
-}
-
-void disableVBlank()
-{
-	//irqSet(IRQ_VBLANK, 0);
-	//irqDisable(IRQ_VBLANK);	
-	REG_IE&=~IRQ_VBLANK;
+void safeFree(void *p){
+	TGDSARM9Free(p);
 }
 
 u32 flength(FILE* fh){

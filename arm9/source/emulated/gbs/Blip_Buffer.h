@@ -6,6 +6,7 @@
 
 	// internal
 	#include <limits.h>
+	#include "posixHandleTGDS.h"
 	#if INT_MAX >= 0x7FFFFFFF
 		typedef int blip_long;
 		typedef unsigned blip_ulong;

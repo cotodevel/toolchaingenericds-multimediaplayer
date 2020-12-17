@@ -20,6 +20,7 @@
 	a power of 2, and the first arg is divisable by your second arg.	
 */
 
+//inherits what is defined in: ipcfifoTGDS.h
 #ifndef __xmem_h__
 #define __xmem_h__
 

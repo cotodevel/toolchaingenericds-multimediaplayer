@@ -10,6 +10,7 @@ extern "C" {
 #include "dsregs_asm.h"
 
 #define ROCKBOX_LITTLE_ENDIAN
+#define CPU_ARM
 
 bool spcInit(uint8_t* buffer, u32 buffersize);
 bool spcPlay(s16 *lBuf, s16 *rBuf);

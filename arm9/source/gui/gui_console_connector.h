@@ -26,7 +26,6 @@ USA
 #include <stdlib.h>
 #include <time.h>
 #include <stdarg.h>
-#include <malloc.h>
 #include <ctype.h>
 #include "ipcfifoTGDSUser.h"
 

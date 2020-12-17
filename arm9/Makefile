@@ -38,15 +38,15 @@ d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_
 
 #ARM9 specific definitions.	-fno-common so we force initialized data to rodata
 MAPFILE = $(DIR_ARM9).map
-AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_AS_COMPILER_FLAGS_9)		$(GLOBAL_AS_COMPILER_FLAGS)		-defsym CPU_ARM=1
-CC_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_CC_COMPILER_FLAGS_9)		$(GLOBAL_CC_COMPILER_FLAGS)		-fPIE	-pie	-DCPU_ARM
-CPP_FLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_CXX_COMPILER_FLAGS_9)	$(GLOBAL_CXX_COMPILER_FLAGS)	-fPIE	-pie	-DCPU_ARM
+AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_AS_COMPILER_FLAGS_9)		$(GLOBAL_AS_COMPILER_FLAGS)
+CC_ASFLAGS		=	-marm	-O2	-mthumb-interwork	-DARM9	-Dappver='$(EXECUTABLE_VERSION)'	-fno-common	-fpie
+CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	-fno-common	-fpie
 BUILD			= 	$(BUILD_ARM9)
 DIR_SRC			=	$(DIRS_ARM9_SRC)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),-z,defs
+LDFLAGS	=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE)	-Wl,-z,defs
 LIBRARIES =	-l$(TARGET_LIBRARY_NAME_9)	-lstdc++	-lcnano9	-lgcc
 
 ################################################################################################
@@ -103,8 +103,6 @@ $(TARGET_LIBRARY_CRT0_FILE_9).o:	$(TARGET_LIBRARY_LINKER_FILE_9)
 	-@echo 'S Compile start: crt0s'
 	rm -fr $(BUILD)/$(TARGET_LIBRARY_CRT0_FILE_9).o
 	$(CPP)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $(OBJDIR)/$@ -c $<
-	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm9_ld.ld $(CURDIR)
-	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm9_ld.specs $(CURDIR)
 	-@echo 'S Compile end: crt0s'
 
 #Linkage. 
@@ -116,7 +114,6 @@ $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 #xxxx-nonstripped.elf -> xxxx.elf STRIP operation
 $(ELF_ARM9): $(OBJPROG)
 	-@echo '$@ Unstripped. STRIP Start!'
-	$(OBJSTRIP)	-s -R .comment -R .gnu.version	$<
 	-mv	$<	$@
 	
 $(BINSTRIP_RULE_9): $(ELF_ARM9)
@@ -127,4 +124,4 @@ $(BINSTRIP_RULE_9): $(ELF_ARM9)
 
 clean:
 	-@echo 'cleanup $(DIR_ARM9)'
-	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE)	$(CURDIR)/nds_arm9_ld.specs	$(CURDIR)/nds_arm9_ld.ld
+	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE)	

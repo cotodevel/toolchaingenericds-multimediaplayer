@@ -18,12 +18,12 @@ USA
 
 */
 
-#ifndef __main7_h__
-#define __main7_h__
+#ifndef __special_mpu_settings9_h__
+#define __special_mpu_settings9_h__
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
-#include "ipcfifoTGDSUser.h"
+#include "limitsTGDS.h"
 
 #endif
 
@@ -32,9 +32,9 @@ USA
 extern "C" {
 #endif
 
-extern int main(int _argc, sint8 **_argv);
+extern void setTGDSProjectSpecial0xFFFF0000MPUSettings();
+extern void MPUSetSpecial();
 
 #ifdef __cplusplus
 }
 #endif
-

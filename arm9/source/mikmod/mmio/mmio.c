@@ -65,8 +65,8 @@
 #include "misc.h"
 #include "fatfslayerTGDS.h"
 
-#include "mikmod_internals.h"
-#include "virtualfile.h"
+#include "..\include\mikmod_internals.h"
+#include "..\virtualfile.h"
 
 #define COPY_BUFSIZE  1024
 
@@ -316,7 +316,7 @@ MWRITER *_mm_new_file_writer(VIRTUAL_FILE* fp)
 
 void _mm_delete_file_writer (MWRITER* writer)
 {
-	if(writer) free (writer);
+	if(writer) safeFree(writer);
 }
 
 /*========== Write functions */

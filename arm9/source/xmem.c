@@ -12,8 +12,8 @@
 #include "typedefsTGDS.h"
 #include "xmem.h"
 
-// default use 2.35 MB
-unsigned int XMEMTOTALSIZE = (2350*1024);
+// default use 1.5 MB
+unsigned int XMEMTOTALSIZE = (1500*1024);
 
 // how many bytes will each of our blocks be?
 unsigned short XMEM_BLOCKSIZE = 128;

@@ -19,32 +19,31 @@ USA
 */
 
 #include "main.h"
+
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
+
 #include "gui_console_connector.h"
 #include "misc.h"
 #include "sound.h"
 #include "soundTGDS.h"
 #include "keypadTGDS.h"
+
 #include "dswnifi_lib.h"
 #include "TGDSLogoLZSSCompressed.h"
+
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
 #include "click_raw.h"
-#include "global_settings.h"
-#include "xmem.h"
-#include "posixHandleTGDS.h"
-#include "TGDSMemoryAllocator.h"
-#include "ipcfifoTGDSUser.h"
-#include "fatfslayerTGDS.h"
-#include "utilsTGDS.h"
 
 //TGDS Dir API: Directory Iterator(s)
+struct FileClassList * RecentPlaylistfileClassListCtx = NULL;		//Recent Played
 struct FileClassList * menuIteratorfileClassListCtx = NULL;			//Menu Directory Iterator
 struct FileClassList * playlistfileClassListCtx = NULL;				//Playlist Directory Iterator
 
 //static vector<string> songLst;
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
+char globalPath[MAX_TGDSFILENAME_LENGTH+1];
 
 #define oldSongsToRemember (int)(10)
 
@@ -52,11 +51,11 @@ char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 #define SCREENHEIGHT (192)
 #define COLOR(r,g,b)  ((r) | (g)<<5 | (b)<<10)
 #define OFFSET(r,c,w) ((r)*(w)+(c))
-#define VRAM_A            ((u16*)0x06000000)
+#define VRAM_C            ((u16*)0x06200000)
 #define PIXEL_ENABLE (1<<15)
 
 static inline void setPixel(int row, int col, u16 color) {
-	VRAM_A[OFFSET(row, col, SCREENWIDTH)] = color | PIXEL_ENABLE;
+	VRAM_C[OFFSET(row, col, SCREENWIDTH)] = color | PIXEL_ENABLE;
 }
 
 //What the original mandelbrot code does: (the original I based this one), as a X/Y latitude-like orientation so it will rotate around its X and Y axis, by a given factor
@@ -230,211 +229,10 @@ static inline struct rgbMandel mandelbrot(float real, float imag) {
 	return rgb;
 }
 
-static inline void draw(float x_start, float x_fin, float y_start, float y_fin) {
-	
-	int width = SCREENWIDTH; //number of characters fitting horizontally on my screen 
-	int heigth = SCREENHEIGHT; //number of characters fitting vertically on my screen
-	float dx = (x_fin - x_start)/(width-1);
-	float dy = (y_fin - y_start)/(heigth-1);
-	
-	//stable
-	int i = 0;
-	for (i = 0; i < heigth; i++) {
-		float y = y_fin - i*dy; // current imaginary value
-		int j = 0;
-		for (j = 0; j < width; j+=40) {
-			
-			float x0 = x_start + (j+0)*dx; // current real value
-			float x1 = x_start + (j+1)*dx; // current real value
-			float x2 = x_start + (j+2)*dx; // current real value
-			float x3 = x_start + (j+3)*dx; // current real value
-			float x4 = x_start + (j+4)*dx; // current real value
-			float x5 = x_start + (j+5)*dx; // current real value
-			float x6 = x_start + (j+6)*dx; // current real value
-			float x7 = x_start + (j+7)*dx; // current real value
-			float x8 = x_start + (j+8)*dx; // current real value
-			float x9 = x_start + (j+9)*dx; // current real value
-			
-			float x10 = x_start + (j+10)*dx; // current real value
-			float x11 = x_start + (j+11)*dx; // current real value
-			float x12 = x_start + (j+12)*dx; // current real value
-			float x13 = x_start + (j+13)*dx; // current real value
-			float x14 = x_start + (j+14)*dx; // current real value
-			float x15 = x_start + (j+15)*dx; // current real value
-			float x16 = x_start + (j+16)*dx; // current real value
-			float x17 = x_start + (j+17)*dx; // current real value
-			float x18 = x_start + (j+18)*dx; // current real value
-			float x19 = x_start + (j+19)*dx; // current real value
-			
-			float x20 = x_start + (j+20)*dx; // current real value
-			float x21 = x_start + (j+21)*dx; // current real value
-			float x22 = x_start + (j+22)*dx; // current real value
-			float x23 = x_start + (j+23)*dx; // current real value
-			float x24 = x_start + (j+24)*dx; // current real value
-			float x25 = x_start + (j+25)*dx; // current real value
-			float x26 = x_start + (j+26)*dx; // current real value
-			float x27 = x_start + (j+27)*dx; // current real value
-			float x28 = x_start + (j+28)*dx; // current real value
-			float x29 = x_start + (j+29)*dx; // current real value
-			
-			float x30 = x_start + (j+30)*dx; // current real value
-			float x31 = x_start + (j+31)*dx; // current real value
-			float x32 = x_start + (j+32)*dx; // current real value
-			float x33 = x_start + (j+33)*dx; // current real value
-			float x34 = x_start + (j+34)*dx; // current real value
-			float x35 = x_start + (j+35)*dx; // current real value
-			float x36 = x_start + (j+36)*dx; // current real value
-			float x37 = x_start + (j+37)*dx; // current real value
-			float x38 = x_start + (j+38)*dx; // current real value
-			float x39 = x_start + (j+39)*dx; // current real value
-			
-			struct rgbMandel rgb0 = mandelbrot(x0,y);	
-			struct rgbMandel rgb1 = mandelbrot(x1,y);	
-			struct rgbMandel rgb2 = mandelbrot(x2,y);	
-			struct rgbMandel rgb3 = mandelbrot(x3,y);	
-			struct rgbMandel rgb4 = mandelbrot(x4,y);	
-			struct rgbMandel rgb5 = mandelbrot(x5,y);	
-			struct rgbMandel rgb6 = mandelbrot(x6,y);	
-			struct rgbMandel rgb7 = mandelbrot(x7,y);	
-			struct rgbMandel rgb8 = mandelbrot(x8,y);	
-			struct rgbMandel rgb9 = mandelbrot(x9,y);	
-			
-			struct rgbMandel rgb10 = mandelbrot(x10,y);	
-			struct rgbMandel rgb11 = mandelbrot(x11,y);	
-			struct rgbMandel rgb12 = mandelbrot(x12,y);	
-			struct rgbMandel rgb13 = mandelbrot(x13,y);	
-			struct rgbMandel rgb14 = mandelbrot(x14,y);	
-			struct rgbMandel rgb15 = mandelbrot(x15,y);	
-			struct rgbMandel rgb16 = mandelbrot(x16,y);	
-			struct rgbMandel rgb17 = mandelbrot(x17,y);	
-			struct rgbMandel rgb18 = mandelbrot(x18,y);	
-			struct rgbMandel rgb19 = mandelbrot(x19,y);
-			
-			struct rgbMandel rgb20 = mandelbrot(x20,y);	
-			struct rgbMandel rgb21 = mandelbrot(x21,y);	
-			struct rgbMandel rgb22 = mandelbrot(x22,y);	
-			struct rgbMandel rgb23 = mandelbrot(x23,y);	
-			struct rgbMandel rgb24 = mandelbrot(x24,y);	
-			struct rgbMandel rgb25 = mandelbrot(x25,y);	
-			struct rgbMandel rgb26 = mandelbrot(x26,y);	
-			struct rgbMandel rgb27 = mandelbrot(x27,y);	
-			struct rgbMandel rgb28 = mandelbrot(x28,y);	
-			struct rgbMandel rgb29 = mandelbrot(x29,y);
-			
-			struct rgbMandel rgb30 = mandelbrot(x30,y);	
-			struct rgbMandel rgb31 = mandelbrot(x31,y);	
-			struct rgbMandel rgb32 = mandelbrot(x32,y);	
-			struct rgbMandel rgb33 = mandelbrot(x33,y);	
-			struct rgbMandel rgb34 = mandelbrot(x34,y);	
-			struct rgbMandel rgb35 = mandelbrot(x35,y);	
-			struct rgbMandel rgb36 = mandelbrot(x36,y);	
-			struct rgbMandel rgb37 = mandelbrot(x37,y);	
-			struct rgbMandel rgb38 = mandelbrot(x38,y);	
-			struct rgbMandel rgb39 = mandelbrot(x39,y);
-			
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 0] = (u32)((COLOR(rgb0.r, rgb0.g, rgb0.b) | PIXEL_ENABLE) | ((COLOR(rgb1.r, rgb1.g, rgb1.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 2] = (u32)((COLOR(rgb2.r, rgb2.g, rgb2.b) | PIXEL_ENABLE) | ((COLOR(rgb3.r, rgb3.g, rgb3.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 4] = (u32)((COLOR(rgb4.r, rgb4.g, rgb4.b) | PIXEL_ENABLE) | ((COLOR(rgb5.r, rgb5.g, rgb5.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 6] = (u32)((COLOR(rgb6.r, rgb6.g, rgb6.b) | PIXEL_ENABLE) | ((COLOR(rgb7.r, rgb7.g, rgb7.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 8] = (u32)((COLOR(rgb8.r, rgb8.g, rgb8.b) | PIXEL_ENABLE) | ((COLOR(rgb9.r, rgb9.g, rgb9.b) | PIXEL_ENABLE)<<16));
-			
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 10] = (u32)((COLOR(rgb10.r, rgb10.g, rgb10.b) | PIXEL_ENABLE) | ((COLOR(rgb11.r, rgb11.g, rgb11.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 12] = (u32)((COLOR(rgb12.r, rgb12.g, rgb12.b) | PIXEL_ENABLE) | ((COLOR(rgb13.r, rgb13.g, rgb13.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 14] = (u32)((COLOR(rgb14.r, rgb14.g, rgb14.b) | PIXEL_ENABLE) | ((COLOR(rgb15.r, rgb15.g, rgb15.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 16] = (u32)((COLOR(rgb16.r, rgb16.g, rgb16.b) | PIXEL_ENABLE) | ((COLOR(rgb17.r, rgb17.g, rgb17.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 18] = (u32)((COLOR(rgb18.r, rgb18.g, rgb18.b) | PIXEL_ENABLE) | ((COLOR(rgb19.r, rgb19.g, rgb19.b) | PIXEL_ENABLE)<<16));
-			
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 20] = (u32)((COLOR(rgb20.r, rgb20.g, rgb20.b) | PIXEL_ENABLE) | ((COLOR(rgb21.r, rgb21.g, rgb21.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 22] = (u32)((COLOR(rgb22.r, rgb22.g, rgb22.b) | PIXEL_ENABLE) | ((COLOR(rgb23.r, rgb23.g, rgb23.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 24] = (u32)((COLOR(rgb24.r, rgb24.g, rgb24.b) | PIXEL_ENABLE) | ((COLOR(rgb25.r, rgb25.g, rgb25.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 26] = (u32)((COLOR(rgb26.r, rgb26.g, rgb26.b) | PIXEL_ENABLE) | ((COLOR(rgb27.r, rgb27.g, rgb27.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 28] = (u32)((COLOR(rgb28.r, rgb28.g, rgb28.b) | PIXEL_ENABLE) | ((COLOR(rgb29.r, rgb29.g, rgb29.b) | PIXEL_ENABLE)<<16));
-			
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 30] = (u32)((COLOR(rgb30.r, rgb30.g, rgb30.b) | PIXEL_ENABLE) | ((COLOR(rgb31.r, rgb31.g, rgb31.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 32] = (u32)((COLOR(rgb32.r, rgb32.g, rgb32.b) | PIXEL_ENABLE) | ((COLOR(rgb33.r, rgb33.g, rgb33.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 34] = (u32)((COLOR(rgb34.r, rgb34.g, rgb34.b) | PIXEL_ENABLE) | ((COLOR(rgb35.r, rgb35.g, rgb35.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 36] = (u32)((COLOR(rgb36.r, rgb36.g, rgb36.b) | PIXEL_ENABLE) | ((COLOR(rgb37.r, rgb37.g, rgb37.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_A[(i*SCREENWIDTH) + j + 38] = (u32)((COLOR(rgb38.r, rgb38.g, rgb38.b) | PIXEL_ENABLE) | ((COLOR(rgb39.r, rgb39.g, rgb39.b) | PIXEL_ENABLE)<<16));
-			
-		} // width == 256
-		handleInput();
-	}	
-}
-
-static inline int getRand(int size){
-	int res = (( (rand() + (REG_VCOUNT&(256-1))) ) % size);
-	if(res >= 0){
-		return res;
-	}
-	return getRand(size);
-}
-
-
+static bool drawMandelbrt = false;
 static bool pendingPlay = false;
-static int audioMode = 0;	//1 == shuffle mode / 2 == playlist mode
-
-__attribute__((section(".itcm")))
-void drawMandel(float factor){
-	float center_x = -1.04082816210546;
-	float center_y = 0.3546341718848392;
-	int iter = 128;
-	
-	float x_start = center_x - 1.5*factor;
-	float x_fin = center_x + 1.5*factor;
-	float y_start = center_y - factor;
-	float y_fin = center_y + factor;
-	draw(x_start, x_fin, y_start, y_fin);
-	
-	int i = 0;
-	for (i = 0; i < iter; i++) {
-		factor = factor / 1.3;
-		x_start = center_x - 1.5*factor;
-		x_fin = center_x + 1.5*factor;
-		y_start = center_y - factor;
-		y_fin = center_y + factor;
-		draw(x_start, x_fin, y_start, y_fin);
-	}
-}
-
-bool keypadDisabled = false;
-
-void menuShow(){
-	clrscr();
-	printf("                              ");
-	printf("Audio Formats: WAV/MP3/AAC/Ogg/FLAC/NSF/SPC/GBS");
-	printf("(Start): File Browser, (A): play audio file");
-	printf("(Select): this menu");
-	printf("(L): Recent Playlist ");
-	printf("(R): Random audio file playback ");
-	if(keypadDisabled == false){
-		printf("(A): Keypad Enabled. >%d", TGDSPrintfColor_Green);
-	}
-	else{
-		printf("(A): Keypad Disabled. >%d", TGDSPrintfColor_Red);
-	}
-	printf("(B): Stop audio playback ");
-	printf("(X): Mandelbrot demo ");
-	printf("(Y): Change playback mode ");
-	printf("(D-PAD: Down): Volume - ");
-	printf("(D-PAD: Up): Volume + ");
-	printf("(Touchscreen): Swap Screens");
-	printf("Available heap memory: %d", getMaxRam());
-	if(soundLoaded == false){
-		printf("Playback: Stopped. >%d", TGDSPrintfColor_Cyan);
-	}
-	else{
-		printf("Playing: %s >%d", curChosenBrowseFile, TGDSPrintfColor_Yellow);
-	}
-	if(audioMode == 1){
-		printf("Audio mode: Shuffle Mode -- Current Volume: %d", (int)getVolume());
-	}
-	else if(audioMode == 2){
-		printf("Audio mode: Playlist Mode -- Current Volume: %d", (int)getVolume());
-	}
-	else{
-		printf("Audio mode: Unknown Mode");
-	}
-}
+static int curFileIndex = 0;
+static int lastRand = 0;
 
 static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileIndex){	//MUST be same as the template one at "fileBrowse.h" but added some custom code
 	scanKeys();
@@ -748,12 +546,17 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 	//Free TGDS Dir API context
 	//freeFileList(menuIteratorfileClassListCtx);
 	return false;
-}	
+}		
 
-static int curFileIndex = 0;
-static bool drawMandelbrt = false;
+static inline int getRand(int size){
+	int res = (( (rand() + (REG_VCOUNT&(256-1))) ) % size);
+	if(res >= 0){
+		return res;
+	}
+	return getRand(size);
+}
 
-void handleInput(){
+static inline void handleInput(){
 	if(pendingPlay == true){
 		soundLoaded = loadSound((char*)curChosenBrowseFile);
 		pendingPlay = false;
@@ -763,271 +566,351 @@ void handleInput(){
 	
 	scanKeys();
 	
-	if(keysPressed() & KEY_A){
-		if(keypadDisabled == false){
-			keypadDisabled = true;
-		}
-		else{
-			keypadDisabled = false;
-		}
+	if (keysPressed() & KEY_UP){
+		struct touchScr touchScrInst;
+		touchScrRead(&touchScrInst);
+		volumeUp(touchScrInst.touchXpx, touchScrInst.touchYpx);
 		menuShow();
 		scanKeys();
-		while(keysPressed() & KEY_A){
+		while(keysPressed() & KEY_UP){
+			scanKeys();
+		}
+	}
+	
+	if (keysPressed() & KEY_DOWN){
+		struct touchScr touchScrInst;
+		touchScrRead(&touchScrInst);
+		volumeDown(touchScrInst.touchXpx, touchScrInst.touchYpx);
+		menuShow();
+		scanKeys();
+		while(keysPressed() & KEY_DOWN){
+			scanKeys();
+		}
+	}
+	
+	
+	if (keysPressed() & KEY_TOUCH){
+		u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
+		setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
+		scanKeys();
+		while(keysPressed() & KEY_TOUCH){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
 	}
 	
-	if(keypadDisabled == false){
-		if(keysPressed() & KEY_TOUCH){
-			//Toggle console between screens
-			bool isDirectFramebuffer = true;
-			bool disableTSCWhenTGDSConsoleTop = false;
-			bool SaveConsoleContext = false;	//no effect because directFB == true
-			u8 * FBSaveContext = NULL;			//no effect because directFB == true
-			TGDSLCDSwap(disableTSCWhenTGDSConsoleTop, isDirectFramebuffer, SaveConsoleContext, FBSaveContext);
-			u8 channel = SOUNDSTREAM_FREE_CHANNEL;
-			startSound(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
-			scanKeys();
-			while(keysPressed() & KEY_TOUCH){
-				scanKeys();
-				IRQWait(IRQ_HBLANK);
-			}
+	if (keysPressed() & KEY_L){
+		int oldLstSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);
+		if(oldLstSize > 0){
+			strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(oldLstSize - 1, RecentPlaylistfileClassListCtx)->fd_namefullPath);
+			popEntryfromFileClassList(RecentPlaylistfileClassListCtx);
+			lastRand = oldLstSize - 1;
+			
+			pendingPlay = true;
 		}
-		
-		if (keysPressed() & KEY_UP){
-			struct touchScr touchScrInst;
-			touchScrRead(&touchScrInst);
-			volumeUp(touchScrInst.touchXpx, touchScrInst.touchYpx);
-			menuShow();
-			scanKeys();
-			while(keysPressed() & KEY_UP){
-				scanKeys();
-				IRQWait(IRQ_HBLANK);
-			}
+		else{
+			clrscr();
+			printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
 		}
-		
-		if (keysPressed() & KEY_DOWN){
-			struct touchScr touchScrInst;
-			touchScrRead(&touchScrInst);
-			volumeDown(touchScrInst.touchXpx, touchScrInst.touchYpx);
-			menuShow();
+		scanKeys();
+		while(keysPressed() & KEY_L){
 			scanKeys();
-			while(keysPressed() & KEY_DOWN){
-				scanKeys();
-				IRQWait(IRQ_HBLANK);
-			}
 		}
+		menuShow();
+	}
+	
+	if (keysPressed() & KEY_R){
+		//Play Random song from current folder
+		int lstSize = getCurrentDirectoryCount(playlistfileClassListCtx);
 		
-		if (keysPressed() & KEY_L){
-			switch(TGDSIPC->sndPlayerCtx.sourceFmt){
-				case(SRC_NSF):
-				case(SRC_SNDH):
-				case(SRC_SID):
-				case(SRC_GBS):
-				{
-					struct touchScr touchScrInst;
-					touchScrRead(&touchScrInst);
-					soundPrevTrack(touchScrInst.touchXpx, touchScrInst.touchYpx);
+		if(lstSize > 0){
+			closeSound();
+			
+			//pick one and play
+			int randFile = -1;
+			while( (randFile = getRand(lstSize)) == lastRand){
+				if(lstSize == 1){
+					break;	//means rand() will loop forever here because the random number will always be 0
 				}
-				break;
-				default:{
-					
-					if(audioMode == 1){
-						if(getCurrentDirectoryCount(playlistfileClassListCtx) > 0){
-							if(curFileIndex > 1){
-								curFileIndex-=2;
-							}
-							strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
-							pendingPlay = true;
-						}
-						else{
-							clrscr();
-							printfCoords(0, 6, "No audio files in recent Shuffled playlist. Play some first. ");
-						}
-					}
-					
-					else if(audioMode == 2){
-						if(getCurrentDirectoryCount(menuIteratorfileClassListCtx) > 0){
-							if(curFileIndex > 1){
-								curFileIndex--;
-							}
-							strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, menuIteratorfileClassListCtx)->fd_namefullPath);
-							pendingPlay = true;
-						}
-						else{
-							clrscr();
-							printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
-						}
-					}
-					
-					scanKeys();
-					while(keysPressed() & KEY_L){
-						scanKeys();
-						IRQWait(IRQ_HBLANK);
-					}
-					menuShow();
-					
-				}
-				break;
 			}
 			
-			scanKeys();
-			while(keysPressed() & KEY_L){
-				scanKeys();
-				IRQWait(IRQ_HBLANK);
-			}
-		}
-		
-		if (keysPressed() & KEY_R){	
-			switch(TGDSIPC->sndPlayerCtx.sourceFmt){
-				case(SRC_NSF):
-				case(SRC_SNDH):
-				case(SRC_SID):
-				case(SRC_GBS):
-				{
-					struct touchScr touchScrInst;
-					touchScrRead(&touchScrInst);
-					soundNextTrack(touchScrInst.touchXpx, touchScrInst.touchYpx);
+			//remember playlist as long the audio file is unique. (for L button)
+			int oldPlsSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);
+			if(oldPlsSize >= 0){
+				struct FileClass * fileClassInst = getFileClassFromList(randFile, playlistfileClassListCtx);
+				if(pushEntryToFileClassList(fileClassInst->isIterable, fileClassInst->fd_namefullPath, fileClassInst->type, fileClassInst->d_ino, RecentPlaylistfileClassListCtx) != NULL){
+					//OK item added
 				}
-				break;
-				default:{
-					if(audioMode == 1){
-						//Play (random sorted) next song from current folder
-						int lstSize = getCurrentDirectoryCount(playlistfileClassListCtx);
-						if(lstSize > 0){
-							closeSound();
-							
-							if(curFileIndex < lstSize){
-								curFileIndex++;
-							}
-							char * nextFilename = getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath;
-							if(nextFilename != NULL){
-								strcpy(curChosenBrowseFile, (const char *)nextFilename);
-								pendingPlay = true;
-							}
-						}
-					}
-					else if(audioMode == 2){
-						//Play next song from current folder
-						int lstSize = getCurrentDirectoryCount(menuIteratorfileClassListCtx);
-						if(lstSize > 1){	//starts from idx 1
-							closeSound();
-							
-							if(curFileIndex < lstSize){
-								curFileIndex++;
-							}
-							
-							strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, menuIteratorfileClassListCtx)->fd_namefullPath);
-							pendingPlay = true;
-						}
-					}
+				else{
+					printf("failed to add an item to a RecentPlaylistfileClassListCtx FileClass Directory Iterator! ");
+					while(1==1);
 				}
-				break;
-			}
-			
-			scanKeys();
-			while(keysPressed() & KEY_R){
-				scanKeys();
-				IRQWait(IRQ_HBLANK);
-			}
-		}
-		
-		if (keysPressed() & KEY_START){
-			if(soundLoaded == false){
-				disableSleepMode();	//Prevent accidental backlight power off while we choose a file
-				while( ShowBrowserC((char *)globalPath, curChosenBrowseFile, &pendingPlay, &curFileIndex) == true ){	//as long you keep using directories ShowBrowser will be true
-					//navigating DIRs here...
-				}
-				//Shuffle List
-				playlistfileClassListCtx = randomizeFileClassList(playlistfileClassListCtx);	
-			
-				scanKeys();
-				while(keysPressed() & KEY_START){
-					scanKeys();
-					IRQWait(IRQ_HBLANK);
-				}
-				enableSleepMode();
-			}
-			else{
-				clrscr();
-				printfCoords(0, 6, "Please stop audio playback before listing files. ");
+				
+				strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(randFile, playlistfileClassListCtx)->fd_namefullPath);
+				pendingPlay = true;
 				
 				scanKeys();
-				while(keysPressed() & KEY_START){
+				while(keysPressed() & KEY_R){
 					scanKeys();
-					IRQWait(IRQ_HBLANK);
 				}
-				menuShow();
-			}
-		}
-		
-		if (keysPressed() & KEY_B){
-			//Audio stop here....
-			closeSound();
-			menuShow();
-			scanKeys();
-			while(keysPressed() & KEY_B){
-				scanKeys();
-				IRQWait(IRQ_HBLANK);
-			}
-		}
-		
-		if (keysPressed() & KEY_X){
-			if(drawMandelbrt == false){
-				drawMandelbrt = true;
-				disableSleepMode();
-				float factor = 1.0; 
-				drawMandel(factor);
-				//render TGDSLogo from a LZSS compressed file
-				RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
-				enableSleepMode();
-			}
-			
-			scanKeys();
-			while(keysPressed() & KEY_X){
-				scanKeys();
-				IRQWait(IRQ_HBLANK);
-			}
-		}
-		
-		
-		if (keysPressed() & KEY_Y){
-			
-			if(audioMode == 1){
-				audioMode = 2;
-			}
-			else{
-				audioMode = 1;
-			}
-			
-			menuShow();
-			scanKeys();
-			while(keysPressed() & KEY_Y){
-				scanKeys();
-				IRQWait(IRQ_HBLANK);
+				lastRand = randFile;				
 			}
 		}
 	}
-	updateStream();
+	
+	if (keysPressed() & KEY_START){
+		
+		if(soundLoaded == false){
+			while( ShowBrowserC((char *)globalPath, curChosenBrowseFile, &pendingPlay, &curFileIndex) == true ){	//as long you keep using directories ShowBrowser will be true
+				//navigating DIRs here...
+			}
+			
+			scanKeys();
+			while(keysPressed() & KEY_START){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
+		}
+		else{
+			clrscr();
+			printfCoords(0, 6, "Please stop audio playback before listing files. ");
+			
+			scanKeys();
+			while(keysPressed() & KEY_START){
+				scanKeys();
+				IRQWait(IRQ_HBLANK);
+			}
+			menuShow();
+		}
+		
+	}
+	
+	if (keysPressed() & KEY_B){
+		//Audio stop here....
+		closeSound();
+		
+		menuShow();
+		
+		scanKeys();
+		while(keysPressed() & KEY_B){
+			scanKeys();
+			IRQWait(IRQ_HBLANK);
+		}
+	}
+	
+	if (keysPressed() & KEY_X){
+		if(drawMandelbrt == false){
+			drawMandelbrt = true;
+			float factor = 1.0; 
+			drawMandel(factor);
+			//render TGDSLogo from a LZSS compressed file
+			RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
+		}
+		
+		scanKeys();
+		while(keysPressed() & KEY_X){
+			scanKeys();
+			IRQWait(IRQ_HBLANK);
+		}
+	}
+	
+	//Audio playback here....
+	updateStream();	//runs once per hblank line
 }
 
-char globalPath[MAX_TGDSFILENAME_LENGTH+1];
+static inline void draw(float x_start, float x_fin, float y_start, float y_fin) {
+	
+	int width = SCREENWIDTH; //number of characters fitting horizontally on my screen 
+	int heigth = SCREENHEIGHT; //number of characters fitting vertically on my screen
+	float dx = (x_fin - x_start)/(width-1);
+	float dy = (y_fin - y_start)/(heigth-1);
+	
+	//stable
+	int i = 0;
+	for (i = 0; i < heigth; i++) {
+		float y = y_fin - i*dy; // current imaginary value
+		int j = 0;
+		for (j = 0; j < width; j+=40) {
+			
+			float x0 = x_start + (j+0)*dx; // current real value
+			float x1 = x_start + (j+1)*dx; // current real value
+			float x2 = x_start + (j+2)*dx; // current real value
+			float x3 = x_start + (j+3)*dx; // current real value
+			float x4 = x_start + (j+4)*dx; // current real value
+			float x5 = x_start + (j+5)*dx; // current real value
+			float x6 = x_start + (j+6)*dx; // current real value
+			float x7 = x_start + (j+7)*dx; // current real value
+			float x8 = x_start + (j+8)*dx; // current real value
+			float x9 = x_start + (j+9)*dx; // current real value
+			
+			float x10 = x_start + (j+10)*dx; // current real value
+			float x11 = x_start + (j+11)*dx; // current real value
+			float x12 = x_start + (j+12)*dx; // current real value
+			float x13 = x_start + (j+13)*dx; // current real value
+			float x14 = x_start + (j+14)*dx; // current real value
+			float x15 = x_start + (j+15)*dx; // current real value
+			float x16 = x_start + (j+16)*dx; // current real value
+			float x17 = x_start + (j+17)*dx; // current real value
+			float x18 = x_start + (j+18)*dx; // current real value
+			float x19 = x_start + (j+19)*dx; // current real value
+			
+			float x20 = x_start + (j+20)*dx; // current real value
+			float x21 = x_start + (j+21)*dx; // current real value
+			float x22 = x_start + (j+22)*dx; // current real value
+			float x23 = x_start + (j+23)*dx; // current real value
+			float x24 = x_start + (j+24)*dx; // current real value
+			float x25 = x_start + (j+25)*dx; // current real value
+			float x26 = x_start + (j+26)*dx; // current real value
+			float x27 = x_start + (j+27)*dx; // current real value
+			float x28 = x_start + (j+28)*dx; // current real value
+			float x29 = x_start + (j+29)*dx; // current real value
+			
+			float x30 = x_start + (j+30)*dx; // current real value
+			float x31 = x_start + (j+31)*dx; // current real value
+			float x32 = x_start + (j+32)*dx; // current real value
+			float x33 = x_start + (j+33)*dx; // current real value
+			float x34 = x_start + (j+34)*dx; // current real value
+			float x35 = x_start + (j+35)*dx; // current real value
+			float x36 = x_start + (j+36)*dx; // current real value
+			float x37 = x_start + (j+37)*dx; // current real value
+			float x38 = x_start + (j+38)*dx; // current real value
+			float x39 = x_start + (j+39)*dx; // current real value
+			
+			struct rgbMandel rgb0 = mandelbrot(x0,y);	
+			struct rgbMandel rgb1 = mandelbrot(x1,y);	
+			struct rgbMandel rgb2 = mandelbrot(x2,y);	
+			struct rgbMandel rgb3 = mandelbrot(x3,y);	
+			struct rgbMandel rgb4 = mandelbrot(x4,y);	
+			struct rgbMandel rgb5 = mandelbrot(x5,y);	
+			struct rgbMandel rgb6 = mandelbrot(x6,y);	
+			struct rgbMandel rgb7 = mandelbrot(x7,y);	
+			struct rgbMandel rgb8 = mandelbrot(x8,y);	
+			struct rgbMandel rgb9 = mandelbrot(x9,y);	
+			
+			struct rgbMandel rgb10 = mandelbrot(x10,y);	
+			struct rgbMandel rgb11 = mandelbrot(x11,y);	
+			struct rgbMandel rgb12 = mandelbrot(x12,y);	
+			struct rgbMandel rgb13 = mandelbrot(x13,y);	
+			struct rgbMandel rgb14 = mandelbrot(x14,y);	
+			struct rgbMandel rgb15 = mandelbrot(x15,y);	
+			struct rgbMandel rgb16 = mandelbrot(x16,y);	
+			struct rgbMandel rgb17 = mandelbrot(x17,y);	
+			struct rgbMandel rgb18 = mandelbrot(x18,y);	
+			struct rgbMandel rgb19 = mandelbrot(x19,y);
+			
+			struct rgbMandel rgb20 = mandelbrot(x20,y);	
+			struct rgbMandel rgb21 = mandelbrot(x21,y);	
+			struct rgbMandel rgb22 = mandelbrot(x22,y);	
+			struct rgbMandel rgb23 = mandelbrot(x23,y);	
+			struct rgbMandel rgb24 = mandelbrot(x24,y);	
+			struct rgbMandel rgb25 = mandelbrot(x25,y);	
+			struct rgbMandel rgb26 = mandelbrot(x26,y);	
+			struct rgbMandel rgb27 = mandelbrot(x27,y);	
+			struct rgbMandel rgb28 = mandelbrot(x28,y);	
+			struct rgbMandel rgb29 = mandelbrot(x29,y);
+			
+			struct rgbMandel rgb30 = mandelbrot(x30,y);	
+			struct rgbMandel rgb31 = mandelbrot(x31,y);	
+			struct rgbMandel rgb32 = mandelbrot(x32,y);	
+			struct rgbMandel rgb33 = mandelbrot(x33,y);	
+			struct rgbMandel rgb34 = mandelbrot(x34,y);	
+			struct rgbMandel rgb35 = mandelbrot(x35,y);	
+			struct rgbMandel rgb36 = mandelbrot(x36,y);	
+			struct rgbMandel rgb37 = mandelbrot(x37,y);	
+			struct rgbMandel rgb38 = mandelbrot(x38,y);	
+			struct rgbMandel rgb39 = mandelbrot(x39,y);
+			
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 0] = (u32)((COLOR(rgb0.r, rgb0.g, rgb0.b) | PIXEL_ENABLE) | ((COLOR(rgb1.r, rgb1.g, rgb1.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 2] = (u32)((COLOR(rgb2.r, rgb2.g, rgb2.b) | PIXEL_ENABLE) | ((COLOR(rgb3.r, rgb3.g, rgb3.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 4] = (u32)((COLOR(rgb4.r, rgb4.g, rgb4.b) | PIXEL_ENABLE) | ((COLOR(rgb5.r, rgb5.g, rgb5.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 6] = (u32)((COLOR(rgb6.r, rgb6.g, rgb6.b) | PIXEL_ENABLE) | ((COLOR(rgb7.r, rgb7.g, rgb7.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 8] = (u32)((COLOR(rgb8.r, rgb8.g, rgb8.b) | PIXEL_ENABLE) | ((COLOR(rgb9.r, rgb9.g, rgb9.b) | PIXEL_ENABLE)<<16));
+			
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 10] = (u32)((COLOR(rgb10.r, rgb10.g, rgb10.b) | PIXEL_ENABLE) | ((COLOR(rgb11.r, rgb11.g, rgb11.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 12] = (u32)((COLOR(rgb12.r, rgb12.g, rgb12.b) | PIXEL_ENABLE) | ((COLOR(rgb13.r, rgb13.g, rgb13.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 14] = (u32)((COLOR(rgb14.r, rgb14.g, rgb14.b) | PIXEL_ENABLE) | ((COLOR(rgb15.r, rgb15.g, rgb15.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 16] = (u32)((COLOR(rgb16.r, rgb16.g, rgb16.b) | PIXEL_ENABLE) | ((COLOR(rgb17.r, rgb17.g, rgb17.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 18] = (u32)((COLOR(rgb18.r, rgb18.g, rgb18.b) | PIXEL_ENABLE) | ((COLOR(rgb19.r, rgb19.g, rgb19.b) | PIXEL_ENABLE)<<16));
+			
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 20] = (u32)((COLOR(rgb20.r, rgb20.g, rgb20.b) | PIXEL_ENABLE) | ((COLOR(rgb21.r, rgb21.g, rgb21.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 22] = (u32)((COLOR(rgb22.r, rgb22.g, rgb22.b) | PIXEL_ENABLE) | ((COLOR(rgb23.r, rgb23.g, rgb23.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 24] = (u32)((COLOR(rgb24.r, rgb24.g, rgb24.b) | PIXEL_ENABLE) | ((COLOR(rgb25.r, rgb25.g, rgb25.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 26] = (u32)((COLOR(rgb26.r, rgb26.g, rgb26.b) | PIXEL_ENABLE) | ((COLOR(rgb27.r, rgb27.g, rgb27.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 28] = (u32)((COLOR(rgb28.r, rgb28.g, rgb28.b) | PIXEL_ENABLE) | ((COLOR(rgb29.r, rgb29.g, rgb29.b) | PIXEL_ENABLE)<<16));
+			
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 30] = (u32)((COLOR(rgb30.r, rgb30.g, rgb30.b) | PIXEL_ENABLE) | ((COLOR(rgb31.r, rgb31.g, rgb31.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 32] = (u32)((COLOR(rgb32.r, rgb32.g, rgb32.b) | PIXEL_ENABLE) | ((COLOR(rgb33.r, rgb33.g, rgb33.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 34] = (u32)((COLOR(rgb34.r, rgb34.g, rgb34.b) | PIXEL_ENABLE) | ((COLOR(rgb35.r, rgb35.g, rgb35.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 36] = (u32)((COLOR(rgb36.r, rgb36.g, rgb36.b) | PIXEL_ENABLE) | ((COLOR(rgb37.r, rgb37.g, rgb37.b) | PIXEL_ENABLE)<<16));
+			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 38] = (u32)((COLOR(rgb38.r, rgb38.g, rgb38.b) | PIXEL_ENABLE) | ((COLOR(rgb39.r, rgb39.g, rgb39.b) | PIXEL_ENABLE)<<16));
+			
+		} // width == 256
+		handleInput();
+	}	
+}
+
 
 __attribute__((section(".itcm")))
-int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
+void drawMandel(float factor){
+	float center_x = -1.04082816210546;
+	float center_y = 0.3546341718848392;
+	int iter = 128;
+	
+	float x_start = center_x - 1.5*factor;
+	float x_fin = center_x + 1.5*factor;
+	float y_start = center_y - factor;
+	float y_fin = center_y + factor;
+	draw(x_start, x_fin, y_start, y_fin);
+	
+	int i = 0;
+	for (i = 0; i < iter; i++) {
+		factor = factor / 1.3;
+		x_start = center_x - 1.5*factor;
+		x_fin = center_x + 1.5*factor;
+		y_start = center_y - factor;
+		y_fin = center_y + factor;
+		draw(x_start, x_fin, y_start, y_fin);
+	}
+}
+
+void menuShow(){
+	clrscr();
+	printf("                              ");
+	printf("Supported Formats: WAV/MP3/AAC/Ogg");
+	printf("/FLAC/NSF/SPC/GBS/+ others");
+	printf("                              ");
+	printf("(Start): File Browser -> (A) to play audio file");
+	printf("(L): Recent Playlist ");
+	printf("(R): Random audio file playback ");
+	printf("(B): Stop audio playback ");
+	printf("(X): Mandelbrot demo ");
+	printf("(D-PAD: Down): Volume - ");
+	printf("(D-PAD: Up): Volume + ");
+	printf("(Select): this menu");
+	
+	if(soundLoaded == false){
+		printf("Playback: Stopped.");
+	}
+	else{
+		printf("Playing: %s", curChosenBrowseFile);
+	}
+	printf("Current Volume: %d", (int)getVolume());
+}
+
+
+int main(int _argc, sint8 **_argv) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
-	bool isTGDSCustomConsole = false;	//set default console or custom console: default console
-	GUI_init(isTGDSCustomConsole);
+	bool project_specific_console = false;	//set default console or custom console: custom console
+	GUI_init(project_specific_console);
 	GUI_clear();
+	
 	bool isCustomTGDSMalloc = true;
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
-	#ifdef ARM7_DLDI
-	setDLDIARM7Address((u32 *)TGDSDLDI_ARM7_ADDRESS);	//Required by ARM7DLDI!
-	#endif
+	printf("     ");
+	printf("     ");
 	
 	int ret=FS_init();
 	if (ret == 0)
@@ -1044,20 +927,12 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 	flush_dcache_all();
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
-	//Show logo
+	//render TGDSLogo from a LZSS compressed file
 	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
-	
-	//Remove logo and restore Main Engine registers
-	//restoreFBModeMainEngine();
-	
-	//Init sound
-	DisableIrq(IRQ_VCOUNT);
-	//We keep HBLANK IRQs to let CPU sleep as long the PPU triggers IRQs
-	
-	MikMod_RegisterAllDrivers();
-	MikMod_RegisterAllLoaders();
-	
+
 	//Init TGDS FS Directory Iterator Context(s). Mandatory to init them like this!! Otherwise several functions won't work correctly.
+	RecentPlaylistfileClassListCtx = initFileList();
+	cleanFileList(RecentPlaylistfileClassListCtx);
 	
 	playlistfileClassListCtx = initFileList();
 	cleanFileList(playlistfileClassListCtx);
@@ -1065,23 +940,10 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 	menuIteratorfileClassListCtx = initFileList();	
 	cleanFileList(menuIteratorfileClassListCtx);
 	
-	disableSleepMode();
-	
-	audioMode = 2;	//1 == shuffle mode / 2 == playlist mode
 	menuShow();
-	keypadDisabled = false;
+	
 	memset(globalPath, 0, sizeof(globalPath));
 	strcpy(globalPath,"/");
-	
-	//ARGV Support: 
-	if (argc > 1) {
-		strcpy(curChosenBrowseFile, (const char *)argv[1]);
-		curFileIndex=1;
-		pendingPlay = true;
-	}
-	
-	REG_DISPSTAT = (DISP_HBLANK_IRQ);
-	REG_IE = IRQ_HBLANK | IRQ_RECVFIFO_NOT_EMPTY;
 	
 	while (1){
 		handleInput();
