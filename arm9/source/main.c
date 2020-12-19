@@ -303,6 +303,8 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			strlwr(ext);
 			
 			if(
+				(strcmp(ext,".ima") == 0)
+				||
 				(strcmp(ext,".wav") == 0)
 				||
 				(strcmp(ext,".it") == 0)
@@ -876,7 +878,7 @@ void drawMandel(float factor){
 void menuShow(){
 	clrscr();
 	printf("                              ");
-	printf("Supported Formats: WAV/MP3/AAC/Ogg");
+	printf("Audio Formats: IMA-ADPCM (Intel)/WAV/MP3/AAC/Ogg");
 	printf("/FLAC/NSF/SPC/GBS/+ others");
 	printf("                              ");
 	printf("(Start): File Browser -> (A) to play audio file");

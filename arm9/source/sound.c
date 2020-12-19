@@ -136,6 +136,12 @@ static track_info_t info;
 static int gbsTrack;
 static int gbsOldTrack;
 
+int internalCodecType = SRC_NONE;//Internal because WAV raw decompressed buffers are used if Uncompressed WAV or ADPCM
+
+//these two handles are opened at the same time by the WAV/ADPCM decoders from a single file. Only one is used.
+static struct fd * _FileHandleVideo = NULL; 
+static struct fd * _FileHandleAudio = NULL;
+
 // arm7 code, etc
 
 void SendArm7Command(u32 command, u32 data);
@@ -2301,9 +2307,11 @@ bool initSoundStreamUser(char * fName, char * ext){
 	return false;
 }
 
-bool loadSound(char *fName){	
-	int srcFormat = initSoundStream(fName);
-	if(srcFormat != SRC_WAV){		
+
+bool loadSound(char *fName){
+	int srcFormat = playSoundStream(fName, _FileHandleVideo, _FileHandleAudio);
+	internalCodecType = srcFormat;
+	if((srcFormat != SRC_WAV) || (srcFormat != SRC_WAVADPCM)){		
 		char tmpName[256];
 		char ext[256];
 		strcpy(tmpName, fName);	
@@ -2312,6 +2320,17 @@ bool loadSound(char *fName){
 		return initSoundStreamUser(fName, ext);
 	}
 	return true;
+}
+
+bool stopSoundStreamUser(){
+	//stop adpcm / wav playback
+	return stopSoundStream(_FileHandleVideo, _FileHandleAudio, &internalCodecType);
+}
+
+void closeSoundUser(){
+	if(isWIFIConnected()){
+		disconnectWifi();
+	}
 }
 
 void soundPrevTrack(int x, int y)
@@ -2968,12 +2987,6 @@ void setSoundLoc(u32 loc)
 	}
 	
 	seekSpecial = false;
-}
-
-void closeSoundUser(){
-	if(isWIFIConnected()){
-		disconnectWifi();
-	}
 }
 
 int getState()

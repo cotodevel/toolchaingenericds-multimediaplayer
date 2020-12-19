@@ -179,6 +179,7 @@ extern void clearLoop();
 extern void checkEndSound();
 
 extern u32 getSoundChannels();
+extern int internalCodecType;
 
 #ifdef __cplusplus
 }
