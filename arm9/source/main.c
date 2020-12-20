@@ -385,7 +385,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 		
 		while(itemRead < itemsToLoad ){		
 			if(getFileClassFromList(itemRead+curjoffset, menuIteratorfileClassListCtx)->type == FT_DIR){
-				printfCoords(0, itemRead, "--- %s%s",getFileClassFromList(itemRead+curjoffset, menuIteratorfileClassListCtx)->fd_namefullPath,"<dir>");
+				printfCoords(0, itemRead, "--- %s >%d",getFileClassFromList(itemRead+curjoffset, menuIteratorfileClassListCtx)->fd_namefullPath, TGDSPrintfColor_Yellow);
 			}
 			else{
 				printfCoords(0, itemRead, "--- %s",getFileClassFromList(itemRead+curjoffset, menuIteratorfileClassListCtx)->fd_namefullPath);
