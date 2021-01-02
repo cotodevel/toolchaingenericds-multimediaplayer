@@ -569,9 +569,9 @@ static inline void handleInput(){
 	scanKeys();
 	
 	if (keysPressed() & KEY_UP){
-		struct touchScr touchScrInst;
-		touchScrRead(&touchScrInst);
-		volumeUp(touchScrInst.touchXpx, touchScrInst.touchYpx);
+		struct XYTscPos touchPos;
+		XYReadScrPos(&touchPos);
+		volumeUp(touchPos.touchXpx, touchPos.touchYpx);
 		menuShow();
 		scanKeys();
 		while(keysPressed() & KEY_UP){
@@ -580,9 +580,9 @@ static inline void handleInput(){
 	}
 	
 	if (keysPressed() & KEY_DOWN){
-		struct touchScr touchScrInst;
-		touchScrRead(&touchScrInst);
-		volumeDown(touchScrInst.touchXpx, touchScrInst.touchYpx);
+		struct XYTscPos touchPos;
+		XYReadScrPos(&touchPos);
+		volumeDown(touchPos.touchXpx, touchPos.touchYpx);
 		menuShow();
 		scanKeys();
 		while(keysPressed() & KEY_DOWN){
