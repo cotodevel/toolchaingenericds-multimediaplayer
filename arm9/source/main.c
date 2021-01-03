@@ -236,7 +236,7 @@ static int lastRand = 0;
 
 static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileIndex){	//MUST be same as the template one at "fileBrowse.h" but added some custom code
 	scanKeys();
-	while((keysPressed() & KEY_START) || (keysPressed() & KEY_A) || (keysPressed() & KEY_B)){
+	while((keysDown() & KEY_START) || (keysDown() & KEY_A) || (keysDown() & KEY_B)){
 		scanKeys();
 		IRQWait(IRQ_VBLANK);
 	}
@@ -394,12 +394,12 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 		}
 		
 		scanKeys();
-		pressed = keysPressed();
+		pressed = keysDown();
 		if (pressed&KEY_DOWN && (j < (itemsToLoad - 1) ) ){
 			j++;
 			while(pressed&KEY_DOWN){
 				scanKeys();
-				pressed = keysPressed();
+				pressed = keysDown();
 				IRQWait(IRQ_VBLANK);
 			}
 		}
@@ -415,10 +415,10 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			j = 1;
 			
 			scanKeys();
-			pressed = keysPressed();
+			pressed = keysDown();
 			while(pressed&KEY_DOWN){
 				scanKeys();
-				pressed = keysPressed();
+				pressed = keysDown();
 				IRQWait(IRQ_VBLANK);
 			}
 		}
@@ -434,10 +434,10 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			j = 1;
 			
 			scanKeys();
-			pressed = keysPressed();
+			pressed = keysDown();
 			while(pressed&KEY_LEFT){
 				scanKeys();
-				pressed = keysPressed();
+				pressed = keysDown();
 				IRQWait(IRQ_VBLANK);
 			}
 		}
@@ -453,10 +453,10 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			j = 1;
 			
 			scanKeys();
-			pressed = keysPressed();
+			pressed = keysDown();
 			while(pressed&KEY_RIGHT){
 				scanKeys();
-				pressed = keysPressed();
+				pressed = keysDown();
 				IRQWait(IRQ_VBLANK);
 			}
 		}
@@ -465,7 +465,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			j--;
 			while(pressed&KEY_UP){
 				scanKeys();
-				pressed = keysPressed();
+				pressed = keysDown();
 				IRQWait(IRQ_VBLANK);
 			}
 		}
@@ -480,10 +480,10 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			j = 1;
 			
 			scanKeys();
-			pressed = keysPressed();
+			pressed = keysDown();
 			while(pressed&KEY_UP){
 				scanKeys();
-				pressed = keysPressed();
+				pressed = keysDown();
 				IRQWait(IRQ_VBLANK);
 			}
 		}
@@ -568,40 +568,40 @@ static inline void handleInput(){
 	
 	scanKeys();
 	
-	if (keysPressed() & KEY_UP){
+	if (keysDown() & KEY_UP){
 		struct XYTscPos touchPos;
 		XYReadScrPos(&touchPos);
 		volumeUp(touchPos.touchXpx, touchPos.touchYpx);
 		menuShow();
 		scanKeys();
-		while(keysPressed() & KEY_UP){
+		while(keysDown() & KEY_UP){
 			scanKeys();
 		}
 	}
 	
-	if (keysPressed() & KEY_DOWN){
+	if (keysDown() & KEY_DOWN){
 		struct XYTscPos touchPos;
 		XYReadScrPos(&touchPos);
 		volumeDown(touchPos.touchXpx, touchPos.touchYpx);
 		menuShow();
 		scanKeys();
-		while(keysPressed() & KEY_DOWN){
+		while(keysDown() & KEY_DOWN){
 			scanKeys();
 		}
 	}
 	
 	
-	if (keysPressed() & KEY_TOUCH){
+	if (keysDown() & KEY_TOUCH){
 		u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
 		setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
 		scanKeys();
-		while(keysPressed() & KEY_TOUCH){
+		while(keysDown() & KEY_TOUCH){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
 	}
 	
-	if (keysPressed() & KEY_L){
+	if (keysDown() & KEY_L){
 		int oldLstSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);
 		if(oldLstSize > 0){
 			strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(oldLstSize - 1, RecentPlaylistfileClassListCtx)->fd_namefullPath);
@@ -615,13 +615,13 @@ static inline void handleInput(){
 			printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
 		}
 		scanKeys();
-		while(keysPressed() & KEY_L){
+		while(keysDown() & KEY_L){
 			scanKeys();
 		}
 		menuShow();
 	}
 	
-	if (keysPressed() & KEY_R){
+	if (keysDown() & KEY_R){
 		//Play Random song from current folder
 		int lstSize = getCurrentDirectoryCount(playlistfileClassListCtx);
 		
@@ -652,7 +652,7 @@ static inline void handleInput(){
 				pendingPlay = true;
 				
 				scanKeys();
-				while(keysPressed() & KEY_R){
+				while(keysDown() & KEY_R){
 					scanKeys();
 				}
 				lastRand = randFile;				
@@ -660,7 +660,7 @@ static inline void handleInput(){
 		}
 	}
 	
-	if (keysPressed() & KEY_START){
+	if (keysDown() & KEY_START){
 		
 		if(soundLoaded == false){
 			while( ShowBrowserC((char *)globalPath, curChosenBrowseFile, &pendingPlay, &curFileIndex) == true ){	//as long you keep using directories ShowBrowser will be true
@@ -668,7 +668,7 @@ static inline void handleInput(){
 			}
 			
 			scanKeys();
-			while(keysPressed() & KEY_START){
+			while(keysDown() & KEY_START){
 				scanKeys();
 				IRQWait(IRQ_HBLANK);
 			}
@@ -678,7 +678,7 @@ static inline void handleInput(){
 			printfCoords(0, 6, "Please stop audio playback before listing files. ");
 			
 			scanKeys();
-			while(keysPressed() & KEY_START){
+			while(keysDown() & KEY_START){
 				scanKeys();
 				IRQWait(IRQ_HBLANK);
 			}
@@ -687,20 +687,20 @@ static inline void handleInput(){
 		
 	}
 	
-	if (keysPressed() & KEY_B){
+	if (keysDown() & KEY_B){
 		//Audio stop here....
 		closeSound();
 		
 		menuShow();
 		
 		scanKeys();
-		while(keysPressed() & KEY_B){
+		while(keysDown() & KEY_B){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
 	}
 	
-	if (keysPressed() & KEY_X){
+	if (keysDown() & KEY_X){
 		if(drawMandelbrt == false){
 			drawMandelbrt = true;
 			float factor = 1.0; 
@@ -710,7 +710,7 @@ static inline void handleInput(){
 		}
 		
 		scanKeys();
-		while(keysPressed() & KEY_X){
+		while(keysDown() & KEY_X){
 			scanKeys();
 			IRQWait(IRQ_HBLANK);
 		}
