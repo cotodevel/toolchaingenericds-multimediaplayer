@@ -570,7 +570,7 @@ static inline void handleInput(){
 	
 	if (keysDown() & KEY_UP){
 		struct XYTscPos touchPos;
-		XYReadScrPos(&touchPos);
+		XYReadScrPosUser(&touchPos);
 		volumeUp(touchPos.touchXpx, touchPos.touchYpx);
 		menuShow();
 		scanKeys();
@@ -581,7 +581,7 @@ static inline void handleInput(){
 	
 	if (keysDown() & KEY_DOWN){
 		struct XYTscPos touchPos;
-		XYReadScrPos(&touchPos);
+		XYReadScrPosUser(&touchPos);
 		volumeDown(touchPos.touchXpx, touchPos.touchYpx);
 		menuShow();
 		scanKeys();
