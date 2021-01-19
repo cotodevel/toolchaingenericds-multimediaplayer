@@ -39,9 +39,11 @@ struct rgbMandel{
 extern "C" {
 #endif
 
-extern int main(int _argc, sint8 **_argv);
+extern int main(int argc, char **argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 extern char globalPath[MAX_TGDSFILENAME_LENGTH+1];
+extern void drawMandel(float factor);
+extern void menuShow();
 
 //TGDS Dir API: Directory Iterator(s)
 extern struct FileClassList * RecentPlaylistfileClassListCtx;		//Recent Played

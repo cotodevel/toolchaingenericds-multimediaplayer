@@ -900,7 +900,7 @@ void menuShow(){
 }
 
 
-int main(int _argc, sint8 **_argv) {
+int main(int argc, char **argv) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	bool project_specific_console = false;	//set default console or custom console: custom console
