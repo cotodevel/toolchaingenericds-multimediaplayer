@@ -38,7 +38,7 @@ USA
 #include "biosTGDS.h"
 
 //---------------------------------------------------------------------------------
-int main(int _argc, sint8 **_argv) {
+int main(int argc, char **argv) {
 //---------------------------------------------------------------------------------
 	//wait for VRAM Block to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
 	while (!(*((vuint8*)0x04000240) & 0x2));
