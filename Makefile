@@ -19,15 +19,17 @@
 #TGDS1.6 compatible Makefile
 
 #ToolchainGenericDS specific: 
-#Non FPIC Code: Use Makefiles from either TGDS, or custom
 export SOURCE_MAKEFILE7 = default
 export SOURCE_MAKEFILE9 = default
 
-#FPIC code is always default TGDS Makefile
-
+#Translate paths to windows with forward slashes
+cpath := $(shell pwd)
+ifeq ($(shell uname -o), Cygwin)
+    CURDIR := '$(shell cygpath -w -p ${cpath})'
+endif
 
 #Shared
-include $(DEFAULT_GCC_PATH)Makefile.basenewlib
+include $(DEFAULT_GCC_PATH_WIN)/Makefile.basenewlib
 
 #Custom
 # Project Specific
@@ -48,8 +50,8 @@ export NONSTRIPELF_ARM9 = arm9-nonstripped.elf
 
 export TARGET_LIBRARY_CRT0_FILE_7 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_9 = nds_arm_ld_crt0
-export TARGET_LIBRARY_LINKER_FILE_7 = $(CURDIR)/$(TARGET_LIBRARY_CRT0_FILE_7).S
-export TARGET_LIBRARY_LINKER_FILE_9 = $(CURDIR)/$(TARGET_LIBRARY_CRT0_FILE_9).S
+export TARGET_LIBRARY_LINKER_FILE_7 = ../$(TARGET_LIBRARY_CRT0_FILE_7).S
+export TARGET_LIBRARY_LINKER_FILE_9 = ../$(TARGET_LIBRARY_CRT0_FILE_9).S
 
 export TARGET_LIBRARY_NAME_7 = toolchaingen7
 export TARGET_LIBRARY_NAME_9 = toolchaingen9
