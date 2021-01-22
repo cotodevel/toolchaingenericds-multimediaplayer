@@ -947,6 +947,9 @@ int main(int argc, char **argv) {
 	memset(globalPath, 0, sizeof(globalPath));
 	strcpy(globalPath,"/");
 	
+	MikMod_RegisterAllDrivers();
+	MikMod_RegisterAllLoaders();
+	
 	while (1){
 		handleInput();
 		if(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){
