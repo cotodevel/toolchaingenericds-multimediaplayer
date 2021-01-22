@@ -11,9 +11,11 @@
 #include <stdbool.h>
 #include "typedefsTGDS.h"
 #include "xmem.h"
+#include "posixHandleTGDS.h"
+#include "InterruptsARMCores_h.h"
 
-// default use 1.5 MB
-unsigned int XMEMTOTALSIZE = (1500*1024);
+// default use 128K (ARM9 Mapped), may be overriden.
+unsigned int XMEMTOTALSIZE = (128*1024);
 
 // how many bytes will each of our blocks be?
 unsigned short XMEM_BLOCKSIZE = 128;
@@ -28,16 +30,13 @@ unsigned int XMEM_TABLESIZE = 0;
 #define XMEM_ENDBLOCK 0x02
 #define XMEM_USEDBLOCK 0x04
 
-
 unsigned char *xmem_table;
 //XMEM_BLOCK *xmem_blocks;
 unsigned char *xmem_blocks;
 
 void XmemSetup(unsigned int size, unsigned short blocks) {
-
 	XMEMTOTALSIZE = size;
 	XMEM_BLOCKSIZE = blocks;
-	
 }
 
 void XmemInit(unsigned int mallocLinearMemoryStart, unsigned int mallocLinearMemorySize) {
@@ -46,16 +45,17 @@ void XmemInit(unsigned int mallocLinearMemoryStart, unsigned int mallocLinearMem
 	
 	//Must be generated here
 	// Number of blocks to create (mem/bs)
-	XMEM_BLOCKCOUNT = ((int)mallocLinearMemorySize/XMEM_BLOCKSIZE);
+	XMEM_BLOCKCOUNT = (mallocLinearMemorySize/XMEM_BLOCKSIZE);
 
 	// Size of Table in bytes
 	XMEM_TABLESIZE = XMEM_BLOCKCOUNT;
 	
-	xmem_table = (unsigned char *) calloc(1,XMEM_TABLESIZE);
-	xmem_blocks = (unsigned char *) malloc(XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT);
+	xmem_table = (unsigned char *)mallocLinearMemoryStart;	
+	xmem_blocks = (unsigned char *)((u8*)mallocLinearMemoryStart + XMEM_TABLESIZE);	//Size: (XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT). Should not exceed the end of EWRAM
 	
 	if ((xmem_table == NULL) || (xmem_blocks == NULL)) {
 		printf("XMEM: Could not allocate %d bytes of main ram for XMEM...",XMEM_TABLESIZE+(XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT));
+		while(1==1){}
 		if (xmem_table) free(xmem_table);
 		if (xmem_blocks) free(xmem_blocks);
 		return;
@@ -63,17 +63,20 @@ void XmemInit(unsigned int mallocLinearMemoryStart, unsigned int mallocLinearMem
 	
 	//free(XT);
 	
-	printf("***       XMEM       *** ");
-	printf("TABLE: %8.8X (%d) ",xmem_table,XMEM_TABLESIZE);
-	printf("BLOCK: %8.8X (%d) ",xmem_blocks,XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT);
-	printf("***XMEM INIT COMPLETE*** ");
+	//printf("***       XMEM       *** ");
+	//printf("TABLE: %8.8X (%d) ",xmem_table,XMEM_TABLESIZE);
+	//printf("BLOCK: %8.8X (%d) ",xmem_blocks,XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT);
+	//printf("***XMEM INIT COMPLETE*** ");
 	
 	xmem_table[0] = XMEM_STARTBLOCK | XMEM_ENDBLOCK | XMEM_USEDBLOCK; // reserved i suppose
+	
+	for (int i=1;(unsigned)i<XMEM_TABLESIZE;i++) {
+		xmem_table[i] = 0;
+	}
 	
 }
 
 void *Xmalloc(const int size) {
-
 	int i, blocks, sblock, fbr;
 	bool found;
 	
@@ -109,6 +112,7 @@ void *Xmalloc(const int size) {
 	if (!found) {
 		// couldnt find enough free blocks!
 		printf("XM: Couldnt Find Mem: %d/%d ",size, XMEM_FreeMem());
+		
 		return NULL;
 	}
 	//printf("XM: SBLOCK: %d ",sblock);
@@ -125,7 +129,6 @@ void *Xmalloc(const int size) {
 		}
 		xmem_table[sblock+(blocks-1)] |= XMEM_ENDBLOCK;
 	}
-	
 	
 	//printf("XM: %d %d %8.8X ", size, sblock, ((unsigned int) xmem_blocks + (sblock*XMEM_BLOCKSIZE))); 
 	return (void *) ((unsigned int) xmem_blocks + (sblock*XMEM_BLOCKSIZE));
@@ -153,11 +156,11 @@ void Xfree(const void *ptr) {
 	int block,sblock;
 	
 	while (1) {
-		if (ptr < xmem_blocks) {
+		if ((unsigned char*)ptr < xmem_blocks) {
 			//printf("XM: Free: NXML %8.8X ",(unsigned int)ptr);
 			break;
 		}
-		if (ptr > (xmem_blocks+(XMEM_BLOCKCOUNT*XMEM_BLOCKSIZE))) {
+		if ((unsigned char*)ptr > (xmem_blocks+(XMEM_BLOCKCOUNT*XMEM_BLOCKSIZE))) {
 			//printf("XM: Free: NXMG %8.8X ",(u32)ptr);
 			break;
 		}

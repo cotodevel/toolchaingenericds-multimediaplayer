@@ -8,6 +8,7 @@
 #include "main.h"
 #include "dswnifi_lib.h"
 #include "posixHandleTGDS.h"
+#include "xmem.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -20,7 +21,24 @@ void *safeMalloc(size_t size){
 	void *tmp = TGDSARM9Malloc(size);
 	if(!tmp)
 	{
+		/*
+		printf("safeMalloc overflow! tried: %d bytes", size);
+		while(1==1){
+			
+		}
 		exit(-100);
+		*/
+		
+		struct AllocatorInstance * customMemoryAllocator = &CustomAllocatorInstance;
+		
+		//Init XMEM (let's see how good this one behaves...)
+		u32 xmemsize = XMEMTOTALSIZE = customMemoryAllocator->memoryToAllocate;
+		xmemsize = xmemsize - (xmemsize/XMEM_BS) - 1024;
+		xmemsize = xmemsize - (xmemsize%1024);
+		XmemSetup(xmemsize, XMEM_BS);
+		XmemInit(customMemoryAllocator->ARM9MallocStartaddress, (u32)xmemsize);
+		
+		return safeMalloc(size);
 	}
 	else{
 		memset(tmp, 0, size);

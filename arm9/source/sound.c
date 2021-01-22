@@ -1637,7 +1637,7 @@ void clearLoop()
 	module->wrap = 0;
 }
 
-bool initSoundStreamUser(char * fName, char * ext){
+bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
 	
 	if(strcmp(ext, ".it") == 0  || strcmp(ext, ".mod") == 0 || strcmp(ext, ".s3m") == 0 || strcmp(ext, ".xm") == 0)
 	{
