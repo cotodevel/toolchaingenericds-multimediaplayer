@@ -45,17 +45,16 @@ void XmemInit(unsigned int mallocLinearMemoryStart, unsigned int mallocLinearMem
 	
 	//Must be generated here
 	// Number of blocks to create (mem/bs)
-	XMEM_BLOCKCOUNT = (mallocLinearMemorySize/XMEM_BLOCKSIZE);
+	XMEM_BLOCKCOUNT = ((int)mallocLinearMemorySize/XMEM_BLOCKSIZE);
 
 	// Size of Table in bytes
 	XMEM_TABLESIZE = XMEM_BLOCKCOUNT;
 	
-	xmem_table = (unsigned char *)mallocLinearMemoryStart;	
-	xmem_blocks = (unsigned char *)((u8*)mallocLinearMemoryStart + XMEM_TABLESIZE);	//Size: (XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT). Should not exceed the end of EWRAM
+	xmem_table = (unsigned char *) calloc(1,XMEM_TABLESIZE);
+	xmem_blocks = (unsigned char *) malloc(XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT);
 	
 	if ((xmem_table == NULL) || (xmem_blocks == NULL)) {
 		printf("XMEM: Could not allocate %d bytes of main ram for XMEM...",XMEM_TABLESIZE+(XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT));
-		while(1==1){}
 		if (xmem_table) free(xmem_table);
 		if (xmem_blocks) free(xmem_blocks);
 		return;
@@ -63,10 +62,10 @@ void XmemInit(unsigned int mallocLinearMemoryStart, unsigned int mallocLinearMem
 	
 	//free(XT);
 	
-	//printf("***       XMEM       *** ");
-	//printf("TABLE: %8.8X (%d) ",xmem_table,XMEM_TABLESIZE);
-	//printf("BLOCK: %8.8X (%d) ",xmem_blocks,XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT);
-	//printf("***XMEM INIT COMPLETE*** ");
+	printf("***       XMEM       *** ");
+	printf("TABLE: %8.8X (%d) ",xmem_table,XMEM_TABLESIZE);
+	printf("BLOCK: %8.8X (%d) ",xmem_blocks,XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT);
+	printf("***XMEM INIT COMPLETE*** ");
 	
 	xmem_table[0] = XMEM_STARTBLOCK | XMEM_ENDBLOCK | XMEM_USEDBLOCK; // reserved i suppose
 	
