@@ -57,6 +57,8 @@ extern vramSetup * getProjectSpecificVRAMSetup();
 //1) VRAM Layout
 extern bool InitProjectSpecificConsole();
 
+extern vramSetup * TGDSAUDIOPLAYER_2DVRAM_SETUP();
+
 #ifdef __cplusplus
 }
 #endif

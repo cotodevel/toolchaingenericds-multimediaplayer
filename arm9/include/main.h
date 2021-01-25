@@ -50,6 +50,9 @@ extern struct FileClassList * RecentPlaylistfileClassListCtx;		//Recent Played
 extern struct FileClassList * menuIteratorfileClassListCtx;			//Menu Directory Iterator
 extern struct FileClassList * playlistfileClassListCtx;				//Playlist Directory Iterator
 
+extern void setPixel(int row, int col, u16 color);
+extern struct rgbMandel mandelbrot(float real, float imag);
+
 #ifdef __cplusplus
 }
 #endif
