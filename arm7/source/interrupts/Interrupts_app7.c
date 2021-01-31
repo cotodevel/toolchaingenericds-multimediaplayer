@@ -1,4 +1,5 @@
 /*
+
 			Copyright (C) 2017  Coto
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,18 +18,18 @@ USA
 
 */
 
-#include "typedefsTGDS.h"
+#include "ipcfifoTGDSUser.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
+
+#include "InterruptsARMCores_h.h"
 #include "interrupts.h"
-#include "biosTGDS.h"
-#include "ipcfifoTGDSUser.h"
-#include "spifwTGDS.h"
 #include "wifi_arm7.h"
 #include "main.h"
 #include "eventsTGDS.h"
 
 //User Handler Definitions
+
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
@@ -52,13 +53,14 @@ void Timer0handlerUser(){
 __attribute__((section(".itcm")))
 #endif
 void Timer1handlerUser(){
-	
+
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void Timer2handlerUser(){
+
 }
 
 #ifdef ARM9
@@ -72,7 +74,7 @@ void Timer3handlerUser(){
 __attribute__((section(".itcm")))
 #endif
 void HblankUser(){
-	
+
 }
 
 #ifdef ARM9
@@ -80,6 +82,7 @@ __attribute__((section(".itcm")))
 #endif
 void VblankUser(){
 	
+
 }
 
 #ifdef ARM9
@@ -94,9 +97,7 @@ void VcounterUser(){
 __attribute__((section(".itcm")))
 #endif
 void screenLidHasOpenedhandlerUser(){
-	setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);	//both lit screens
-	SetLedState(LED_ON);
-	isArm7ClosedLid = false;
+	TurnOnScreens();
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
@@ -104,6 +105,5 @@ void screenLidHasOpenedhandlerUser(){
 __attribute__((section(".itcm")))
 #endif
 void screenLidHasClosedhandlerUser(){
-	setBacklight(0);
-	SetLedState(LED_LONGBLINK);
+	TurnOffScreens();
 }

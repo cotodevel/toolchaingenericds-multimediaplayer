@@ -2308,6 +2308,7 @@ bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
 
 
 bool loadSound(char *fName){
+	closeDualTGDSFileHandleFromFile(_FileHandleVideo, _FileHandleAudio);
 	int srcFormat = playSoundStream(fName, _FileHandleVideo, _FileHandleAudio);
 	internalCodecType = srcFormat;
 	if((srcFormat != SRC_WAV) || (srcFormat != SRC_WAVADPCM)){		

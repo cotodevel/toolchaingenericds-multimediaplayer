@@ -23,7 +23,6 @@ USA
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
-#include "ipcfifoTGDSUser.h"
 
 #endif
 
