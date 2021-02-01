@@ -13,6 +13,8 @@
 #include "sound.h"
 #include "soundTGDS.h"
 #include "main.h"
+#include "posixHandleTGDS.h"
+#include "keypadTGDS.h"
 
 __attribute__((section(".itcm")))
 WoopsiTemplate * WoopsiTemplateProc = NULL;
@@ -70,19 +72,21 @@ void WoopsiTemplate::startup() {
 	
 	
 	// Add File listing screen
-	AmigaScreen* fileScreen = new AmigaScreen("File List", Gadget::GADGET_DRAGGABLE, AmigaScreen::AMIGA_SCREEN_SHOW_DEPTH | AmigaScreen::AMIGA_SCREEN_SHOW_FLIP);
-	woopsiApplication->addGadget(fileScreen);
-	fileScreen->setPermeable(true);
-	fileScreen->flipToTopScreen();
+	_fileScreen = new AmigaScreen("File List", Gadget::GADGET_DRAGGABLE, AmigaScreen::AMIGA_SCREEN_SHOW_DEPTH | AmigaScreen::AMIGA_SCREEN_SHOW_FLIP);
+	woopsiApplication->addGadget(_fileScreen);
+	_fileScreen->setPermeable(true);
+	_fileScreen->flipToTopScreen();
 	// Add screen background
-	fileScreen->insertGadget(new Gradient(0, SCREEN_TITLE_HEIGHT, 256, 192 - SCREEN_TITLE_HEIGHT, woopsiRGB(0, 31, 0), woopsiRGB(0, 0, 31)));
+	_fileScreen->insertGadget(new Gradient(0, SCREEN_TITLE_HEIGHT, 256, 192 - SCREEN_TITLE_HEIGHT, woopsiRGB(0, 31, 0), woopsiRGB(0, 0, 31)));
 	
 	// Create FileRequester
 	_fileReq = new FileRequester(10, 10, 150, 150, "Files", "/", GADGET_DRAGGABLE | GADGET_DOUBLE_CLICKABLE);
 	_fileReq->setRefcon(1);
-	fileScreen->addGadget(_fileReq);
+	_fileScreen->addGadget(_fileReq);
 	_fileReq->addGadgetEventHandler(this);
 	currentFileRequesterIndex = 0;
+	
+	_MultiLineTextBoxLogger = NULL;	//destroyable TextBox
 	
 	enableDrawing();	// Ensure Woopsi can now draw itself
 	redraw();			// Draw initial state
@@ -90,6 +94,18 @@ void WoopsiTemplate::startup() {
 
 void WoopsiTemplate::shutdown() {
 	Woopsi::shutdown();
+}
+
+void WoopsiTemplate::waitForAOrTouchScreenButtonMessage(MultiLineTextBox* thisLineTextBox, const WoopsiString& thisText){
+	thisLineTextBox->appendText(thisText);
+	scanKeys();
+	while((!(keysDown() & KEY_A)) && (!(keysDown() & KEY_TOUCH))){
+		scanKeys();
+	}
+	scanKeys();
+	while((keysDown() & KEY_A) && (keysDown() & KEY_TOUCH)){
+		scanKeys();
+	}
 }
 
 void WoopsiTemplate::handleValueChangeEvent(const GadgetEventArgs& e) {
@@ -104,6 +120,35 @@ void WoopsiTemplate::handleValueChangeEvent(const GadgetEventArgs& e) {
 			memset(currentFileChosen, 0, sizeof(currentFileChosen));
 			strObj.copyToCharArray(currentFileChosen);
 			pendPlay = 1;
+			
+			/* 
+			//Destroyable Textbox implementation init
+			Rect rect;
+			_fileScreen->getClientRect(rect);
+			_MultiLineTextBoxLogger = new MultiLineTextBox(rect.x, rect.y, 262, 170, "Loading\n...", Gadget::GADGET_DRAGGABLE, 5);
+			_fileScreen->addGadget(_MultiLineTextBoxLogger);
+			
+			_MultiLineTextBoxLogger->removeText(0);
+			_MultiLineTextBoxLogger->moveCursorToPosition(0);
+			_MultiLineTextBoxLogger->appendText("File open OK: ");
+			_MultiLineTextBoxLogger->appendText(strObj);
+			_MultiLineTextBoxLogger->appendText("\n");
+			_MultiLineTextBoxLogger->appendText("Please wait calculating CRC32... \n");
+			
+			char arrBuild[256+1];
+			sprintf(arrBuild, "%s%x\n", "Invalid file: crc32 = 0x", crc32);
+			_MultiLineTextBoxLogger->appendText(WoopsiString(arrBuild));
+			
+			sprintf(arrBuild, "%s%x\n", "Expected: crc32 = 0x", 0x5F35977E);
+			_MultiLineTextBoxLogger->appendText(WoopsiString(arrBuild));
+			
+			waitForAOrTouchScreenButtonMessage(_MultiLineTextBoxLogger, "Press (A) or tap touchscreen to continue. \n");
+			
+			_MultiLineTextBoxLogger->invalidateVisibleRectCache();
+			_fileScreen->eraseGadget(_MultiLineTextBoxLogger);
+			_MultiLineTextBoxLogger->destroy();	//same as delete _MultiLineTextBoxLogger;
+			//Destroyable Textbox implementation end
+			*/
 		}
 	}
 }

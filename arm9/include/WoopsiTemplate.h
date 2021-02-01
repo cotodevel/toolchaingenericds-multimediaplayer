@@ -23,12 +23,14 @@ public:
 	void shutdown();
 	void handleValueChangeEvent(const GadgetEventArgs& e);	//Handles UI events if they change
 	void handleClickEvent(const GadgetEventArgs& e);	//Handles UI events when they take click action
+	void waitForAOrTouchScreenButtonMessage(MultiLineTextBox* thisLineTextBox, const WoopsiString& thisText);
 	void handleLidClosed();
 	void handleLidOpen();
 	void ApplicationMainLoop();
 	FileRequester* _fileReq;
 	int currentFileRequesterIndex;
-	
+	AmigaScreen* _fileScreen;
+	MultiLineTextBox* _MultiLineTextBoxLogger;
 	Button* _Index;
 	Button* _lastFile;
 	Button* _nextFile;
