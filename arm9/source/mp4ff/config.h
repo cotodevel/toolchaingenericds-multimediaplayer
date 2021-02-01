@@ -100,7 +100,7 @@
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
-#define WORDS_BIGENDIAN 1
+#define WORDS_BIGENDIAN 0
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */

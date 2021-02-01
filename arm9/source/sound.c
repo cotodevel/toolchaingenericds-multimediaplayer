@@ -85,25 +85,59 @@ static int tmpAmount = 0;
 static int recAmount = 0;
 
 // aac
+__attribute__((section(".dtcm")))
 static HAACDecoder *hAACDecoder;
+
+__attribute__((section(".dtcm")))
 static unsigned char *aacReadBuf = NULL;
+
+__attribute__((section(".dtcm")))
 static unsigned char *aacReadPtr = NULL;
+
+__attribute__((section(".dtcm")))
 static s16 *aacOutBuf = NULL;
+
+__attribute__((section(".dtcm")))
 static AACFrameInfo aacFrameInfo;
+
+__attribute__((section(".dtcm")))
 static int aacBytesLeft, aacRead, aacErr, aacEofReached;
+
+__attribute__((section(".dtcm")))
 static int aacLength;
+
+__attribute__((section(".dtcm")))
 static bool isRawAAC;
+
+__attribute__((section(".dtcm")))
 static mp4ff_t *mp4file;
+
+__attribute__((section(".dtcm")))
 static mp4ff_callback_t mp4cb;
+
+__attribute__((section(".dtcm")))
 static int mp4track;
+
+__attribute__((section(".dtcm")))
 static int sampleId;
 
 //flac
+__attribute__((section(".dtcm")))
 static FLACContext fc;
+
+__attribute__((section(".dtcm")))
 static uint8_t *flacInBuf = NULL;
+
+__attribute__((section(".dtcm")))
 static int flacBLeft = 0;
+
+__attribute__((section(".dtcm")))
 static int32_t *decoded0 = NULL;
+
+__attribute__((section(".dtcm")))
 static int32_t *decoded1 = NULL;
+
+__attribute__((section(".dtcm")))
 static bool flacFinished = false;
 
 //sid
@@ -856,6 +890,7 @@ void seekFlac()
 	}
 }
 
+__attribute__((section(".itcm")))
 void sidDecode()
 {
 	s16 *tBuffer = lBuffer;
@@ -896,6 +931,7 @@ char *sidMeta(int which)
 	return sidfile + SID_META_LOC + (which << 5);
 }
 
+__attribute__((section(".itcm")))
 void mp3Decode()
 {	
 	madFinished = false;
@@ -930,6 +966,7 @@ void nsfDecode()
 	inTrack = false;
 }
 
+__attribute__((section(".itcm")))
 void spcDecode()
 {
 	spcPlay(lBuffer, rBuffer);
@@ -1000,6 +1037,7 @@ static inline u16 scale(mad_fixed_t sample)
 	return sample >> (MAD_F_FRACBITS + 1 - 16);
 }
 
+__attribute__((section(".itcm")))
 void fillMadBuffer()
 {
 	if(cutOff)
@@ -2917,6 +2955,7 @@ void pauseSound(bool pause)
 	sndPaused = pause;
 }
 
+__attribute__((section(".itcm")))
 void getSoundLoc(u32 *loc, u32 *max)
 {
 	// return a dummy value representing 0 for files that aren't loaded.
@@ -2954,6 +2993,7 @@ void getSoundLoc(u32 *loc, u32 *max)
 	*max = soundData.len;
 }
 
+__attribute__((section(".itcm")))
 void setSoundLoc(u32 loc)
 {
 	seekSpecial = true;
@@ -2989,6 +3029,7 @@ void setSoundLoc(u32 loc)
 	seekSpecial = false;
 }
 
+__attribute__((section(".itcm")))
 int getState()
 {
 	if(soundData.sourceFmt == SRC_NONE)

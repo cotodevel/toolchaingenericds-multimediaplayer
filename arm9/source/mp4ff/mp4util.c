@@ -29,6 +29,7 @@
 #include "ipcfifoTGDSUser.h"
 #include <stdlib.h>
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, uint32_t size)
 {
     int32_t result = 1;
@@ -40,11 +41,13 @@ int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, uint32_t size)
     return result;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_truncate(mp4ff_t * f)
 {
 	return f->stream->truncate(f->stream->user_data);
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, uint32_t size)
 {
     int32_t result = 1;
@@ -56,6 +59,7 @@ int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, uint32_t size)
     return result;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_write_int32(mp4ff_t *f, const uint32_t data)
 {
 	uint32_t result;
@@ -75,6 +79,7 @@ int32_t mp4ff_write_int32(mp4ff_t *f, const uint32_t data)
     return mp4ff_write_data(f,(int8_t*)&result,sizeof(result));
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_set_position(mp4ff_t *f, const int64_t position)
 {
     f->stream->seek(f->stream->user_data, position);
@@ -83,11 +88,13 @@ int32_t mp4ff_set_position(mp4ff_t *f, const int64_t position)
     return 0;
 }
 
+__attribute__((section(".itcm")))
 int64_t mp4ff_position(const mp4ff_t *f)
 {
     return f->current_position;
 }
 
+__attribute__((section(".itcm")))
 uint64_t mp4ff_read_int64(mp4ff_t *f)
 {
     uint8_t data[8];
@@ -104,6 +111,7 @@ uint64_t mp4ff_read_int64(mp4ff_t *f)
     return result;
 }
 
+__attribute__((section(".itcm")))
 uint32_t mp4ff_read_int32(mp4ff_t *f)
 {
     uint32_t result;
@@ -120,6 +128,7 @@ uint32_t mp4ff_read_int32(mp4ff_t *f)
     return (uint32_t)result;
 }
 
+__attribute__((section(".itcm")))
 uint32_t mp4ff_read_int24(mp4ff_t *f)
 {
     uint32_t result;
@@ -135,6 +144,7 @@ uint32_t mp4ff_read_int24(mp4ff_t *f)
     return (uint32_t)result;
 }
 
+__attribute__((section(".itcm")))
 uint16_t mp4ff_read_int16(mp4ff_t *f)
 {
     uint32_t result;
@@ -149,6 +159,7 @@ uint16_t mp4ff_read_int16(mp4ff_t *f)
     return (uint16_t)result;
 }
 
+__attribute__((section(".itcm")))
 char * mp4ff_read_string(mp4ff_t * f,uint32_t length)
 {
 	char * str = (char*)safeMalloc(length + 1);
@@ -167,6 +178,7 @@ char * mp4ff_read_string(mp4ff_t * f,uint32_t length)
 	return str;	
 }
 
+__attribute__((section(".itcm")))
 uint8_t mp4ff_read_char(mp4ff_t *f)
 {
     uint8_t output;
@@ -174,6 +186,7 @@ uint8_t mp4ff_read_char(mp4ff_t *f)
     return output;
 }
 
+__attribute__((section(".itcm")))
 uint32_t mp4ff_read_mp4_descr_length(mp4ff_t *f)
 {
     uint8_t b;

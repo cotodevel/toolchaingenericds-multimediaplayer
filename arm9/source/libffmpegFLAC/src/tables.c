@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 /* From ffmpeg - libavutil/common.h */
+__attribute__((section(".dtcm")))
 const uint8_t ff_log2_tab[256] = {
     0,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
     5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,

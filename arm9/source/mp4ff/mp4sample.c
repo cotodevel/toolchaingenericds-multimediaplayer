@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include "mp4ffint.h"
 
-
+__attribute__((section(".itcm")))
 int32_t mp4ff_chunk_of_sample(const mp4ff_t *f, const int32_t track, const int32_t sample,
                                      int32_t *chunk_sample, int32_t *chunk)
 {
@@ -75,6 +75,7 @@ int32_t mp4ff_chunk_of_sample(const mp4ff_t *f, const int32_t track, const int32
     return 0;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_chunk_to_offset(const mp4ff_t *f, const int32_t track, const int32_t chunk)
 {
     const mp4ff_track_t * p_track = f->track[track];
@@ -91,6 +92,7 @@ int32_t mp4ff_chunk_to_offset(const mp4ff_t *f, const int32_t track, const int32
     return 0;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_sample_range_size(const mp4ff_t *f, const int32_t track,
                                        const int32_t chunk_sample, const int32_t sample)
 {
@@ -114,6 +116,7 @@ int32_t mp4ff_sample_range_size(const mp4ff_t *f, const int32_t track,
     return total;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_sample_to_offset(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t chunk, chunk_sample, chunk_offset1, chunk_offset2;
@@ -126,6 +129,7 @@ int32_t mp4ff_sample_to_offset(const mp4ff_t *f, const int32_t track, const int3
     return chunk_offset2;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_audio_frame_size(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t bytes;
@@ -141,6 +145,7 @@ int32_t mp4ff_audio_frame_size(const mp4ff_t *f, const int32_t track, const int3
     return bytes;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_set_sample_position(mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t offset;

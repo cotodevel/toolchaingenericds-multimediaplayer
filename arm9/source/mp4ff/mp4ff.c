@@ -112,6 +112,7 @@ void mp4ff_track_add(mp4ff_t *f)
     memset(f->track[f->total_tracks - 1], 0, sizeof(mp4ff_track_t));
 }
 
+__attribute__((section(".itcm")))
 int need_parse_when_meta_only(uint8_t atom_type)
 {
 	switch(atom_type)
@@ -140,6 +141,7 @@ int need_parse_when_meta_only(uint8_t atom_type)
 }
 
 /* parse atoms that are sub atoms of other atoms */
+__attribute__((section(".itcm")))
 int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size,int meta_only)
 {
     uint64_t size;
@@ -180,6 +182,7 @@ int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size,int meta_only)
 }
 
 /* parse root atoms */
+__attribute__((section(".itcm")))
 int32_t parse_atoms(mp4ff_t *f,int meta_only)
 {
     uint64_t size;
@@ -223,6 +226,7 @@ int32_t parse_atoms(mp4ff_t *f,int meta_only)
     return 0;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_get_decoder_config(const mp4ff_t *f, const int32_t track,
                                  uint8_t** ppBuf, uint32_t* pBufSize)
 {
@@ -251,36 +255,43 @@ int32_t mp4ff_get_decoder_config(const mp4ff_t *f, const int32_t track,
     return 0;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_get_track_type(const mp4ff_t *f, const int track)
 {
 	return f->track[track]->type;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_total_tracks(const mp4ff_t *f)
 {
     return f->total_tracks;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_time_scale(const mp4ff_t *f, const int32_t track)
 {
     return f->track[track]->timeScale;
 }
 
+__attribute__((section(".itcm")))
 uint32_t mp4ff_get_avg_bitrate(const mp4ff_t *f, const int32_t track)
 {
 	return f->track[track]->avgBitrate;
 }
 
+__attribute__((section(".itcm")))
 uint32_t mp4ff_get_max_bitrate(const mp4ff_t *f, const int32_t track)
 {
 	return f->track[track]->maxBitrate;
 }
 
+__attribute__((section(".itcm")))
 int64_t mp4ff_get_track_duration(const mp4ff_t *f, const int32_t track)
 {
 	return f->track[track]->duration;
 }
 
+__attribute__((section(".itcm")))
 int64_t mp4ff_get_track_duration_use_offsets(const mp4ff_t *f, const int32_t track)
 {
 	int64_t duration = mp4ff_get_track_duration(f,track);
@@ -293,7 +304,7 @@ int64_t mp4ff_get_track_duration_use_offsets(const mp4ff_t *f, const int32_t tra
 	return duration;
 }
 
-
+__attribute__((section(".itcm")))
 int32_t mp4ff_num_samples(const mp4ff_t *f, const int32_t track)
 {
     int32_t i;
@@ -306,24 +317,25 @@ int32_t mp4ff_num_samples(const mp4ff_t *f, const int32_t track)
     return total;
 }
 
-
-
-
+__attribute__((section(".itcm")))
 uint32_t mp4ff_get_sample_rate(const mp4ff_t *f, const int32_t track)
 {
 	return f->track[track]->sampleRate;
 }
 
+__attribute__((section(".itcm")))
 uint32_t mp4ff_get_channel_count(const mp4ff_t * f,const int32_t track)
 {
 	return f->track[track]->channelCount;
 }
 
+__attribute__((section(".itcm")))
 uint32_t mp4ff_get_audio_type(const mp4ff_t * f,const int32_t track)
 {
 	return f->track[track]->audioType;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_get_sample_duration_use_offsets(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
 	int32_t d,o;
@@ -337,6 +349,7 @@ int32_t mp4ff_get_sample_duration_use_offsets(const mp4ff_t *f, const int32_t tr
 	return d;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t i, co = 0;
@@ -351,6 +364,7 @@ int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const i
     return (int32_t)(-1);
 }
 
+__attribute__((section(".itcm")))
 int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t i, co = 0;
@@ -373,6 +387,7 @@ int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const i
     return (int64_t)(-1);
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t i, co = 0;
@@ -387,6 +402,7 @@ int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int
     return 0;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip)
 {
 	int32_t i, co = 0;
@@ -413,11 +429,13 @@ int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t o
 	return (int32_t)(-1);
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_find_sample_use_offsets(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip)
 {
 	return mp4ff_find_sample(f,track,offset + mp4ff_get_sample_offset(f,track,0),toskip);
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
                           uint8_t **audio_buffer,  uint32_t *bytes)
 {
@@ -453,7 +471,7 @@ int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
     return *bytes;
 }
 
-
+__attribute__((section(".itcm")))
 int32_t mp4ff_read_sample_v2(mp4ff_t *f, const int track, const int sample,unsigned char *buffer)
 {
     int32_t result = 0;
@@ -472,6 +490,7 @@ int32_t mp4ff_read_sample_v2(mp4ff_t *f, const int track, const int sample,unsig
     return result;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_read_sample_getsize(mp4ff_t *f, const int track, const int sample)
 {
 	int32_t temp = mp4ff_audio_frame_size(f, track, sample);

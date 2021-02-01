@@ -32,6 +32,7 @@
 /** 
  * reads 0-32 bits.
  */
+__attribute__((section(".itcm")))
 unsigned int get_bits_long(GetBitContext *s, int n){
     if(n<=17) return get_bits(s, n);
     else{
@@ -43,6 +44,7 @@ unsigned int get_bits_long(GetBitContext *s, int n){
 /** 
  * shows 0-32 bits.
  */
+__attribute__((section(".itcm")))
 unsigned int show_bits_long(GetBitContext *s, int n){
     if(n<=17) return show_bits(s, n);
     else{
@@ -53,6 +55,7 @@ unsigned int show_bits_long(GetBitContext *s, int n){
     }
 }
 
+__attribute__((section(".itcm")))
 void align_get_bits(GetBitContext *s)
 {
     int n= (-get_bits_count(s)) & 7;
