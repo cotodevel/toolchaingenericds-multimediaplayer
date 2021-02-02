@@ -565,9 +565,8 @@ void updateStreamCustomDecoder(u32 srcFrmt){
 // sound streaming stuff
 //----------------------
 
-__attribute__((section(".itcm")))
 void SendArm7Command(u32 command, u32 data){
-	SendFIFOWords((uint32)command, (uint32)data);
+	SendFIFOWords((uint32)command);
 }
 
 void freeStreamBuffer(){	

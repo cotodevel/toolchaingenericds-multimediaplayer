@@ -82,7 +82,7 @@ ARCH_CFLAGS += \
 COMPILER_SPECIFIC_CFLAGS += \
   --target=arm-none-eabi \
   --sysroot= \
-  -Oz	\
+  -O2	\
   -DARM9
   
 CFLAGS = \

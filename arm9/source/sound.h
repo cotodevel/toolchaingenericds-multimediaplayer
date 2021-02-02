@@ -163,7 +163,6 @@ extern void loadWavToMemory();
 //extern char *gbsMeta(int which);
 
 // wifi
-extern void SendArm7Command(u32 command, u32 data);
 extern int getCurrentStatus();
 //extern ICY_HEADER *getStreamData();
 
