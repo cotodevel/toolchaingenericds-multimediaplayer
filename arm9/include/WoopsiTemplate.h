@@ -19,7 +19,7 @@ using namespace WoopsiUI;
 
 class WoopsiTemplate : public Woopsi, public GadgetEventHandler {
 public:
-	void startup();
+	void startup(int argc, char **argv);
 	void shutdown();
 	void handleValueChangeEvent(const GadgetEventArgs& e);	//Handles UI events if they change
 	void handleClickEvent(const GadgetEventArgs& e);	//Handles UI events when they take click action
