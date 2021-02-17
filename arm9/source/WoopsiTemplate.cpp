@@ -70,7 +70,16 @@ void WoopsiTemplate::startup(int argc, char **argv) {
 	controlWindow->addGadget(_stop);
 	_stop->addGadgetEventHandler(this);
 	
+	_upVolume = new Button(rect.x + 41 + 17 + 17 + 40 + 40, rect.y, 40, 16, "Vol.+");
+	_upVolume->setRefcon(7);
+	controlWindow->addGadget(_upVolume);
+	_upVolume->addGadgetEventHandler(this);
 	
+	_downVolume = new Button(rect.x + 41 + 17 + 17 + 40 + 40 + 40, rect.y, 40, 16, "Vol.-");
+	_downVolume->setRefcon(8);
+	controlWindow->addGadget(_downVolume);
+	_downVolume->addGadgetEventHandler(this);
+
 	// Add File listing screen
 	_fileScreen = new AmigaScreen("File List", Gadget::GADGET_DRAGGABLE, AmigaScreen::AMIGA_SCREEN_SHOW_DEPTH | AmigaScreen::AMIGA_SCREEN_SHOW_FLIP);
 	woopsiApplication->addGadget(_fileScreen);
@@ -177,7 +186,7 @@ void WoopsiTemplate::handleLidOpen() {
 	}
 }
 
-void WoopsiTemplate::handleClickEvent(const GadgetEventArgs& e) {
+void WoopsiTemplate::handleClickEvent(const GadgetEventArgs& e) __attribute__ ((optnone)) {
 	switch (e.getSource()->getRefcon()) {
 		//_Index Event
 		case 2:{
@@ -230,6 +239,24 @@ void WoopsiTemplate::handleClickEvent(const GadgetEventArgs& e) {
 			pendPlay = 2;
 		}	
 		break;
+		
+		//_upVolume Event
+		case 7:{
+			struct XYTscPos touch;
+			XYReadScrPosUser(&touch);
+			volumeUp(touch.touchXpx, touch.touchYpx);
+			
+		}	
+		break;
+		
+		//_downVolume Event
+		case 8:{
+			struct XYTscPos touch;
+			XYReadScrPosUser(&touch);
+			volumeDown(touch.touchXpx, touch.touchYpx);
+		}	
+		break;
+
 	}
 }
 

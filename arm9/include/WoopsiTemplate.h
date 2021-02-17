@@ -36,7 +36,8 @@ public:
 	Button* _nextFile;
 	Button* _play;
 	Button* _stop;
-	
+	Button* _upVolume;
+	Button* _downVolume;
 private:
 	Alert* _alert;
 };
