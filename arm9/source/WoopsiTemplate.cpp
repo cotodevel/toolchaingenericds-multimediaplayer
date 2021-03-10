@@ -117,7 +117,7 @@ void WoopsiTemplate::waitForAOrTouchScreenButtonMessage(MultiLineTextBox* thisLi
 	}
 }
 
-void WoopsiTemplate::handleValueChangeEvent(const GadgetEventArgs& e) {
+void WoopsiTemplate::handleValueChangeEvent(const GadgetEventArgs& e) __attribute__ ((optnone)) {
 
 	// Did a gadget fire this event?
 	if (e.getSource() != NULL) {
@@ -128,6 +128,33 @@ void WoopsiTemplate::handleValueChangeEvent(const GadgetEventArgs& e) {
 			WoopsiString strObj = ((FileRequester*)e.getSource())->getSelectedOption()->getText();
 			memset(currentFileChosen, 0, sizeof(currentFileChosen));
 			strObj.copyToCharArray(currentFileChosen);
+			
+			//Boot .NDS file! (homebrew only)
+			char tmpName[256];
+			char ext[256];
+			strcpy(tmpName, currentFileChosen);
+			separateExtension(tmpName, ext);
+			strlwr(ext);
+			if(strncmp(ext,".nds", 4) == 0){
+ 				TGDSMultibootRunNDSPayload(currentFileChosen);
+ 			}			
+			else if(strncmp(ext,".bin", 4) == 0){
+				memset(args, 0, sizeof(args));
+				memset(argvs, 0, sizeof(argvs));//
+				
+				int argCount = 3;	
+				strcpy(&args[0][0], TGDSPROJECTNAME);	//Arg0: Parent TGDS Project name
+				strcpy(&args[1][0], currentFileChosen);	//Arg1: self TGDS-LinkedModule filename
+				strcpy(&args[2][0], "-d l");
+				
+				int i = 0;
+				for(i = 0; i < argCount; i++){
+					argvs[i] = (char*)&args[i][0];
+				}
+				
+				TGDSProjectRunLinkedModule(currentFileChosen, argCount, argvs, TGDSPROJECTNAME);
+			}
+			
 			pendPlay = 1;
 			
 			/* 

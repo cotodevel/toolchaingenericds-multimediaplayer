@@ -51,17 +51,6 @@ void safeFree(void *p){
 	TGDSARM9Free(p);
 }
 
-u32 flength(FILE* fh){
-	if(fh != NULL){
-		u32 cPos = ftell(fh);
-		fseek(fh, 0, SEEK_END);
-		u32 aPos = ftell(fh);
-		fseek(fh, cPos, SEEK_SET);
-		return aPos;		
-	}
-	return 0;
-}
-
 void *trackMalloc(u32 length, char *desc)
 {
 	void *tmp = safeMalloc(length);

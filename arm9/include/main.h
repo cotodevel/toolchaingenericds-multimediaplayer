@@ -50,6 +50,10 @@ extern struct rgbMandel mandelbrot(float real, float imag);
 extern void MikMod_RegisterAllDrivers(void);
 extern void MikMod_RegisterAllLoaders(void);
 
+//ToolchainGenericDS-LinkedModule User implementation: WoopsiTGDS
+extern char args[8][MAX_TGDSFILENAME_LENGTH];
+extern char *argvs[8];
+
 #ifdef __cplusplus
 }
 #endif

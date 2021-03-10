@@ -251,8 +251,15 @@ static inline void menuShow(){
 	printarm7DebugBuffer();
 }
 
-int main(int argc, char **argv) {
-	
+
+//ToolchainGenericDS-LinkedModule User implementation: WoopsiTGDS. But Binary size exceeds 1.25M, thus, binary image is reloaded.
+char args[8][MAX_TGDSFILENAME_LENGTH];
+char *argvs[8];
+int TGDSProjectReturnFromLinkedModule() __attribute__ ((optnone)) {
+	return -1;
+}
+
+int main(int argc, char **argv) __attribute__ ((optnone)) {
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	bool isTGDSCustomConsole = true;	//set default console or custom console: default console
 	GUI_init(isTGDSCustomConsole);
