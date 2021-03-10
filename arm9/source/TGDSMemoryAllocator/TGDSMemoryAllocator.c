@@ -38,7 +38,7 @@ struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(u32 ARM7Malloc
 	customMemoryAllocator->ARM7MallocSize = ARM7MallocSize;
 	
 	customMemoryAllocator->ARM9MallocStartaddress = (u32)sbrk(0);
-	customMemoryAllocator->memoryToAllocate = (1512*1024);	//512K Alloc (Woopsi objects) + Audio buffers
+	customMemoryAllocator->memoryToAllocate = (1024*1024);	//512K Alloc (Woopsi objects) + Audio buffers
 	customMemoryAllocator->CustomTGDSMalloc9 = (TGDSARM9MallocHandler)&Xmalloc;
 	customMemoryAllocator->CustomTGDSCalloc9 = (TGDSARM9CallocHandler)&Xcalloc;
 	customMemoryAllocator->CustomTGDSFree9 = (TGDSARM9FreeHandler)&Xfree;
