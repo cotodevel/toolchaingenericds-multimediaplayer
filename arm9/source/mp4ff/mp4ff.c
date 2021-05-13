@@ -1,39 +1,42 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
-**
-** This program is free software; you can redistribute it and/or modify
+** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
+**  
+** This program is TGDSARM9Free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
-** Commercial non-GPL licensing of this software is possible.
-** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+** The "appropriate copyright message" mentioned in section 2c of the GPLv2
+** must read: "Code from FAAD2 is copyright (c) Nero AG, www.nero.com"
 **
-** $Id: mp4ff.c,v 1.16 2004/03/27 11:14:48 menno Exp $
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
+**
+** $Id: mp4ff.c,v 1.22 2009/01/26 23:01:40 menno Exp $
 **/
+
+#include "posixHandleTGDS.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include "mp4ffint.h"
 
-#include "drms.h"
-
 mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f)
 {
-    mp4ff_t *ff = safeMalloc(sizeof(mp4ff_t));
+    mp4ff_t *ff = TGDSARM9Malloc(sizeof(mp4ff_t));
 
     memset(ff, 0, sizeof(mp4ff_t));
 
@@ -46,7 +49,7 @@ mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f)
 
 mp4ff_t *mp4ff_open_read_metaonly(mp4ff_callback_t *f)
 {
-    mp4ff_t *ff = safeMalloc(sizeof(mp4ff_t));
+    mp4ff_t *ff = TGDSARM9Malloc(sizeof(mp4ff_t));
 
     memset(ff, 0, sizeof(mp4ff_t));
 
@@ -61,38 +64,35 @@ void mp4ff_close(mp4ff_t *ff)
 {
     int32_t i;
 
-	// for some reason, letting this safeFree causes the fat lib
-	// to lock up after opening the next file
-	
     for (i = 0; i < ff->total_tracks; i++)
     {
         if (ff->track[i])
         {
             if (ff->track[i]->stsz_table)
-                safeFree(ff->track[i]->stsz_table);
+                TGDSARM9Free(ff->track[i]->stsz_table);
             if (ff->track[i]->stts_sample_count)
-                safeFree(ff->track[i]->stts_sample_count);
+                TGDSARM9Free(ff->track[i]->stts_sample_count);
             if (ff->track[i]->stts_sample_delta)
-                safeFree(ff->track[i]->stts_sample_delta);
+                TGDSARM9Free(ff->track[i]->stts_sample_delta);
             if (ff->track[i]->stsc_first_chunk)
-                safeFree(ff->track[i]->stsc_first_chunk);
+                TGDSARM9Free(ff->track[i]->stsc_first_chunk);
             if (ff->track[i]->stsc_samples_per_chunk)
-                safeFree(ff->track[i]->stsc_samples_per_chunk);
+                TGDSARM9Free(ff->track[i]->stsc_samples_per_chunk);
             if (ff->track[i]->stsc_sample_desc_index)
-                safeFree(ff->track[i]->stsc_sample_desc_index);
+                TGDSARM9Free(ff->track[i]->stsc_sample_desc_index);
             if (ff->track[i]->stco_chunk_offset)
-                safeFree(ff->track[i]->stco_chunk_offset);
+                TGDSARM9Free(ff->track[i]->stco_chunk_offset);
             if (ff->track[i]->decoderConfig)
-                safeFree(ff->track[i]->decoderConfig);
+                TGDSARM9Free(ff->track[i]->decoderConfig);
 			if (ff->track[i]->ctts_sample_count)
-				safeFree(ff->track[i]->ctts_sample_count);
+				TGDSARM9Free(ff->track[i]->ctts_sample_count);
 			if (ff->track[i]->ctts_sample_offset)
-				safeFree(ff->track[i]->ctts_sample_offset);
+				TGDSARM9Free(ff->track[i]->ctts_sample_offset);
 #ifdef ITUNES_DRM
             if (ff->track[i]->p_drms)
                 drms_free(ff->track[i]->p_drms);
 #endif
-            safeFree(ff->track[i]);
+            TGDSARM9Free(ff->track[i]);
         }
     }
 
@@ -100,20 +100,19 @@ void mp4ff_close(mp4ff_t *ff)
     mp4ff_tag_delete(&(ff->tags));
 #endif
 
-    if (ff) safeFree(ff);
+    if (ff) TGDSARM9Free(ff);
 }
 
 void mp4ff_track_add(mp4ff_t *f)
 {
     f->total_tracks++;
 
-    f->track[f->total_tracks - 1] = safeMalloc(sizeof(mp4ff_track_t));
+    f->track[f->total_tracks - 1] = TGDSARM9Malloc(sizeof(mp4ff_track_t));
 
     memset(f->track[f->total_tracks - 1], 0, sizeof(mp4ff_track_t));
 }
 
-__attribute__((section(".itcm")))
-int need_parse_when_meta_only(uint8_t atom_type)
+static int need_parse_when_meta_only(uint8_t atom_type)
 {
 	switch(atom_type)
 	{
@@ -141,7 +140,6 @@ int need_parse_when_meta_only(uint8_t atom_type)
 }
 
 /* parse atoms that are sub atoms of other atoms */
-__attribute__((section(".itcm")))
 int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size,int meta_only)
 {
     uint64_t size;
@@ -182,7 +180,6 @@ int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size,int meta_only)
 }
 
 /* parse root atoms */
-__attribute__((section(".itcm")))
 int32_t parse_atoms(mp4ff_t *f,int meta_only)
 {
     uint64_t size;
@@ -226,7 +223,6 @@ int32_t parse_atoms(mp4ff_t *f,int meta_only)
     return 0;
 }
 
-__attribute__((section(".itcm")))
 int32_t mp4ff_get_decoder_config(const mp4ff_t *f, const int32_t track,
                                  uint8_t** ppBuf, uint32_t* pBufSize)
 {
@@ -242,7 +238,7 @@ int32_t mp4ff_get_decoder_config(const mp4ff_t *f, const int32_t track,
         *ppBuf = NULL;
         *pBufSize = 0;
     } else {
-        *ppBuf = safeMalloc(f->track[track]->decoderConfigLen);
+        *ppBuf = TGDSARM9Malloc(f->track[track]->decoderConfigLen);
         if (*ppBuf == NULL)
         {
             *pBufSize = 0;
@@ -255,43 +251,36 @@ int32_t mp4ff_get_decoder_config(const mp4ff_t *f, const int32_t track,
     return 0;
 }
 
-__attribute__((section(".itcm")))
 int32_t mp4ff_get_track_type(const mp4ff_t *f, const int track)
 {
 	return f->track[track]->type;
 }
 
-__attribute__((section(".itcm")))
 int32_t mp4ff_total_tracks(const mp4ff_t *f)
 {
     return f->total_tracks;
 }
 
-__attribute__((section(".itcm")))
 int32_t mp4ff_time_scale(const mp4ff_t *f, const int32_t track)
 {
     return f->track[track]->timeScale;
 }
 
-__attribute__((section(".itcm")))
 uint32_t mp4ff_get_avg_bitrate(const mp4ff_t *f, const int32_t track)
 {
 	return f->track[track]->avgBitrate;
 }
 
-__attribute__((section(".itcm")))
 uint32_t mp4ff_get_max_bitrate(const mp4ff_t *f, const int32_t track)
 {
 	return f->track[track]->maxBitrate;
 }
 
-__attribute__((section(".itcm")))
 int64_t mp4ff_get_track_duration(const mp4ff_t *f, const int32_t track)
 {
 	return f->track[track]->duration;
 }
 
-__attribute__((section(".itcm")))
 int64_t mp4ff_get_track_duration_use_offsets(const mp4ff_t *f, const int32_t track)
 {
 	int64_t duration = mp4ff_get_track_duration(f,track);
@@ -304,7 +293,7 @@ int64_t mp4ff_get_track_duration_use_offsets(const mp4ff_t *f, const int32_t tra
 	return duration;
 }
 
-__attribute__((section(".itcm")))
+
 int32_t mp4ff_num_samples(const mp4ff_t *f, const int32_t track)
 {
     int32_t i;
@@ -317,25 +306,24 @@ int32_t mp4ff_num_samples(const mp4ff_t *f, const int32_t track)
     return total;
 }
 
-__attribute__((section(".itcm")))
+
+
+
 uint32_t mp4ff_get_sample_rate(const mp4ff_t *f, const int32_t track)
 {
 	return f->track[track]->sampleRate;
 }
 
-__attribute__((section(".itcm")))
 uint32_t mp4ff_get_channel_count(const mp4ff_t * f,const int32_t track)
 {
 	return f->track[track]->channelCount;
 }
 
-__attribute__((section(".itcm")))
 uint32_t mp4ff_get_audio_type(const mp4ff_t * f,const int32_t track)
 {
 	return f->track[track]->audioType;
 }
 
-__attribute__((section(".itcm")))
 int32_t mp4ff_get_sample_duration_use_offsets(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
 	int32_t d,o;
@@ -349,7 +337,6 @@ int32_t mp4ff_get_sample_duration_use_offsets(const mp4ff_t *f, const int32_t tr
 	return d;
 }
 
-__attribute__((section(".itcm")))
 int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t i, co = 0;
@@ -364,7 +351,6 @@ int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const i
     return (int32_t)(-1);
 }
 
-__attribute__((section(".itcm")))
 int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t i, co = 0;
@@ -387,7 +373,6 @@ int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const i
     return (int64_t)(-1);
 }
 
-__attribute__((section(".itcm")))
 int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t i, co = 0;
@@ -402,7 +387,6 @@ int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int
     return 0;
 }
 
-__attribute__((section(".itcm")))
 int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip)
 {
 	int32_t i, co = 0;
@@ -429,13 +413,11 @@ int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t o
 	return (int32_t)(-1);
 }
 
-__attribute__((section(".itcm")))
 int32_t mp4ff_find_sample_use_offsets(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip)
 {
 	return mp4ff_find_sample(f,track,offset + mp4ff_get_sample_offset(f,track,0),toskip);
 }
 
-__attribute__((section(".itcm")))
 int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
                           uint8_t **audio_buffer,  uint32_t *bytes)
 {
@@ -445,18 +427,15 @@ int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
 
 	if (*bytes==0) return 0;
 
-    *audio_buffer = (uint8_t*)safeMalloc(*bytes);
+    *audio_buffer = (uint8_t*)TGDSARM9Malloc(*bytes);
 
     mp4ff_set_sample_position(f, track, sample);
 
-    result = mp4ff_read_data(
-	(mp4ff_t*)f, 
-	(int8_t*)*audio_buffer, 
-	(int)*bytes);
+    result = mp4ff_read_data(f, *audio_buffer, *bytes);
 
     if (!result)
 	{
-		safeFree(*audio_buffer);
+		TGDSARM9Free(*audio_buffer);
 		*audio_buffer = 0;
         return 0;
 	}
@@ -471,14 +450,14 @@ int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
     return *bytes;
 }
 
-__attribute__((section(".itcm")))
+
 int32_t mp4ff_read_sample_v2(mp4ff_t *f, const int track, const int sample,unsigned char *buffer)
 {
     int32_t result = 0;
 	int32_t size = mp4ff_audio_frame_size(f,track,sample);
 	if (size<=0) return 0;
 	mp4ff_set_sample_position(f, track, sample);
-	result = mp4ff_read_data(f,(int8_t*)buffer,size);
+	result = mp4ff_read_data(f,buffer,size);
 
 #ifdef ITUNES_DRM
     if (f->track[track]->p_drms != NULL)
@@ -490,7 +469,6 @@ int32_t mp4ff_read_sample_v2(mp4ff_t *f, const int track, const int sample,unsig
     return result;
 }
 
-__attribute__((section(".itcm")))
 int32_t mp4ff_read_sample_getsize(mp4ff_t *f, const int track, const int sample)
 {
 	int32_t temp = mp4ff_audio_frame_size(f, track, sample);

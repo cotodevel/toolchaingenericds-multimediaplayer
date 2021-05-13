@@ -1,28 +1,31 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
-**
-** This program is free software; you can redistribute it and/or modify
+** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
+**  
+** This program is TGDSARM9Free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
-** Commercial non-GPL licensing of this software is possible.
-** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+** The "appropriate copyright message" mentioned in section 2c of the GPLv2
+** must read: "Code from FAAD2 is copyright (c) Nero AG, www.nero.com"
 **
-** $Id: mp4meta.c,v 1.15 2004/09/03 19:38:58 menno Exp $
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
+**
+** $Id: mp4meta.c,v 1.21 2009/01/19 23:56:30 menno Exp $
 **/
 
 #ifdef USE_TAGGING
@@ -40,10 +43,10 @@ static int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, con
 
     if (!item || (item && !*item) || !value) return 0;
 
-    tags->tags = (mp4ff_tag_t*)safeRealloc(tags->tags, (tags->count+1) * sizeof(mp4ff_tag_t));
+    tags->tags = (mp4ff_tag_t*)TGDSARM9Realloc(tags->tags, (tags->count+1) * sizeof(mp4ff_tag_t));
     if (!tags->tags)
     {
-        if (backup) safeFree(backup);
+        if (backup) TGDSARM9Free(backup);
         return 0;
     } else {
         tags->tags[tags->count].item = strdup(item);
@@ -51,8 +54,8 @@ static int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, con
 
         if (!tags->tags[tags->count].item || !tags->tags[tags->count].value)
         {
-            if (!tags->tags[tags->count].item) safeFree (tags->tags[tags->count].item);
-            if (!tags->tags[tags->count].value) safeFree (tags->tags[tags->count].value);
+            if (!tags->tags[tags->count].item) TGDSARM9Free (tags->tags[tags->count].item);
+            if (!tags->tags[tags->count].value) TGDSARM9Free (tags->tags[tags->count].value);
             tags->tags[tags->count].item = NULL;
             tags->tags[tags->count].value = NULL;
             return 0;
@@ -73,7 +76,7 @@ static int32_t mp4ff_tag_set_field(mp4ff_metadata_t *tags, const char *item, con
     {
         if (!stricmp(tags->tags[i].item, item))
         {
-			safeFree(tags->tags[i].value);
+			TGDSARM9Free(tags->tags[i].value);
 			tags->tags[i].value = strdup(value);
             return 1;
         }
@@ -88,11 +91,11 @@ int32_t mp4ff_tag_delete(mp4ff_metadata_t *tags)
 
     for (i = 0; i < tags->count; i++)
     {
-        if (tags->tags[i].item) safeFree(tags->tags[i].item);
-        if (tags->tags[i].value) safeFree(tags->tags[i].value);
+        if (tags->tags[i].item) TGDSARM9Free(tags->tags[i].item);
+        if (tags->tags[i].value) TGDSARM9Free(tags->tags[i].value);
     }
 
-    if (tags->tags) safeFree(tags->tags);
+    if (tags->tags) TGDSARM9Free(tags->tags);
 
     tags->tags = NULL;
     tags->count = 0;
@@ -165,7 +168,13 @@ static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char
     static char *tag_names[] = {
         "unknown", "title", "artist", "writer", "album",
         "date", "tool", "comment", "genre", "track",
-        "disc", "compilation", "genre", "tempo", "cover"
+        "disc", "compilation", "genre", "tempo", "cover",
+		"album_artist", "contentgroup", "lyrics", "description",
+        "network", "show", "episodename",
+        "sorttitle", "sortalbum", "sortartist", "sortalbumartist",
+        "sortwriter", "sortshow",
+        "season", "episode", "podcast"
+
     };
     uint8_t tag_idx = 0;
 
@@ -185,6 +194,22 @@ static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char
     case ATOM_GENRE2: tag_idx = 12; break;
     case ATOM_TEMPO: tag_idx = 13; break;
     case ATOM_COVER: tag_idx = 14; break;
+	case ATOM_ALBUM_ARTIST: tag_idx = 15; break;
+    case ATOM_CONTENTGROUP: tag_idx = 16; break;
+    case ATOM_LYRICS: tag_idx = 17; break;
+    case ATOM_DESCRIPTION: tag_idx = 18; break;
+    case ATOM_NETWORK: tag_idx = 19; break;
+    case ATOM_SHOW: tag_idx = 20; break;
+    case ATOM_EPISODENAME: tag_idx = 21; break;
+    case ATOM_SORTTITLE: tag_idx = 22; break;
+    case ATOM_SORTALBUM: tag_idx = 23; break;
+    case ATOM_SORTARTIST: tag_idx = 24; break;
+    case ATOM_SORTALBUMARTIST: tag_idx = 25; break;
+    case ATOM_SORTWRITER: tag_idx = 26; break;
+    case ATOM_SORTSHOW: tag_idx = 27; break;
+    case ATOM_SEASON: tag_idx = 28; break;
+    case ATOM_EPISODE: tag_idx = 29; break;
+    case ATOM_PODCAST: tag_idx = 30; break;
     default: tag_idx = 0; break;
     }
 
@@ -240,14 +265,22 @@ static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const
 						done = 1;
 					}
 				} else if (parent_atom_type == ATOM_TRACK || parent_atom_type == ATOM_DISC) {
-					if (!done && subsize - header_size >= 8 + 8)
+					/* if (!done && subsize - header_size >= 8 + 8) */
+					/* modified by AJS */
+					if ( !done && (subsize - header_size) >=
+						(sizeof(char) + sizeof(uint8_t)*3 + sizeof(uint32_t) + /* version + flags + reserved */
+						+ sizeof(uint16_t) /* leading uint16_t */
+						+ sizeof(uint16_t) /* track / disc */
+						+ sizeof(uint16_t)) /* totaltracks / totaldiscs */
+						)
 					{
 						uint16_t index,total;
 						char temp[32];
 						mp4ff_read_int16(f);
 						index = mp4ff_read_int16(f);
 						total = mp4ff_read_int16(f);
-						mp4ff_read_int16(f);
+  						/* modified by AJS */
+						/* mp4ff_read_int16(f); */
 
 						sprintf(temp,"%d",index);
 						mp4ff_tag_add_field(&(f->tags), parent_atom_type == ATOM_TRACK ? "track" : "disc", temp);
@@ -260,7 +293,7 @@ static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const
 					}
 				} else
 				{
-					if (data) {safeFree(data);data = NULL;}
+					if (data) {TGDSARM9Free(data);data = NULL;}
 					data = mp4ff_read_string(f,(uint32_t)(subsize-(header_size+8)));
 				}
 			} else if (atom_type == ATOM_NAME) {
@@ -268,7 +301,7 @@ static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const
 				{
 					mp4ff_read_char(f); /* version */
 					mp4ff_read_int24(f); /* flags */
-					if (name) safeFree(name);
+					if (name) TGDSARM9Free(name);
 					name = mp4ff_read_string(f,(uint32_t)(subsize-(header_size+4)));
 				}
 			}
@@ -285,9 +318,9 @@ static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const
 			if (name) mp4ff_tag_add_field(&(f->tags), name, data);
 		}
 
-		safeFree(data);
+		TGDSARM9Free(data);
 	}
-	if (name) safeFree(name);
+	if (name) TGDSARM9Free(name);
     return 1;
 }
 
@@ -300,6 +333,8 @@ int32_t mp4ff_parse_metadata(mp4ff_t *f, const int32_t size)
     while (sumsize < size)
     {
         subsize = mp4ff_atom_read_header(f, &atom_type, &header_size);
+        if (subsize == 0)
+            break;
         mp4ff_parse_tag(f, atom_type, (uint32_t)(subsize-header_size));
         sumsize += subsize;
     }
@@ -424,4 +459,3 @@ int32_t mp4ff_meta_get_coverart(const mp4ff_t *f, char **value)
 }
 
 #endif
-
