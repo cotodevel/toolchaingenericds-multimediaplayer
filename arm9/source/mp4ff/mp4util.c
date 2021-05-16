@@ -1,32 +1,36 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
-**
-** This program is free software; you can redistribute it and/or modify
+** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
+**  
+** This program is TGDSARM9Free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
-** Commercial non-GPL licensing of this software is possible.
-** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+** The "appropriate copyright message" mentioned in section 2c of the GPLv2
+** must read: "Code from FAAD2 is copyright (c) Nero AG, www.nero.com"
 **
-** $Id: mp4util.c,v 1.16 2004/03/27 11:14:49 menno Exp $
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
+**
+** $Id: mp4util.c,v 1.20 2007/11/01 12:33:29 menno Exp $
 **/
 
+#include "posixHandleTGDS.h"
+
 #include "mp4ffint.h"
-#include "ipcfifoTGDSUser.h"
 #include <stdlib.h>
 
 int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, uint32_t size)
@@ -56,15 +60,13 @@ int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, uint32_t size)
     return result;
 }
 
-int32_t mp4ff_write_int32(mp4ff_t *f, const uint32_t data)
+int32_t mp4ff_write_int32(mp4ff_t *f,const uint32_t data)
 {
 	uint32_t result;
     uint32_t a, b, c, d;
     int8_t temp[4];
     
-	uint32_t * buftemp = UNION_CAST((uint8_t*)&temp[0], uint32_t *);
-	
-    *buftemp = data;
+    *(uint32_t*)temp = data;
     a = (uint8_t)temp[0];
     b = (uint8_t)temp[1];
     c = (uint8_t)temp[2];
@@ -72,7 +74,7 @@ int32_t mp4ff_write_int32(mp4ff_t *f, const uint32_t data)
 
     result = (a<<24) | (b<<16) | (c<<8) | d;
 
-    return mp4ff_write_data(f,(int8_t*)&result,sizeof(result));
+    return mp4ff_write_data(f,(uint8_t*)&result,sizeof(result));
 }
 
 int32_t mp4ff_set_position(mp4ff_t *f, const int64_t position)
@@ -94,7 +96,7 @@ uint64_t mp4ff_read_int64(mp4ff_t *f)
     uint64_t result = 0;
     int8_t i;
 
-    mp4ff_read_data(f, (int8_t*)data, 8);
+    mp4ff_read_data(f, data, 8);
 
     for (i = 0; i < 8; i++)
     {
@@ -151,12 +153,12 @@ uint16_t mp4ff_read_int16(mp4ff_t *f)
 
 char * mp4ff_read_string(mp4ff_t * f,uint32_t length)
 {
-	char * str = (char*)safeMalloc(length + 1);
+	char * str = (char*)TGDSARM9Malloc(length + 1);
 	if (str!=0)
 	{
-		if ((uint32_t)mp4ff_read_data(f, (int8_t*)str, length)!=length)
+		if ((uint32_t)mp4ff_read_data(f,str,length)!=length)
 		{
-			safeFree(str);
+			TGDSARM9Free(str);
 			str = 0;
 		}
 		else
@@ -170,7 +172,7 @@ char * mp4ff_read_string(mp4ff_t * f,uint32_t length)
 uint8_t mp4ff_read_char(mp4ff_t *f)
 {
     uint8_t output;
-    mp4ff_read_data(f, (int8_t*)&output, 1);
+    mp4ff_read_data(f, &output, 1);
     return output;
 }
 

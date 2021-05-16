@@ -1,28 +1,31 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
-**
+** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
-** Commercial non-GPL licensing of this software is possible.
-** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+** The "appropriate copyright message" mentioned in section 2c of the GPLv2
+** must read: "Code from FAAD2 is copyright (c) Nero AG, www.nero.com"
 **
-** $Id: mp4ffint.h,v 1.18 2004/04/12 18:17:42 menno Exp $
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
+**
+** $Id: mp4ffint.h,v 1.26 2009/01/25 20:14:34 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -32,53 +35,10 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#include <stdint.h>
+#include "mp4ff_int_types.h"
+#include <stdlib.h>
 
-#undef ITUNES_DRM
-
-static __inline uint32_t GetDWLE( void const * _p )
-{
-    uint8_t * p = (uint8_t *)_p;
-    return ( ((uint32_t)p[3] << 24) | ((uint32_t)p[2] << 16)
-              | ((uint32_t)p[1] << 8) | p[0] );
-}
-static __inline uint32_t U32_AT( void const * _p )
-{
-    uint8_t * p = (uint8_t *)_p;
-    return ( ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16)
-              | ((uint32_t)p[2] << 8) | p[3] );
-}
-static __inline uint64_t U64_AT( void const * _p )
-{
-    uint8_t * p = (uint8_t *)_p;
-    return ( ((uint64_t)p[0] << 56) | ((uint64_t)p[1] << 48)
-              | ((uint64_t)p[2] << 40) | ((uint64_t)p[3] << 32)
-              | ((uint64_t)p[4] << 24) | ((uint64_t)p[5] << 16)
-              | ((uint64_t)p[6] << 8) | p[7] );
-}
-
-#ifdef WORDS_BIGENDIAN
-#   define VLC_FOURCC( a, b, c, d ) \
-        ( ((uint32_t)d) | ( ((uint32_t)c) << 8 ) \
-           | ( ((uint32_t)b) << 16 ) | ( ((uint32_t)a) << 24 ) )
-#   define VLC_TWOCC( a, b ) \
-        ( (uint16_t)(b) | ( (uint16_t)(a) << 8 ) )
-
-#else
-#   define VLC_FOURCC( a, b, c, d ) \
-        ( ((uint32_t)a) | ( ((uint32_t)b) << 8 ) \
-           | ( ((uint32_t)c) << 16 ) | ( ((uint32_t)d) << 24 ) )
-#   define VLC_TWOCC( a, b ) \
-        ( (uint16_t)(a) | ( (uint16_t)(b) << 8 ) )
-#endif
-
-#define FOURCC_user VLC_FOURCC( 'u', 's', 'e', 'r' )
-#define FOURCC_key  VLC_FOURCC( 'k', 'e', 'y', ' ' )
-#define FOURCC_iviv VLC_FOURCC( 'i', 'v', 'i', 'v' )
-#define FOURCC_name VLC_FOURCC( 'n', 'a', 'm', 'e' )
-#define FOURCC_priv VLC_FOURCC( 'p', 'r', 'i', 'v' )
-
-#define MAX_TRACKS 64
+#define MAX_TRACKS 1024
 #define TRACK_UNKNOWN 0
 #define TRACK_AUDIO   1
 #define TRACK_VIDEO   2
@@ -117,6 +77,23 @@ static __inline uint64_t U64_AT( void const * _p )
 #define ATOM_USER 155
 #define ATOM_KEY  156
 
+#define ATOM_ALBUM_ARTIST	157
+#define ATOM_CONTENTGROUP   158
+#define ATOM_LYRICS         159
+#define ATOM_DESCRIPTION    160
+#define ATOM_NETWORK        161
+#define ATOM_SHOW           162
+#define ATOM_EPISODENAME    163
+#define ATOM_SORTTITLE      164
+#define ATOM_SORTALBUM      165
+#define ATOM_SORTARTIST     166
+#define ATOM_SORTALBUMARTIST    167
+#define ATOM_SORTWRITER     168
+#define ATOM_SORTSHOW       169
+#define ATOM_SEASON         170
+#define ATOM_EPISODE        171
+#define ATOM_PODCAST        172
+
 #define ATOM_UNKNOWN 255
 #define ATOM_FREE ATOM_UNKNOWN
 #define ATOM_SKIP ATOM_UNKNOWN
@@ -149,11 +126,14 @@ static __inline uint64_t U64_AT( void const * _p )
 #define ATOM_SCHI 25
 
 #ifdef HAVE_CONFIG_H
-#include "../../config.h"
+#include "../../config.h"   
 #endif
 
 #if !(defined(_WIN32) || defined(_WIN32_WCE))
 #define stricmp strcasecmp
+#else
+#define stricmp _stricmp
+#define strdup _strdup
 #endif
 
 /* file callback structure */
@@ -228,11 +208,6 @@ typedef struct
     uint32_t timeScale;
     uint64_t duration;
 
-#ifdef ITUNES_DRM
-    /* drms */
-    void *p_drms;
-#endif
-
 } mp4ff_track_t;
 
 /* mp4 main file structure */
@@ -281,40 +256,40 @@ int32_t mp4ff_truncate(mp4ff_t * f);
 char * mp4ff_read_string(mp4ff_t * f,uint32_t length);
 
 /* mp4atom.c */
-int32_t mp4ff_atom_get_size(const int8_t *data);
-int32_t mp4ff_atom_compare(const int8_t a1, const int8_t b1, const int8_t c1, const int8_t d1,
+static int32_t mp4ff_atom_get_size(const int8_t *data);
+static int32_t mp4ff_atom_compare(const int8_t a1, const int8_t b1, const int8_t c1, const int8_t d1,
                                   const int8_t a2, const int8_t b2, const int8_t c2, const int8_t d2);
-uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b, const int8_t c, const int8_t d);
+static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b, const int8_t c, const int8_t d);
 uint64_t mp4ff_atom_read_header(mp4ff_t *f, uint8_t *atom_type, uint8_t *header_size);
-int32_t mp4ff_read_stsz(mp4ff_t *f);
-int32_t mp4ff_read_esds(mp4ff_t *f);
-int32_t mp4ff_read_mp4a(mp4ff_t *f);
-int32_t mp4ff_read_stsd(mp4ff_t *f);
-int32_t mp4ff_read_stsc(mp4ff_t *f);
-int32_t mp4ff_read_stco(mp4ff_t *f);
-int32_t mp4ff_read_stts(mp4ff_t *f);
+static int32_t mp4ff_read_stsz(mp4ff_t *f);
+static int32_t mp4ff_read_esds(mp4ff_t *f);
+static int32_t mp4ff_read_mp4a(mp4ff_t *f);
+static int32_t mp4ff_read_stsd(mp4ff_t *f);
+static int32_t mp4ff_read_stsc(mp4ff_t *f);
+static int32_t mp4ff_read_stco(mp4ff_t *f);
+static int32_t mp4ff_read_stts(mp4ff_t *f);
 #ifdef USE_TAGGING
-int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size);
+static int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size);
 #endif
 int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type);
 
 /* mp4sample.c */
-int32_t mp4ff_chunk_of_sample(const mp4ff_t *f, const int32_t track, const int32_t sample,
+static int32_t mp4ff_chunk_of_sample(const mp4ff_t *f, const int32_t track, const int32_t sample,
                                      int32_t *chunk_sample, int32_t *chunk);
-int32_t mp4ff_chunk_to_offset(const mp4ff_t *f, const int32_t track, const int32_t chunk);
-int32_t mp4ff_sample_range_size(const mp4ff_t *f, const int32_t track,
+static int32_t mp4ff_chunk_to_offset(const mp4ff_t *f, const int32_t track, const int32_t chunk);
+static int32_t mp4ff_sample_range_size(const mp4ff_t *f, const int32_t track,
                                        const int32_t chunk_sample, const int32_t sample);
-int32_t mp4ff_sample_to_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
+static int32_t mp4ff_sample_to_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
 int32_t mp4ff_audio_frame_size(const mp4ff_t *f, const int32_t track, const int32_t sample);
 int32_t mp4ff_set_sample_position(mp4ff_t *f, const int32_t track, const int32_t sample);
 
 #ifdef USE_TAGGING
 /* mp4meta.c */
-int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, const char *value);
-int32_t mp4ff_tag_set_field(mp4ff_metadata_t *tags, const char *item, const char *value);
-int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char **name);
-int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const int32_t size);
-int32_t mp4ff_meta_find_by_name(const mp4ff_t *f, const char *item, char **value);
+static int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, const char *value);
+static int32_t mp4ff_tag_set_field(mp4ff_metadata_t *tags, const char *item, const char *value);
+static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char **name);
+static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const int32_t size);
+static int32_t mp4ff_meta_find_by_name(const mp4ff_t *f, const char *item, char **value);
 int32_t mp4ff_parse_metadata(mp4ff_t *f, const int32_t size);
 int32_t mp4ff_tag_delete(mp4ff_metadata_t *tags);
 int32_t mp4ff_meta_get_num_items(const mp4ff_t *f);
@@ -341,7 +316,7 @@ mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f);
 mp4ff_t *mp4ff_open_edit(mp4ff_callback_t *f);
 #endif
 void mp4ff_close(mp4ff_t *ff);
-void mp4ff_track_add(mp4ff_t *f);
+//void mp4ff_track_add(mp4ff_t *f);
 int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size,int meta_only);
 int32_t parse_atoms(mp4ff_t *f,int meta_only);
 
