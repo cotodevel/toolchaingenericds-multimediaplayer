@@ -1,5 +1,4 @@
 /*
-
 			Copyright (C) 2017  Coto
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,21 +17,22 @@ USA
 
 */
 
-#include "ipcfifoTGDSUser.h"
+#include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
-
-#include "InterruptsARMCores_h.h"
 #include "interrupts.h"
+#include "biosTGDS.h"
+#include "ipcfifoTGDSUser.h"
+#include "spifwTGDS.h"
 #include "wifi_arm7.h"
 #include "main.h"
 #include "eventsTGDS.h"
 
 //User Handler Definitions
-
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void IpcSynchandlerUser(uint8 ipcByte){
 	switch(ipcByte){
 		default:{
@@ -45,6 +45,7 @@ void IpcSynchandlerUser(uint8 ipcByte){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer0handlerUser(){
 
 }
@@ -52,42 +53,45 @@ void Timer0handlerUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer1handlerUser(){
-
+	
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer2handlerUser(){
-
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer3handlerUser(){
-
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void HblankUser(){
-
+	
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void VblankUser(){
 	
-
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void VcounterUser(){
 
 }
@@ -96,14 +100,19 @@ void VcounterUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void screenLidHasOpenedhandlerUser(){
-	TurnOnScreens();
+	setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);	//both lit screens
+	SetLedState(LED_ON);
+	isArm7ClosedLid = false;
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void screenLidHasClosedhandlerUser(){
-	TurnOffScreens();
+	setBacklight(0);
+	SetLedState(LED_LONGBLINK);
 }

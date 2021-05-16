@@ -38,6 +38,10 @@ extern "C"{
 //				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	
 //}
 
+//GDBStub Callbacks
+extern void onGDBStubConnect();
+extern void onGDBStubDisconnected();
+
 #ifdef __cplusplus
 }
 #endif

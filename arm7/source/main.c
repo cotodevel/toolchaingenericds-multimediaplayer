@@ -1,5 +1,4 @@
 /*
-
 			Copyright (C) 2017  Coto
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,39 +16,41 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 USA
 */
 
-#include <string.h>
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+ 
 #include "main.h"
 #include "InterruptsARMCores_h.h"
 #include "interrupts.h"
 
 #include "ipcfifoTGDSUser.h"
-#include "wifi_arm7.h"
 #include "usrsettingsTGDS.h"
 #include "timerTGDS.h"
-#include "biosTGDS.h"
 #include "CPUARMTGDS.h"
-#include "eventsTGDS.h"
+#include <dswifi7.h>
+#include "wifi_arm7.h"
+#include "wifi_shared.h"
+#include "spiTGDS.h"
+#include "spifwTGDS.h"
+#include "powerTGDS.h"
+#include "utilsTGDS.h"
+#include "biosTGDS.h"
 
 //---------------------------------------------------------------------------------
 int main(int argc, char **argv) {
 //---------------------------------------------------------------------------------
-	/*			TGDS 1.6 Standard ARM7 Init code start	*/
-	
-	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
+	//wait for VRAM Block to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
 	while (!(*((vuint8*)0x04000240) & 0x2));
 	
+	/*			TGDS 1.5 Standard ARM7 Init code start	*/
 	installWifiFIFO();		
-	
-	int argBuffer[MAXPRINT7ARGVCOUNT];
-	memset((unsigned char *)&argBuffer[0], 0, sizeof(argBuffer));
-	argBuffer[0] = 0xc070ffff;
-	writeDebugBuffer7("TGDS ARM7.bin Boot OK!", 1, (int*)&argBuffer[0]);
-	
-	/*			TGDS 1.6 Standard ARM7 Init code end	*/
+	/*			TGDS 1.5 Standard ARM7 Init code end	*/
 	
     while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQWait(IRQ_VCOUNT);
+		IRQWait(IRQ_HBLANK);
 	}
+   
 	return 0;
 }

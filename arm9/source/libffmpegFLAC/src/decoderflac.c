@@ -47,24 +47,19 @@
 #define FFMAX(a,b) ((a) > (b) ? (a) : (b))
 #define FFMIN(a,b) ((a) > (b) ? (b) : (a))
 
-__attribute__((section(".dtcm")))
 static const int sample_rate_table[] ICONST_ATTR =
 { 0, 0, 0, 0,
   8000, 16000, 22050, 24000, 32000, 44100, 48000, 96000,
   0, 0, 0, 0 };
 
-__attribute__((section(".dtcm")))
 static const int sample_size_table[] ICONST_ATTR = 
 { 0, 8, 12, 0, 16, 20, 24, 0 };
 
-
-__attribute__((section(".dtcm")))
 static const int blocksize_table[] ICONST_ATTR = {
      0,    192, 576<<0, 576<<1, 576<<2, 576<<3,      0,      0, 
 256<<0, 256<<1, 256<<2, 256<<3, 256<<4, 256<<5, 256<<6, 256<<7 
 };
 
-__attribute__((section(".dtcm")))
 static const uint8_t table_crc8[256] ICONST_ATTR = {
     0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15,
     0x38, 0x3f, 0x36, 0x31, 0x24, 0x23, 0x2a, 0x2d,
@@ -100,9 +95,7 @@ static const uint8_t table_crc8[256] ICONST_ATTR = {
     0xe6, 0xe1, 0xe8, 0xef, 0xfa, 0xfd, 0xf4, 0xf3
 };
 
-__attribute__((section(".dtcm")))
 static int64_t get_utf8(GetBitContext *gb) ICODE_ATTR_FLAC;
-
 static int64_t get_utf8(GetBitContext *gb)
 {
     uint64_t val;
@@ -128,8 +121,6 @@ static int64_t get_utf8(GetBitContext *gb)
 }
 
 static int get_crc8(const uint8_t *buf, int count) ICODE_ATTR_FLAC;
-
-__attribute__((section(".itcm")))
 static int get_crc8(const uint8_t *buf, int count)
 {
     int crc=0;
@@ -143,8 +134,6 @@ static int get_crc8(const uint8_t *buf, int count)
 }
 
 static int decode_residuals(FLACContext *s, int32_t* decoded, int pred_order) ICODE_ATTR_FLAC;
-
-__attribute__((section(".itcm")))
 static int decode_residuals(FLACContext *s, int32_t* decoded, int pred_order)
 {
     int i, tmp, partition, method_type, rice_order;
@@ -185,7 +174,6 @@ static int decode_residuals(FLACContext *s, int32_t* decoded, int pred_order)
 }    
 
 static int decode_subframe_fixed(FLACContext *s, int32_t* decoded, int pred_order) ICODE_ATTR_FLAC;
-__attribute__((section(".itcm")))
 static int decode_subframe_fixed(FLACContext *s, int32_t* decoded, int pred_order)
 {
     int i;
@@ -233,7 +221,6 @@ static int decode_subframe_fixed(FLACContext *s, int32_t* decoded, int pred_orde
 }
 
 static int decode_subframe_lpc(FLACContext *s, int32_t* decoded, int pred_order) ICODE_ATTR_FLAC;
-__attribute__((section(".itcm")))
 static int decode_subframe_lpc(FLACContext *s, int32_t* decoded, int pred_order)
 {
     int sum, i, j;
@@ -306,7 +293,6 @@ static int decode_subframe_lpc(FLACContext *s, int32_t* decoded, int pred_order)
     return 0;
 }
 
-__attribute__((section(".itcm")))
 static inline int decode_subframe(FLACContext *s, int channel, int32_t* decoded)
 {
     int type, wasted = 0;
@@ -397,7 +383,6 @@ static int decode_frame(FLACContext *s,
                         int32_t* decoded0,
                         int32_t* decoded1,
                         void (*yield)(void)) ICODE_ATTR_FLAC;
-__attribute__((section(".itcm")))
 static int decode_frame(FLACContext *s,
                         int32_t* decoded0,
                         int32_t* decoded1,
@@ -512,7 +497,6 @@ static int decode_frame(FLACContext *s,
     return 0;
 }
 
-__attribute__((section(".itcm")))
 int flac_decode_frame(FLACContext *s,
                              int32_t* decoded0,
                              int32_t* decoded1,

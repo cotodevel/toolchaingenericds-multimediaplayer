@@ -47,7 +47,7 @@
 #define MIKMOD_FREQ 44100
 
 #define AAC_READBUF_SIZE	(2 * AAC_MAINBUF_SIZE * AAC_MAX_NCHANS)
-#define AAC_OUT_SIZE (AAC_READBUF_SIZE * 8)	//read ahead 8 aac/m4a samples
+#define AAC_OUT_SIZE 32768
 #ifdef AAC_ENABLE_SBR
   #define SBR_MUL		2
 #else

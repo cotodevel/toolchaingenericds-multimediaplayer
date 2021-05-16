@@ -85,59 +85,25 @@ static int tmpAmount = 0;
 static int recAmount = 0;
 
 // aac
-__attribute__((section(".dtcm")))
 static HAACDecoder *hAACDecoder;
-
-__attribute__((section(".dtcm")))
 static unsigned char *aacReadBuf = NULL;
-
-__attribute__((section(".dtcm")))
 static unsigned char *aacReadPtr = NULL;
-
-__attribute__((section(".dtcm")))
 static s16 *aacOutBuf = NULL;
-
-__attribute__((section(".dtcm")))
 static AACFrameInfo aacFrameInfo;
-
-__attribute__((section(".dtcm")))
 static int aacBytesLeft, aacRead, aacErr, aacEofReached;
-
-__attribute__((section(".dtcm")))
 static int aacLength;
-
-__attribute__((section(".dtcm")))
 static bool isRawAAC;
-
-__attribute__((section(".dtcm")))
 static mp4ff_t *mp4file;
-
-__attribute__((section(".dtcm")))
 static mp4ff_callback_t mp4cb;
-
-__attribute__((section(".dtcm")))
 static int mp4track;
-
-__attribute__((section(".dtcm")))
 static int sampleId;
 
 //flac
-__attribute__((section(".dtcm")))
 static FLACContext fc;
-
-__attribute__((section(".dtcm")))
 static uint8_t *flacInBuf = NULL;
-
-__attribute__((section(".dtcm")))
 static int flacBLeft = 0;
-
-__attribute__((section(".dtcm")))
 static int32_t *decoded0 = NULL;
-
-__attribute__((section(".dtcm")))
 static int32_t *decoded1 = NULL;
-
-__attribute__((section(".dtcm")))
 static bool flacFinished = false;
 
 //sid
@@ -178,7 +144,6 @@ static struct fd * _FileHandleAudio = NULL;
 
 // arm7 code, etc
 
-void SendArm7Command(u32 command, u32 data);
 void copyRemainingData();
 void fillMadBuffer();
 void fillMadBufferStream();
@@ -565,10 +530,6 @@ void updateStreamCustomDecoder(u32 srcFrmt){
 // sound streaming stuff
 //----------------------
 
-void SendArm7Command(u32 command, u32 data){
-	SendFIFOWords((uint32)command);
-}
-
 void freeStreamBuffer(){	
 	if(s_buffer != NULL){
 		trackFree(s_buffer);
@@ -889,7 +850,6 @@ void seekFlac()
 	}
 }
 
-__attribute__((section(".itcm")))
 void sidDecode()
 {
 	s16 *tBuffer = lBuffer;
@@ -930,7 +890,6 @@ char *sidMeta(int which)
 	return sidfile + SID_META_LOC + (which << 5);
 }
 
-__attribute__((section(".itcm")))
 void mp3Decode()
 {	
 	madFinished = false;
@@ -965,7 +924,6 @@ void nsfDecode()
 	inTrack = false;
 }
 
-__attribute__((section(".itcm")))
 void spcDecode()
 {
 	spcPlay(lBuffer, rBuffer);
@@ -1036,7 +994,6 @@ static inline u16 scale(mad_fixed_t sample)
 	return sample >> (MAD_F_FRACBITS + 1 - 16);
 }
 
-__attribute__((section(".itcm")))
 void fillMadBuffer()
 {
 	if(cutOff)
@@ -1674,7 +1631,7 @@ void clearLoop()
 	module->wrap = 0;
 }
 
-bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
+bool initSoundStreamUser(char * fName, char * ext){
 	
 	if(strcmp(ext, ".it") == 0  || strcmp(ext, ".mod") == 0 || strcmp(ext, ".s3m") == 0 || strcmp(ext, ".xm") == 0)
 	{
@@ -1712,7 +1669,6 @@ bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
 		soundData.loc = 0;
 		sCursor = 0;
 		
-		enableFastMode();	//prevents touchscreencode to cause audio stutters
 		startSound9();
 		
 		return true;		
@@ -1795,7 +1751,6 @@ bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
 		bytesLeftBuf = NULL;
 		
 		mp3Decode();	//process header frame
-		enableFastMode();	//prevents touchscreencode to cause audio stutters
 		startSound9();
 		return true;
 	}
@@ -1840,7 +1795,7 @@ bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
 		
 		soundData.len = flength(fp);
 		soundData.loc = 0;
-    	enableFastMode();	//prevents touchscreencode to cause audio stutters
+    	
 		startSound9();
 		
 		return true;
@@ -1919,7 +1874,7 @@ bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
 		
 		soundData.len = flength(fp);
 		soundData.loc = 0;
-		enableFastMode();	//prevents touchscreencode to cause audio stutters
+		
 		startSound9();
 		
 		return true;
@@ -2058,7 +2013,7 @@ bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
 		
 		aacLength = aacFrameInfo.outputSamps / soundData.channels;
 		soundData.loc = 0;
-		enableFastMode();	//prevents touchscreencode to cause audio stutters
+		
 		startSound9();
 		
 		return true;
@@ -2100,9 +2055,9 @@ bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
 		soundData.len = fc.filesize;
 		soundData.loc = 0;
 		bytesLeft = 0;
-		bytesLeftBuf = NULL;   	
+		bytesLeftBuf = NULL;
+    	
 		decodeFlacFrame();
-		enableFastMode();	//prevents touchscreencode to cause audio stutters
 		startSound9();
 		
 		return true;
@@ -2149,8 +2104,8 @@ bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
 		sidfile[SID_META_LOC + 31] = 0;
 		sidfile[SID_META_LOC + 63] = 0;
 		sidfile[SID_META_LOC + 95] = 0;
+		
 		sidDecode();
-		enableFastMode();	//prevents touchscreencode to cause audio stutters
 		startSound9();		
 		
 		return true;
@@ -2210,7 +2165,6 @@ bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
 		
 		StopFade();
 		nsfDecode();
-		enableFastMode();	//prevents touchscreencode to cause audio stutters
 		startSound9();	
 		
 		return true;
@@ -2242,8 +2196,8 @@ bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
 		setSoundLength(SPC_OUT_SIZE);
 		
 		mallocData(SPC_OUT_SIZE);
+		
 		spcDecode();
-		enableFastMode();	//prevents touchscreencode to cause audio stutters
 		startSound9();
 		
 		return true;
@@ -2296,9 +2250,10 @@ bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
 		setSoundFrequency(init68.sampling_rate);	
 		setSoundLength(SNDH_OUT_SIZE);
 		
-		mallocData(SNDH_OUT_SIZE);		
+		mallocData(SNDH_OUT_SIZE);
+		
 		sndhDecode();
-		enableFastMode();	//prevents touchscreencode to cause audio stutters
+		
 		startSound9();
 		
 		return true;
@@ -2333,8 +2288,9 @@ bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
 		setSoundFrequency(GBS_FREQ);	
 		setSoundLength(GBS_OUT_SIZE);		
 		mallocData(GBS_OUT_SIZE);
+		
 		gbsDecode();
-		enableFastMode();	//prevents touchscreencode to cause audio stutters
+		
 		startSound9();
 		
 		return true;
@@ -2345,7 +2301,6 @@ bool initSoundStreamUser(char * fName, char * ext) __attribute__ ((optnone)) {
 
 
 bool loadSound(char *fName){
-	closeDualTGDSFileHandleFromFile(_FileHandleVideo, _FileHandleAudio);
 	int srcFormat = playSoundStream(fName, _FileHandleVideo, _FileHandleAudio);
 	internalCodecType = srcFormat;
 	if((srcFormat != SRC_WAV) || (srcFormat != SRC_WAVADPCM)){		
@@ -2744,7 +2699,7 @@ void startStreamAudio()
 				
 				bufCursor = 0;
 				streamOpened = true;
-				enableFastMode();	//prevents touchscreencode to cause audio stutters
+				
 				startSound9();
 			}
 			
@@ -2777,7 +2732,7 @@ void startStreamAudio()
 			
 			bufCursor = 0;
 			streamOpened = true;
-			enableFastMode();	//prevents touchscreencode to cause audio stutters
+			
 			startSound9();
 			break;
 		}
@@ -2844,7 +2799,7 @@ void startStreamAudio()
 			aacOutBuf = NULL;
 			
 			aacLength = aacFrameInfo.outputSamps / soundData.channels;
-			enableFastMode();	//prevents touchscreencode to cause audio stutters
+			
 			startSound9();
 			streamOpened = true;
 			
@@ -2954,7 +2909,6 @@ void pauseSound(bool pause)
 	sndPaused = pause;
 }
 
-__attribute__((section(".itcm")))
 void getSoundLoc(u32 *loc, u32 *max)
 {
 	// return a dummy value representing 0 for files that aren't loaded.
@@ -2992,7 +2946,6 @@ void getSoundLoc(u32 *loc, u32 *max)
 	*max = soundData.len;
 }
 
-__attribute__((section(".itcm")))
 void setSoundLoc(u32 loc)
 {
 	seekSpecial = true;
@@ -3028,7 +2981,6 @@ void setSoundLoc(u32 loc)
 	seekSpecial = false;
 }
 
-__attribute__((section(".itcm")))
 int getState()
 {
 	if(soundData.sourceFmt == SRC_NONE)

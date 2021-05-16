@@ -25,6 +25,7 @@ USA
 //		struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 														// Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
 //		struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;		// Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
 
+
 #include "ipcfifoTGDS.h"
 #include "ipcfifoTGDSUser.h"
 #include "dsregs.h"
@@ -37,6 +38,9 @@ USA
 #include "main.h"
 #include "wifi_arm7.h"
 #include "spifwTGDS.h"
+#include "click_raw.h"
+
+
 
 #endif
 
@@ -45,35 +49,23 @@ USA
 #include <stdbool.h>
 #include "main.h"
 #include "wifi_arm9.h"
+#include "sound.h"
 
 #endif
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
-	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (struct sIPCSharedTGDSSpecific*)(TGDSIPCUserStartAddress);
-	return sIPCSharedTGDSSpecificInst;
-}
-
-//inherits what is defined in: ipcfifoTGDS.c
-#ifdef ARM9
-__attribute__((section(".itcm")))
-#endif
-void HandleFifoNotEmptyWeakRef(volatile u32 cmd1) {
-	
+void HandleFifoNotEmptyWeakRef(volatile u32 cmd1){
 	switch (cmd1) {
 		//NDS7: 
 		#ifdef ARM7
-		
 		#endif
 		
 		//NDS9: 
 		#ifdef ARM9
-		
 		#endif
 	}
-	
 }
 
 #ifdef ARM9
@@ -81,6 +73,3 @@ __attribute__((section(".itcm")))
 #endif
 void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 }
-
-//project specific stuff
-

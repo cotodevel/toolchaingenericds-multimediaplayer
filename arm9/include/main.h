@@ -23,8 +23,6 @@ USA
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
-#include "fatfslayerTGDS.h"
-#include "utilsTGDS.h"
 #include "limitsTGDS.h"
 
 struct rgbMandel{
@@ -42,17 +40,15 @@ extern "C" {
 #endif
 
 extern int main(int argc, char **argv);
-extern void ApplicationMainLoop();
+extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
+extern char globalPath[MAX_TGDSFILENAME_LENGTH+1];
+extern void drawMandel(float factor);
+extern void menuShow();
 
-extern void setPixel(int row, int col, u16 color);
-extern struct rgbMandel mandelbrot(float real, float imag);
-
-extern void MikMod_RegisterAllDrivers(void);
-extern void MikMod_RegisterAllLoaders(void);
-
-//ToolchainGenericDS-LinkedModule User implementation: WoopsiTGDS
-extern char args[8][MAX_TGDSFILENAME_LENGTH];
-extern char *argvs[8];
+//TGDS Dir API: Directory Iterator(s)
+extern struct FileClassList * RecentPlaylistfileClassListCtx;		//Recent Played
+extern struct FileClassList * menuIteratorfileClassListCtx;			//Menu Directory Iterator
+extern struct FileClassList * playlistfileClassListCtx;				//Playlist Directory Iterator
 
 #ifdef __cplusplus
 }

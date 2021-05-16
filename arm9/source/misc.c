@@ -8,7 +8,6 @@
 #include "main.h"
 #include "dswnifi_lib.h"
 #include "posixHandleTGDS.h"
-#include "xmem.h"
 
 #include <stdio.h>
 #include <string.h>

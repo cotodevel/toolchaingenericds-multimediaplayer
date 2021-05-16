@@ -18,44 +18,22 @@ USA
 
 */
 
-#ifndef __gui_console_h__
-#define __gui_console_h__
-
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
-#include <stdarg.h>
-#include <ctype.h>
-#include "ipcfifoTGDSUser.h"
+#ifndef __special_mpu_settings9_h__
+#define __special_mpu_settings9_h__
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
-#include "consoleTGDS.h"
-#include "biosTGDS.h"
-#include "InterruptsARMCores_h.h"
-#include "dmaTGDS.h"
-
-#include "posixHandleTGDS.h"
-#include "fatfslayerTGDS.h"
-#include "keypadTGDS.h"
-#include "videoTGDS.h"
+#include "limitsTGDS.h"
 
 #endif
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-////////[Default Console implementation is selected, thus stubs are implemented here]////////
-
-//Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
-extern vramSetup * getProjectSpecificVRAMSetup();
-
-//Custom console VRAM layout setup
-
-//1) VRAM Layout
-extern bool InitProjectSpecificConsole();
+extern void setTGDSProjectSpecial0xFFFF0000MPUSettings();
+extern void MPUSetSpecial();
 
 #ifdef __cplusplus
 }

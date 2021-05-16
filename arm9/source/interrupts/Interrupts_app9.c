@@ -20,18 +20,19 @@ USA
 
 #include "InterruptsARMCores_h.h"
 #include "ipcfifoTGDSUser.h"
-#include "consoleTGDS.h"
 #include "dsregs_asm.h"
 #include "main.h"
 #include "keypadTGDS.h"
+#include "interrupts.h"
+#include "utilsTGDS.h"
+#include "spifwTGDS.h"
 
 //User Handler Definitions
-#include "woopsifuncs.h"
-#include "WoopsiTemplate.h"
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void IpcSynchandlerUser(uint8 ipcByte){
 	switch(ipcByte){
 		default:{
@@ -44,51 +45,60 @@ void IpcSynchandlerUser(uint8 ipcByte){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer0handlerUser(){
-
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer1handlerUser(){
-
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer2handlerUser(){
-
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer3handlerUser(){
-
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void HblankUser(){
-
+	
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void VblankUser(){
-	woopsiVblFunc();
 	
-	//Timing reserved for 2D/3D rendering
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void VcounterUser(){
+}
+
+//Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+inline __attribute__((always_inline)) 
+void screenLidHasOpenedhandlerUser(){
 	
 }
 
@@ -96,18 +106,7 @@ void VcounterUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-void screenLidHasOpenedhandlerUser(){
-	if(WoopsiTemplateProc != NULL){
-		WoopsiTemplateProc->handleLidOpen();
-	}
-}
-
-//Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
-#ifdef ARM9
-__attribute__((section(".itcm")))
-#endif
+inline __attribute__((always_inline)) 
 void screenLidHasClosedhandlerUser(){
-	if(WoopsiTemplateProc != NULL){
-		WoopsiTemplateProc->handleLidClosed();
-	}
+	
 }

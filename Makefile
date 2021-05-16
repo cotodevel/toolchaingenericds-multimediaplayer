@@ -18,10 +18,9 @@
 
 #TGDS1.6 compatible Makefile
 
-#ToolchainGenericDS specific: Use Makefiles from either TGDS, or custom
-#Note: Woopsi template mostly targets ARM9 SDK. Thus the default ARM7 template is used
+#ToolchainGenericDS specific: 
 export SOURCE_MAKEFILE7 = default
-export SOURCE_MAKEFILE9 = custom
+export SOURCE_MAKEFILE9 = default
 
 #Translate paths to windows with forward slashes
 cpath := $(shell pwd)
@@ -50,11 +49,10 @@ export ELF_ARM7 = arm7.elf
 export ELF_ARM9 = arm9.elf
 export NONSTRIPELF_ARM7 = arm7-nonstripped.elf
 export NONSTRIPELF_ARM9 = arm9-nonstripped.elf
-
 export TARGET_LIBRARY_CRT0_FILE_7 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_9 = nds_arm_ld_crt0
-export TARGET_LIBRARY_LINKER_FILE_7 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_7).S
-export TARGET_LIBRARY_LINKER_FILE_9 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_9).S
+export TARGET_LIBRARY_LINKER_FILE_7 = ../$(TARGET_LIBRARY_CRT0_FILE_7).S
+export TARGET_LIBRARY_LINKER_FILE_9 = ../$(TARGET_LIBRARY_CRT0_FILE_9).S
 
 export TARGET_LIBRARY_NAME_7 = toolchaingen7
 export TARGET_LIBRARY_NAME_9 = toolchaingen9
@@ -160,6 +158,7 @@ compile	:
 	-$(MAKE)	-R	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/
 	-cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC9_FPIC)	$(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)
 	-$(MAKE)	-R	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/
+
 ifeq ($(SOURCE_MAKEFILE7),default)
 	cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC7_NOFPIC)	$(CURDIR)/$(DIR_ARM7)
 endif
@@ -168,11 +167,11 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 	cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC9_NOFPIC)	$(CURDIR)/$(DIR_ARM9)
 endif
 	$(MAKE)	-R	-C	$(DIR_ARM9)/
-	
+
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
 	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 $(CURDIR)/arm9/$(BINSTRIP_RULE_9) -e9  0x02000000	-b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; "
-	$(NDSTOOL)	-c 	${@:.nds=.srl} -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; " -7 arm7/arm7-nonstripped_dsi.elf -9 arm9/arm9-nonstripped_dsi.elf
+	$(CURDIR)/dlditool.exe scsd_moon.dldi $@
 	-@echo 'ndstool end: built: $@'
 	
 #---------------------------------------------------------------------------------
@@ -185,7 +184,7 @@ clean:
 ifeq ($(SOURCE_MAKEFILE7),default)
 	-@rm -rf $(CURDIR)/$(DIR_ARM7)/Makefile
 endif
-#--------------------------------------------------------------------
+#--------------------------------------------------------------------	
 	$(MAKE)	clean	-C	$(DIR_ARM9)/
 	$(MAKE) clean	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/
 ifeq ($(SOURCE_MAKEFILE9),default)
@@ -193,7 +192,7 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/Makefile
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
-	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl	$(CURDIR)/common/templateCode/
+	-@rm -fr $(EXECUTABLE_FNAME)	$(CURDIR)/common/templateCode/
 
 rebase:
 	git reset --hard HEAD

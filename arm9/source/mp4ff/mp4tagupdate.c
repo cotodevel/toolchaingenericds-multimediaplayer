@@ -56,10 +56,10 @@ unsigned membuffer_write(membuffer * buf,const void * ptr,unsigned bytes)
 		} while(dest_size > buf->allocated);
 		
 		{
-			void * newptr = TGDSARM9Realloc(buf->data,buf->allocated);
+			void * newptr = safeRealloc(buf->data,buf->allocated);
 			if (newptr==0)
 			{
-				TGDSARM9Free(buf->data);
+				safeFree(buf->data);
 				buf->data = 0;
 				buf->error = 1;
 				return 0;
@@ -157,8 +157,8 @@ membuffer * membuffer_create()
 {
 	const unsigned initial_size = 256;
 
-	membuffer * buf = (membuffer *) TGDSARM9Malloc(sizeof(membuffer));
-	buf->data = TGDSARM9Malloc(initial_size);
+	membuffer * buf = (membuffer *) safeMalloc(sizeof(membuffer));
+	buf->data = safeMalloc(initial_size);
 	buf->written = 0;
 	buf->allocated = initial_size;
 	buf->error = buf->data == 0 ? 1 : 0;
@@ -168,8 +168,8 @@ membuffer * membuffer_create()
 
 void membuffer_free(membuffer * buf)
 {
-	if (buf->data) TGDSARM9Free(buf->data);
-	TGDSARM9Free(buf);
+	if (buf->data) safeFree(buf->data);
+	safeFree(buf);
 }
 
 void * membuffer_detach(membuffer * buf)
@@ -178,9 +178,9 @@ void * membuffer_detach(membuffer * buf)
 
 	if (buf->error) return 0;
 
-	ret = TGDSARM9Realloc(buf->data,buf->written);
+	ret = safeRealloc(buf->data,buf->written);
 	
-	if (ret == 0) TGDSARM9Free(buf->data);
+	if (ret == 0) safeFree(buf->data);
 
 	buf->data = 0;
 	buf->error = 1;
@@ -212,21 +212,19 @@ typedef struct
 
 static stdmeta_entry stdmetas[] = 
 {
-	{"\xA9" "nam","title"},
-	{"\xA9" "ART","artist"},
-	{"\xA9" "wrt","writer"},
-	{"\xA9" "alb","album"},
-	{"\xA9" "day","date"},
-	{"\xA9" "too","tool"},
-	{"\xA9" "cmt","comment"},
-//	{"\xA9" "gen","genre"},
+	{"©nam","title"},
+	{"©ART","artist"},
+	{"©wrt","writer"},
+	{"©alb","album"},
+	{"©day","date"},
+	{"©too","tool"},
+	{"©cmt","comment"},
+//	{"©gen","genre"},
 	{"cpil","compilation"},
 //	{"trkn","track"},
 //	{"disk","disc"},
 //	{"gnre","genre"},
 	{"covr","cover"},
-	/* added by AJS */
-	{"aART","album_artist"},
 };
 
 
@@ -267,20 +265,11 @@ static void membuffer_write_int16_tag(membuffer * buf,const char * name,uint16_t
 
 static void membuffer_write_std_tag(membuffer * buf,const char * name,const char * value)
 {
-	/* added by AJS */
-	uint32_t flags = 1;
-
-	/* special check for compilation flag */
-	if ( strcmp(name, "cpil") == 0)
-	{
-		flags = 21;
-	}
-
 	membuffer_write_int32(buf,8 /*atom header*/ + 8 /*data atom header*/ + 8 /*flags + reserved*/ + strlen(value) );
 	membuffer_write_atom_name(buf,name);
 	membuffer_write_int32(buf,8 /*data atom header*/ + 8 /*flags + reserved*/ + strlen(value));
 	membuffer_write_atom_name(buf,"data");
-	membuffer_write_int32(buf,flags);//flags
+	membuffer_write_int32(buf,1);//flags
 	membuffer_write_int32(buf,0);//reserved
 	membuffer_write_data(buf,value,strlen(value));
 }
@@ -314,7 +303,7 @@ static uint32_t create_ilst(const mp4ff_metadata_t * data,void ** out_buffer,uin
 {
 	membuffer * buf = membuffer_create();
 	unsigned metaptr;
-	char * mask = (char*)TGDSARM9Malloc(data->count);
+	char * mask = (char*)safeMalloc(data->count);
 	memset(mask,0,data->count);
 
 	{
@@ -388,7 +377,7 @@ static uint32_t create_ilst(const mp4ff_metadata_t * data,void ** out_buffer,uin
 		}
 	}
 
-	TGDSARM9Free(mask);
+	safeFree(mask);
 
 	if (membuffer_error(buf))
 	{
@@ -473,7 +462,7 @@ static uint32_t create_meta(const mp4ff_metadata_t * data,void ** out_buffer,uin
 
 	membuffer_write_int32(buf,0);
 	membuffer_write_atom(buf,"ilst",ilst_size,ilst_buffer);
-	TGDSARM9Free(ilst_buffer);
+	safeFree(ilst_buffer);
 
 	*out_size = membuffer_get_size(buf);
 	*out_buffer = membuffer_detach(buf);
@@ -493,7 +482,7 @@ static uint32_t create_udta(const mp4ff_metadata_t * data,void ** out_buffer,uin
 
 	membuffer_write_atom(buf,"meta",meta_size,meta_buffer);
 
-	TGDSARM9Free(meta_buffer);
+	safeFree(meta_buffer);
 
 	*out_size = membuffer_get_size(buf);
 	*out_buffer = membuffer_detach(buf);
@@ -529,7 +518,7 @@ static uint32_t modify_moov(mp4ff_t * f,const mp4ff_metadata_t * data,void ** ou
 		
 		membuffer_write_atom(buf,"udta",new_udta_size,new_udta_buffer);
 
-		TGDSARM9Free(new_udta_buffer);
+		safeFree(new_udta_buffer);
 	
 		*out_size = membuffer_get_size(buf);
 		*out_buffer = membuffer_detach(buf);
@@ -540,7 +529,7 @@ static uint32_t modify_moov(mp4ff_t * f,const mp4ff_metadata_t * data,void ** ou
 	{
 		udta_offset = mp4ff_position(f);
 		udta_size = mp4ff_read_int32(f);
-		if (!find_atom_v2(f,udta_offset+8,udta_size-8,"meta",4,"ilst"))
+		if (find_atom_v2(f,udta_offset+8,udta_size-8,"meta",4,"ilst")<2)
 		{
 			membuffer * buf;
 			void * new_meta_buffer;
@@ -556,7 +545,7 @@ static uint32_t modify_moov(mp4ff_t * f,const mp4ff_metadata_t * data,void ** ou
 			membuffer_transfer_from_file(buf,f,udta_size);
 						
 			membuffer_write_atom(buf,"meta",new_meta_size,new_meta_buffer);
-			TGDSARM9Free(new_meta_buffer);
+			safeFree(new_meta_buffer);
 		
 			*out_size = membuffer_get_size(buf);
 			*out_buffer = membuffer_detach(buf);
@@ -574,10 +563,10 @@ static uint32_t modify_moov(mp4ff_t * f,const mp4ff_metadata_t * data,void ** ou
 		size_delta = new_ilst_size - (ilst_size - 8);
 
 		*out_size = total_size + size_delta;
-		*out_buffer = TGDSARM9Malloc(*out_size);
+		*out_buffer = safeMalloc(*out_size);
 		if (*out_buffer == 0)
 		{
-			TGDSARM9Free(new_ilst_buffer);
+			safeFree(new_ilst_buffer);
 			return 0;
 		}
 
@@ -600,7 +589,7 @@ static uint32_t modify_moov(mp4ff_t * f,const mp4ff_metadata_t * data,void ** ou
 		mp4ff_set_position(f,ilst_offset + ilst_size);
 		mp4ff_read_data(f,p_out,(uint32_t)(total_size - (ilst_offset - total_base) - ilst_size));
 
-		TGDSARM9Free(new_ilst_buffer);
+		safeFree(new_ilst_buffer);
 	}
 	return 1;
 
@@ -611,7 +600,7 @@ int32_t mp4ff_meta_update(mp4ff_callback_t *f,const mp4ff_metadata_t * data)
 	void * new_moov_data;
 	uint32_t new_moov_size;
 
-    mp4ff_t *ff = TGDSARM9Malloc(sizeof(mp4ff_t));
+    mp4ff_t *ff = safeMalloc(sizeof(mp4ff_t));
 
     memset(ff, 0, sizeof(mp4ff_t));
     ff->stream = f;
@@ -629,9 +618,9 @@ int32_t mp4ff_meta_update(mp4ff_callback_t *f,const mp4ff_metadata_t * data)
     /* copy moov atom to end of the file */
     if (ff->last_atom != ATOM_MOOV)
     {
-        char *free_data = "TGDSARM9Free";
+        char *free_data = "free";
 
-        /* rename old moov to TGDSARM9Free */
+        /* rename old moov to free */
         mp4ff_set_position(ff, ff->moov_offset + 4);
         mp4ff_write_data(ff, free_data, 4);
 	

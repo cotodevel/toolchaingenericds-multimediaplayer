@@ -24,22 +24,23 @@ USA
 //		struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 														// Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
 //		struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;		// Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
 
-//inherits what is defined in: ipcfifoTGDS.h
-#ifndef __ipcfifoTGDSUser_h__
-#define __ipcfifoTGDSUser_h__
 
+//inherits what is defined in: ipcfifoTGDS.h
+#ifndef __specific_shared_h__
+#define __specific_shared_h__
+
+#include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
 #include "ipcfifoTGDS.h"
 #include "dswnifi.h"
-#include "posixHandleTGDS.h"
+#include "utilsTGDS.h"
 
 struct sIPCSharedTGDSSpecific {
 	uint32 frameCounter7;	//VBLANK counter7
 	uint32 frameCounter9;	//VBLANK counter9
 };
 
-#ifdef ARM9
 //types used by DSOrganize
 typedef sint16 int16;
 #define UNION_CAST(x, destType) \
@@ -66,8 +67,6 @@ typedef sint16 int16;
 
 #endif
 
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -75,8 +74,6 @@ extern "C" {
 //NOT weak symbols : the implementation of these is project-defined (here)
 extern void HandleFifoNotEmptyWeakRef(volatile u32 cmd1);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
-
-extern struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific();
 
 #ifdef __cplusplus
 }
