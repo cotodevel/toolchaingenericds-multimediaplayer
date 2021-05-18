@@ -54,10 +54,10 @@ export TARGET_LIBRARY_CRT0_FILE_9 = nds_arm_ld_crt0
 export TARGET_LIBRARY_LINKER_FILE_7 = ../$(TARGET_LIBRARY_CRT0_FILE_7).S
 export TARGET_LIBRARY_LINKER_FILE_9 = ../$(TARGET_LIBRARY_CRT0_FILE_9).S
 
-export TARGET_LIBRARY_NAME_7 = toolchaingen7
-export TARGET_LIBRARY_NAME_9 = toolchaingen9
-export TARGET_LIBRARY_FILE_7	=	lib$(TARGET_LIBRARY_NAME_7).a
-export TARGET_LIBRARY_FILE_9	=	lib$(TARGET_LIBRARY_NAME_9).a
+export TARGET_LIBRARY_TGDS_NTR_7 = toolchaingen7
+export TARGET_LIBRARY_TGDS_NTR_9 = toolchaingen9
+export TARGET_LIBRARY_TGDS_TWL_7 = $(TARGET_LIBRARY_TGDS_NTR_7)i
+export TARGET_LIBRARY_TGDS_TWL_9 = $(TARGET_LIBRARY_TGDS_NTR_9)i
 
 #####################################################ARM7#####################################################
 
