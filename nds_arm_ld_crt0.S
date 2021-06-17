@@ -57,6 +57,19 @@ USA
 .global _start
 _start:
 @---------------------------------------------------------------------------------
+	#ifdef ARM7
+	@Copy ARM7i sections from VMA to LMA
+	ldr                 r1,=__arm7i_lma__                 /* point our source register to the start of the .itcm section (VMA)*/
+	ldr                 r2,=__arm7i_start__                 /* point our destination register to the I-TCM dedicated to our writable data (LMA)*/
+	ldr                 r3,=__arm7i_end__                  /* point r3 after the last byte we will be writing (LMA)*/
+	bl                  copy  
+	
+	ldr                 r1,=__arm7_lma__                 /* point our source register to the start of the .itcm section (VMA)*/
+	ldr                 r2,=__arm7_start__                 /* point our destination register to the I-TCM dedicated to our writable data (LMA)*/
+	ldr                 r3,=__arm7_end__                  /* point r3 after the last byte we will be writing (LMA)*/
+	bl                  copy  
+	#endif
+
 	@Info from: http://problemkaputt.de/gbatek.htm
 	@DS BIOS RAM Usage
 	@Below memory at 27FFxxxh is mirrored to 23FFxxxh (on retail consoles with 4MB RAM), however, it should be accessed via address 27FFxxxh 
@@ -134,17 +147,13 @@ _start:
 	bl DrainWriteBuffer
 	#endif
 	
-	@Clear vma sections used before
-	ldr                 r0,=__lib__end__
-	ldr                 r1,=__vma_stub_end__
-	bl clear
-	
 	#ifdef ARM9
 	bl DrainWriteBuffer
 	/* Wait until ARM7 reads firmware and we initialize ARM9 from this flag */
-	ldr r1,=(0x027FF000 + 0x5D)	@(uint8)Console Type: 
 	waitForFirmwareARM7Setup:
-		ldrb r0, [r1]
+		ldr r0,=(0x027FF000 + 0x5D)	@(uint8)Console Type: 
+		blx getValueSafe
+		and r0,r0,#0xFF
 		cmp r0, #0xFF		@DS Phat
 		beq FirmwareARM7OK
 		cmp r0, #0x20		@DS Lite
@@ -162,8 +171,14 @@ _start:
 	bl __libc_init_array
 	
 	ldr	lr, =exception_sysexit
-	b	main	@entrypoint
-
+	
+	#ifdef ARM7
+	b	main			@entrypoint
+	#endif
+	
+	#ifdef ARM9
+	b	mainARGV			@entrypoint
+	#endif
 @format:	r0 = src_vma, r1 = dest_vma 
 clear:
 	mov	r2, #0
