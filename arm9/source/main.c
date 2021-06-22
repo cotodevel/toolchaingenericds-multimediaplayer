@@ -237,7 +237,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 	scanKeys();
 	while((keysDown() & KEY_START) || (keysDown() & KEY_A) || (keysDown() & KEY_B)){
 		scanKeys();
-		IRQWait(IRQ_VBLANK);
+		IRQWait(0, IRQ_VBLANK);
 	}
 	
 	//Create TGDS Dir API context
@@ -399,7 +399,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			while(pressed&KEY_DOWN){
 				scanKeys();
 				pressed = keysDown();
-				IRQWait(IRQ_VBLANK);
+				IRQWait(0, IRQ_VBLANK);
 			}
 		}
 		
@@ -418,7 +418,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			while(pressed&KEY_DOWN){
 				scanKeys();
 				pressed = keysDown();
-				IRQWait(IRQ_VBLANK);
+				IRQWait(0, IRQ_VBLANK);
 			}
 		}
 		
@@ -437,7 +437,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			while(pressed&KEY_LEFT){
 				scanKeys();
 				pressed = keysDown();
-				IRQWait(IRQ_VBLANK);
+				IRQWait(0, IRQ_VBLANK);
 			}
 		}
 		
@@ -456,7 +456,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			while(pressed&KEY_RIGHT){
 				scanKeys();
 				pressed = keysDown();
-				IRQWait(IRQ_VBLANK);
+				IRQWait(0, IRQ_VBLANK);
 			}
 		}
 		
@@ -465,7 +465,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			while(pressed&KEY_UP){
 				scanKeys();
 				pressed = keysDown();
-				IRQWait(IRQ_VBLANK);
+				IRQWait(0, IRQ_VBLANK);
 			}
 		}
 		
@@ -483,7 +483,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			while(pressed&KEY_UP){
 				scanKeys();
 				pressed = keysDown();
-				IRQWait(IRQ_VBLANK);
+				IRQWait(0, IRQ_VBLANK);
 			}
 		}
 		
@@ -596,7 +596,7 @@ static inline void handleInput(){
 		scanKeys();
 		while(keysDown() & KEY_TOUCH){
 			scanKeys();
-			IRQWait(IRQ_HBLANK);
+			IRQWait(0, IRQ_VBLANK);
 		}
 	}
 	
@@ -669,7 +669,7 @@ static inline void handleInput(){
 			scanKeys();
 			while(keysDown() & KEY_START){
 				scanKeys();
-				IRQWait(IRQ_HBLANK);
+				IRQWait(0, IRQ_VBLANK);
 			}
 		}
 		else{
@@ -679,7 +679,7 @@ static inline void handleInput(){
 			scanKeys();
 			while(keysDown() & KEY_START){
 				scanKeys();
-				IRQWait(IRQ_HBLANK);
+				IRQWait(0, IRQ_VBLANK);
 			}
 			menuShow();
 		}
@@ -695,7 +695,7 @@ static inline void handleInput(){
 		scanKeys();
 		while(keysDown() & KEY_B){
 			scanKeys();
-			IRQWait(IRQ_HBLANK);
+			IRQWait(0, IRQ_VBLANK);
 		}
 	}
 	
@@ -711,7 +711,7 @@ static inline void handleInput(){
 		scanKeys();
 		while(keysDown() & KEY_X){
 			scanKeys();
-			IRQWait(IRQ_HBLANK);
+			IRQWait(0, IRQ_VBLANK);
 		}
 	}
 	
@@ -961,7 +961,7 @@ int main(int argc, char **argv) {
 		if(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){
 			REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
 		}
-		IRQWait(IRQ_HBLANK);
+		IRQVBlankWait();
 	}
 	
 	return 0;
