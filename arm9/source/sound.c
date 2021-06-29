@@ -1649,7 +1649,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 		struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 	
 		TGDSIPC->soundIPC.channels = 2; // for de-interlacing
 		
-		soundData.sourceFmt = SRC_MIKMOD;
+		internalCodecType = soundData.sourceFmt = SRC_MIKMOD;
 		soundData.bufLoc = 0;
 		
 		module = Player_Load(fName, 256, 0);
@@ -1678,7 +1678,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 	{
 		// mp3 file
 		
-		soundData.sourceFmt = SRC_MP3;
+		internalCodecType = soundData.sourceFmt = SRC_MP3;
 		soundData.bufLoc = 0;
 		
 		mad_stream_init(&Stream);
@@ -1759,7 +1759,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 	{
 		// ogg file
 		
-		soundData.sourceFmt = SRC_OGG;
+		internalCodecType = soundData.sourceFmt = SRC_OGG;
 		soundData.bufLoc = 0;
 		
 		FILE *fp = fopen(fName, "r");
@@ -1805,7 +1805,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 	{
 		// raw aac file
 		
-		soundData.sourceFmt = SRC_AAC;
+		internalCodecType = soundData.sourceFmt = SRC_AAC;
 		soundData.bufLoc = 0;
 		
 		hAACDecoder = (HAACDecoder *)AACInitDecoder();
@@ -1884,7 +1884,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 	{
 		// raw apple wrapper around aac file
 		
-		soundData.sourceFmt = SRC_AAC;
+		internalCodecType = soundData.sourceFmt = SRC_AAC;
 		soundData.bufLoc = 0;
 		
 		hAACDecoder = (HAACDecoder *)AACInitDecoder();
@@ -2023,7 +2023,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 	{
 		// flac audio file
 		
-		soundData.sourceFmt = SRC_FLAC;
+		internalCodecType = soundData.sourceFmt = SRC_FLAC;
 		soundData.bufLoc = 0;
 		
 		soundData.filePointer = fopen(fName,"r");
@@ -2067,7 +2067,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 	{
 		// sid audio file
 		
-		soundData.sourceFmt = SRC_SID;
+		internalCodecType = soundData.sourceFmt = SRC_SID;
 		soundData.bufLoc = 0;
 		
 		FILE *df = fopen(fName,"r");
@@ -2115,7 +2115,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 	{
 		// NES audio file
 		
-		soundData.sourceFmt = SRC_NSF;
+		internalCodecType = soundData.sourceFmt = SRC_NSF;
 		soundData.bufLoc = 0;
 		FILE *df = fopen(fName,"r");
 		nsfLength = flength(df);
@@ -2174,7 +2174,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 	{
 		// SNES audio file
 		
-		soundData.sourceFmt = SRC_SPC;
+		internalCodecType = soundData.sourceFmt = SRC_SPC;
 		soundData.bufLoc = 0;
 		
 		FILE *df = fopen(fName,"r");
@@ -2207,7 +2207,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 	{
 		// Atari ST audio file
 		
-		soundData.sourceFmt = SRC_SNDH;
+		internalCodecType = soundData.sourceFmt = SRC_SNDH;
 		soundData.bufLoc = 0;
 		
 		FILE *df = fopen(fName,"r");
@@ -2263,7 +2263,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 	{
 		// GameBoy audio file
 		
-		soundData.sourceFmt = SRC_GBS;
+		internalCodecType = soundData.sourceFmt = SRC_GBS;
 		soundData.bufLoc = 0;
 		
 		FILE *df = fopen(fName,"r");
@@ -2302,7 +2302,6 @@ bool initSoundStreamUser(char * fName, char * ext){
 
 bool loadSound(char *fName){
 	int srcFormat = playSoundStream(fName, _FileHandleVideo, _FileHandleAudio);
-	internalCodecType = srcFormat;
 	if((srcFormat != SRC_WAV) || (srcFormat != SRC_WAVADPCM)){		
 		char tmpName[256];
 		char ext[256];
