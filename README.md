@@ -27,8 +27,9 @@ Button (Select): This menu screen
 /release folder has the latest binary precompiled for your convenience.
 
 Notes:
- - Mp3 may take a few retries before playback, this is a bug due to interrupts
- - Be careful to NOT to set the volume too high! Prevent Ear damages!
+ 
+ - DLDI patch the file manually if it isn't detected by the loader.
+ - Be careful to NOT to set the volume too high! Prevent hearing loss!
 
 Many thanks to DSOrganize and it's author(s), since the audio player code was taken from there... except there is no memory issues this time to play audio files at all!!!!
 

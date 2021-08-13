@@ -715,8 +715,6 @@ static inline void handleInput(){
 		}
 	}
 	
-	//Audio playback here....
-	updateStream();	//runs once per hblank line
 }
 
 static inline void draw(float x_start, float x_fin, float y_start, float y_fin) {
@@ -958,10 +956,238 @@ int main(int argc, char **argv) {
 	
 	while (1){
 		handleInput();
-		if(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){
-			REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-		}
-		IRQVBlankWait();
+		
+		//Audio playback here....
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		
 	}
 	
 	return 0;
