@@ -29,11 +29,13 @@ USA
 #include "sound.h"
 #include "soundTGDS.h"
 #include "keypadTGDS.h"
+#include "dmaTGDS.h"
 #include "dswnifi_lib.h"
 #include "TGDSLogoLZSSCompressed.h"
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
 #include "click_raw.h"
 #include "utilsTGDS.h"
+#include "nds_cp15_misc.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * RecentPlaylistfileClassListCtx = NULL;		//Recent Played
@@ -50,11 +52,11 @@ char globalPath[MAX_TGDSFILENAME_LENGTH+1];
 #define SCREENHEIGHT (192)
 #define COLOR(r,g,b)  ((r) | (g)<<5 | (b)<<10)
 #define OFFSET(r,c,w) ((r)*(w)+(c))
-#define VRAM_C            ((u16*)0x06200000)
+#define VRAM_A            ((u16*)0x06000000)
 #define PIXEL_ENABLE (1<<15)
 
 static inline void setPixel(int row, int col, u16 color) {
-	VRAM_C[OFFSET(row, col, SCREENWIDTH)] = color | PIXEL_ENABLE;
+	VRAM_A[OFFSET(row, col, SCREENWIDTH)] = color | PIXEL_ENABLE;
 }
 
 //What the original mandelbrot code does: (the original I based this one), as a X/Y latitude-like orientation so it will rotate around its X and Y axis, by a given factor
@@ -702,7 +704,7 @@ static inline void handleInput(){
 	if (keysDown() & KEY_X){
 		if(drawMandelbrt == false){
 			drawMandelbrt = true;
-			float factor = 1.0; 
+			double factor = 1.0; 
 			drawMandel(factor);
 			//render TGDSLogo from a LZSS compressed file
 			RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
@@ -717,63 +719,63 @@ static inline void handleInput(){
 	
 }
 
-static inline void draw(float x_start, float x_fin, float y_start, float y_fin) {
+static u32 bufDraw[80/4];
+
+static inline void draw(double x_start, double x_fin, double y_start, double y_fin) {
 	
 	int width = SCREENWIDTH; //number of characters fitting horizontally on my screen 
 	int heigth = SCREENHEIGHT; //number of characters fitting vertically on my screen
-	float dx = (x_fin - x_start)/(width-1);
-	float dy = (y_fin - y_start)/(heigth-1);
-	
-	//stable
+	double dx = (x_fin - x_start)/(width-1);
+	double dy = (y_fin - y_start)/(heigth-1);
 	int i = 0;
 	for (i = 0; i < heigth; i++) {
-		float y = y_fin - i*dy; // current imaginary value
+		double y = y_fin - i*dy; // current imaginary value
 		int j = 0;
 		for (j = 0; j < width; j+=40) {
 			
-			float x0 = x_start + (j+0)*dx; // current real value
-			float x1 = x_start + (j+1)*dx; // current real value
-			float x2 = x_start + (j+2)*dx; // current real value
-			float x3 = x_start + (j+3)*dx; // current real value
-			float x4 = x_start + (j+4)*dx; // current real value
-			float x5 = x_start + (j+5)*dx; // current real value
-			float x6 = x_start + (j+6)*dx; // current real value
-			float x7 = x_start + (j+7)*dx; // current real value
-			float x8 = x_start + (j+8)*dx; // current real value
-			float x9 = x_start + (j+9)*dx; // current real value
+			double x0 = x_start + (j+0)*dx; // current real value
+			double x1 = x_start + (j+1)*dx; // current real value
+			double x2 = x_start + (j+2)*dx; // current real value
+			double x3 = x_start + (j+3)*dx; // current real value
+			double x4 = x_start + (j+4)*dx; // current real value
+			double x5 = x_start + (j+5)*dx; // current real value
+			double x6 = x_start + (j+6)*dx; // current real value
+			double x7 = x_start + (j+7)*dx; // current real value
+			double x8 = x_start + (j+8)*dx; // current real value
+			double x9 = x_start + (j+9)*dx; // current real value
 			
-			float x10 = x_start + (j+10)*dx; // current real value
-			float x11 = x_start + (j+11)*dx; // current real value
-			float x12 = x_start + (j+12)*dx; // current real value
-			float x13 = x_start + (j+13)*dx; // current real value
-			float x14 = x_start + (j+14)*dx; // current real value
-			float x15 = x_start + (j+15)*dx; // current real value
-			float x16 = x_start + (j+16)*dx; // current real value
-			float x17 = x_start + (j+17)*dx; // current real value
-			float x18 = x_start + (j+18)*dx; // current real value
-			float x19 = x_start + (j+19)*dx; // current real value
+			double x10 = x_start + (j+10)*dx; // current real value
+			double x11 = x_start + (j+11)*dx; // current real value
+			double x12 = x_start + (j+12)*dx; // current real value
+			double x13 = x_start + (j+13)*dx; // current real value
+			double x14 = x_start + (j+14)*dx; // current real value
+			double x15 = x_start + (j+15)*dx; // current real value
+			double x16 = x_start + (j+16)*dx; // current real value
+			double x17 = x_start + (j+17)*dx; // current real value
+			double x18 = x_start + (j+18)*dx; // current real value
+			double x19 = x_start + (j+19)*dx; // current real value
 			
-			float x20 = x_start + (j+20)*dx; // current real value
-			float x21 = x_start + (j+21)*dx; // current real value
-			float x22 = x_start + (j+22)*dx; // current real value
-			float x23 = x_start + (j+23)*dx; // current real value
-			float x24 = x_start + (j+24)*dx; // current real value
-			float x25 = x_start + (j+25)*dx; // current real value
-			float x26 = x_start + (j+26)*dx; // current real value
-			float x27 = x_start + (j+27)*dx; // current real value
-			float x28 = x_start + (j+28)*dx; // current real value
-			float x29 = x_start + (j+29)*dx; // current real value
+			double x20 = x_start + (j+20)*dx; // current real value
+			double x21 = x_start + (j+21)*dx; // current real value
+			double x22 = x_start + (j+22)*dx; // current real value
+			double x23 = x_start + (j+23)*dx; // current real value
+			double x24 = x_start + (j+24)*dx; // current real value
+			double x25 = x_start + (j+25)*dx; // current real value
+			double x26 = x_start + (j+26)*dx; // current real value
+			double x27 = x_start + (j+27)*dx; // current real value
+			double x28 = x_start + (j+28)*dx; // current real value
+			double x29 = x_start + (j+29)*dx; // current real value
 			
-			float x30 = x_start + (j+30)*dx; // current real value
-			float x31 = x_start + (j+31)*dx; // current real value
-			float x32 = x_start + (j+32)*dx; // current real value
-			float x33 = x_start + (j+33)*dx; // current real value
-			float x34 = x_start + (j+34)*dx; // current real value
-			float x35 = x_start + (j+35)*dx; // current real value
-			float x36 = x_start + (j+36)*dx; // current real value
-			float x37 = x_start + (j+37)*dx; // current real value
-			float x38 = x_start + (j+38)*dx; // current real value
-			float x39 = x_start + (j+39)*dx; // current real value
+			double x30 = x_start + (j+30)*dx; // current real value
+			double x31 = x_start + (j+31)*dx; // current real value
+			double x32 = x_start + (j+32)*dx; // current real value
+			double x33 = x_start + (j+33)*dx; // current real value
+			double x34 = x_start + (j+34)*dx; // current real value
+			double x35 = x_start + (j+35)*dx; // current real value
+			double x36 = x_start + (j+36)*dx; // current real value
+			double x37 = x_start + (j+37)*dx; // current real value
+			double x38 = x_start + (j+38)*dx; // current real value
+			double x39 = x_start + (j+39)*dx; // current real value
 			
 			struct rgbMandel rgb0 = mandelbrot(x0,y);	
 			struct rgbMandel rgb1 = mandelbrot(x1,y);	
@@ -819,46 +821,46 @@ static inline void draw(float x_start, float x_fin, float y_start, float y_fin) 
 			struct rgbMandel rgb38 = mandelbrot(x38,y);	
 			struct rgbMandel rgb39 = mandelbrot(x39,y);
 			
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 0] = (u32)((COLOR(rgb0.r, rgb0.g, rgb0.b) | PIXEL_ENABLE) | ((COLOR(rgb1.r, rgb1.g, rgb1.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 2] = (u32)((COLOR(rgb2.r, rgb2.g, rgb2.b) | PIXEL_ENABLE) | ((COLOR(rgb3.r, rgb3.g, rgb3.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 4] = (u32)((COLOR(rgb4.r, rgb4.g, rgb4.b) | PIXEL_ENABLE) | ((COLOR(rgb5.r, rgb5.g, rgb5.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 6] = (u32)((COLOR(rgb6.r, rgb6.g, rgb6.b) | PIXEL_ENABLE) | ((COLOR(rgb7.r, rgb7.g, rgb7.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 8] = (u32)((COLOR(rgb8.r, rgb8.g, rgb8.b) | PIXEL_ENABLE) | ((COLOR(rgb9.r, rgb9.g, rgb9.b) | PIXEL_ENABLE)<<16));
-			
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 10] = (u32)((COLOR(rgb10.r, rgb10.g, rgb10.b) | PIXEL_ENABLE) | ((COLOR(rgb11.r, rgb11.g, rgb11.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 12] = (u32)((COLOR(rgb12.r, rgb12.g, rgb12.b) | PIXEL_ENABLE) | ((COLOR(rgb13.r, rgb13.g, rgb13.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 14] = (u32)((COLOR(rgb14.r, rgb14.g, rgb14.b) | PIXEL_ENABLE) | ((COLOR(rgb15.r, rgb15.g, rgb15.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 16] = (u32)((COLOR(rgb16.r, rgb16.g, rgb16.b) | PIXEL_ENABLE) | ((COLOR(rgb17.r, rgb17.g, rgb17.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 18] = (u32)((COLOR(rgb18.r, rgb18.g, rgb18.b) | PIXEL_ENABLE) | ((COLOR(rgb19.r, rgb19.g, rgb19.b) | PIXEL_ENABLE)<<16));
-			
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 20] = (u32)((COLOR(rgb20.r, rgb20.g, rgb20.b) | PIXEL_ENABLE) | ((COLOR(rgb21.r, rgb21.g, rgb21.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 22] = (u32)((COLOR(rgb22.r, rgb22.g, rgb22.b) | PIXEL_ENABLE) | ((COLOR(rgb23.r, rgb23.g, rgb23.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 24] = (u32)((COLOR(rgb24.r, rgb24.g, rgb24.b) | PIXEL_ENABLE) | ((COLOR(rgb25.r, rgb25.g, rgb25.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 26] = (u32)((COLOR(rgb26.r, rgb26.g, rgb26.b) | PIXEL_ENABLE) | ((COLOR(rgb27.r, rgb27.g, rgb27.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 28] = (u32)((COLOR(rgb28.r, rgb28.g, rgb28.b) | PIXEL_ENABLE) | ((COLOR(rgb29.r, rgb29.g, rgb29.b) | PIXEL_ENABLE)<<16));
-			
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 30] = (u32)((COLOR(rgb30.r, rgb30.g, rgb30.b) | PIXEL_ENABLE) | ((COLOR(rgb31.r, rgb31.g, rgb31.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 32] = (u32)((COLOR(rgb32.r, rgb32.g, rgb32.b) | PIXEL_ENABLE) | ((COLOR(rgb33.r, rgb33.g, rgb33.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 34] = (u32)((COLOR(rgb34.r, rgb34.g, rgb34.b) | PIXEL_ENABLE) | ((COLOR(rgb35.r, rgb35.g, rgb35.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 36] = (u32)((COLOR(rgb36.r, rgb36.g, rgb36.b) | PIXEL_ENABLE) | ((COLOR(rgb37.r, rgb37.g, rgb37.b) | PIXEL_ENABLE)<<16));
-			*(u32*)&VRAM_C[(i*SCREENWIDTH) + j + 38] = (u32)((COLOR(rgb38.r, rgb38.g, rgb38.b) | PIXEL_ENABLE) | ((COLOR(rgb39.r, rgb39.g, rgb39.b) | PIXEL_ENABLE)<<16));
+			bufDraw[0] = (u32)((COLOR(rgb0.r, rgb0.g, rgb0.b) | PIXEL_ENABLE) | ((COLOR(rgb1.r, rgb1.g, rgb1.b) | PIXEL_ENABLE)<<16));
+			bufDraw[1] = (u32)((COLOR(rgb2.r, rgb2.g, rgb2.b) | PIXEL_ENABLE) | ((COLOR(rgb3.r, rgb3.g, rgb3.b) | PIXEL_ENABLE)<<16));
+			bufDraw[2] = (u32)((COLOR(rgb4.r, rgb4.g, rgb4.b) | PIXEL_ENABLE) | ((COLOR(rgb5.r, rgb5.g, rgb5.b) | PIXEL_ENABLE)<<16));
+			bufDraw[3] = (u32)((COLOR(rgb6.r, rgb6.g, rgb6.b) | PIXEL_ENABLE) | ((COLOR(rgb7.r, rgb7.g, rgb7.b) | PIXEL_ENABLE)<<16));
+			bufDraw[4] = (u32)((COLOR(rgb8.r, rgb8.g, rgb8.b) | PIXEL_ENABLE) | ((COLOR(rgb9.r, rgb9.g, rgb9.b) | PIXEL_ENABLE)<<16));
+			bufDraw[5] = (u32)((COLOR(rgb10.r, rgb10.g, rgb10.b) | PIXEL_ENABLE) | ((COLOR(rgb11.r, rgb11.g, rgb11.b) | PIXEL_ENABLE)<<16));
+			bufDraw[6] = (u32)((COLOR(rgb12.r, rgb12.g, rgb12.b) | PIXEL_ENABLE) | ((COLOR(rgb13.r, rgb13.g, rgb13.b) | PIXEL_ENABLE)<<16));
+			bufDraw[7] = (u32)((COLOR(rgb14.r, rgb14.g, rgb14.b) | PIXEL_ENABLE) | ((COLOR(rgb15.r, rgb15.g, rgb15.b) | PIXEL_ENABLE)<<16));
+			bufDraw[8] = (u32)((COLOR(rgb16.r, rgb16.g, rgb16.b) | PIXEL_ENABLE) | ((COLOR(rgb17.r, rgb17.g, rgb17.b) | PIXEL_ENABLE)<<16));
+			bufDraw[9] = (u32)((COLOR(rgb18.r, rgb18.g, rgb18.b) | PIXEL_ENABLE) | ((COLOR(rgb19.r, rgb19.g, rgb19.b) | PIXEL_ENABLE)<<16));
+			bufDraw[10] = (u32)((COLOR(rgb20.r, rgb20.g, rgb20.b) | PIXEL_ENABLE) | ((COLOR(rgb21.r, rgb21.g, rgb21.b) | PIXEL_ENABLE)<<16));
+			bufDraw[11] = (u32)((COLOR(rgb22.r, rgb22.g, rgb22.b) | PIXEL_ENABLE) | ((COLOR(rgb23.r, rgb23.g, rgb23.b) | PIXEL_ENABLE)<<16));
+			bufDraw[12] = (u32)((COLOR(rgb24.r, rgb24.g, rgb24.b) | PIXEL_ENABLE) | ((COLOR(rgb25.r, rgb25.g, rgb25.b) | PIXEL_ENABLE)<<16));
+			bufDraw[13] = (u32)((COLOR(rgb26.r, rgb26.g, rgb26.b) | PIXEL_ENABLE) | ((COLOR(rgb27.r, rgb27.g, rgb27.b) | PIXEL_ENABLE)<<16));
+			bufDraw[14] = (u32)((COLOR(rgb28.r, rgb28.g, rgb28.b) | PIXEL_ENABLE) | ((COLOR(rgb29.r, rgb29.g, rgb29.b) | PIXEL_ENABLE)<<16));
+			bufDraw[15] = (u32)((COLOR(rgb30.r, rgb30.g, rgb30.b) | PIXEL_ENABLE) | ((COLOR(rgb31.r, rgb31.g, rgb31.b) | PIXEL_ENABLE)<<16));
+			bufDraw[16] = (u32)((COLOR(rgb32.r, rgb32.g, rgb32.b) | PIXEL_ENABLE) | ((COLOR(rgb33.r, rgb33.g, rgb33.b) | PIXEL_ENABLE)<<16));
+			bufDraw[17] = (u32)((COLOR(rgb34.r, rgb34.g, rgb34.b) | PIXEL_ENABLE) | ((COLOR(rgb35.r, rgb35.g, rgb35.b) | PIXEL_ENABLE)<<16));
+			bufDraw[18] = (u32)((COLOR(rgb36.r, rgb36.g, rgb36.b) | PIXEL_ENABLE) | ((COLOR(rgb37.r, rgb37.g, rgb37.b) | PIXEL_ENABLE)<<16));
+			bufDraw[19] = (u32)((COLOR(rgb38.r, rgb38.g, rgb38.b) | PIXEL_ENABLE) | ((COLOR(rgb39.r, rgb39.g, rgb39.b) | PIXEL_ENABLE)<<16));
+			coherent_user_range_by_size((uint32)&bufDraw[0], 80);
+			dmaTransferWord(0, (u32)&bufDraw[0], (u32)&VRAM_A[(i*SCREENWIDTH) + j], (uint32)80);
 			
 		} // width == 256
-		handleInput();
-	}	
+		//handleInput();
+	}
+	
 }
 
 
 __attribute__((section(".itcm")))
-void drawMandel(float factor){
-	float center_x = -1.04082816210546;
-	float center_y = 0.3546341718848392;
+void drawMandel(double factor){
+	double center_x = -1.04082816210546;
+	double center_y = 0.3546341718848392;
 	int iter = 128;
 	
-	float x_start = center_x - 1.5*factor;
-	float x_fin = center_x + 1.5*factor;
-	float y_start = center_y - factor;
-	float y_fin = center_y + factor;
+	double x_start = center_x - 1.5*factor;
+	double x_fin = center_x + 1.5*factor;
+	double y_start = center_y - factor;
+	double y_fin = center_y + factor;
 	draw(x_start, x_fin, y_start, y_fin);
 	
 	int i = 0;
@@ -903,6 +905,7 @@ int TGDSProjectReturnFromLinkedModule() __attribute__ ((optnone)) {
 	return -1;
 }
 
+__attribute__((section(".itcm")))
 int main(int argc, char **argv) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/

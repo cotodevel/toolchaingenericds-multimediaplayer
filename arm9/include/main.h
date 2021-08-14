@@ -42,7 +42,7 @@ extern "C" {
 extern int main(int argc, char **argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 extern char globalPath[MAX_TGDSFILENAME_LENGTH+1];
-extern void drawMandel(float factor);
+extern void drawMandel(double factor);
 extern void menuShow();
 
 //TGDS Dir API: Directory Iterator(s)
