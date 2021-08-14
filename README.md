@@ -1,5 +1,7 @@
 SDK: TGDS1.63
 
+master: Development branch. Use TGDS1.63-1Stable: branch for stable features.
+
 This is the ToolchainGenericDS-audioplayer project:
 
 Compile Toolchain: To compile this project you will need to follow the steps at https://bitbucket.org/Coto88/toolchaingenericds : Then simply extract the project somewhere.
