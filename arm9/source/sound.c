@@ -1861,7 +1861,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 			return false;
 		}
 		
-		setSoundInterpolation(2);
+		setSoundInterpolation(1);
 		setSoundFrequency(aacFrameInfo.sampRateOut);		
 		setSoundLength(aacFrameInfo.outputSamps / soundData.channels);
 		mallocData(aacFrameInfo.outputSamps / soundData.channels);	
