@@ -1,5 +1,7 @@
 SDK: TGDS1.63
 
+TGDS1.63-1Stable: Stable branch. MP3 / AAC up to 44Khz 128K. Anything higher than that will cause stuttering.
+
 This is the ToolchainGenericDS-audioplayer project:
 
 Compile Toolchain: To compile this project you will need to follow the steps at https://bitbucket.org/Coto88/toolchaingenericds : Then simply extract the project somewhere.
