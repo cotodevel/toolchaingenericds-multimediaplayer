@@ -958,6 +958,10 @@ int main(int argc, char **argv) {
 	DisableSoundSampleContext();
 	
 	while (1){
+		if(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){ //discard FIFO errors
+			REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
+		}
+		
 		handleInput();
 		
 		//Audio playback here....
