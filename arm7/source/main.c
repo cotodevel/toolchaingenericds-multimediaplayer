@@ -47,6 +47,10 @@ int main(int argc, char **argv) {
 	installWifiFIFO();		
 	/*			TGDS 1.5 Standard ARM7 Init code end	*/
 	
+	if(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){ //discard FIFO errors
+		REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
+	}
+	
     while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
 		IRQWait(0, IRQ_VBLANK | IRQ_VCOUNT | IRQ_IPCSYNC | IRQ_RECVFIFO_NOT_EMPTY | IRQ_SCREENLID);
