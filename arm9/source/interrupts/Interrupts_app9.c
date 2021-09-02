@@ -19,11 +19,11 @@ USA
 */
 
 #include "InterruptsARMCores_h.h"
-#include "ipcfifoTGDSUser.h"
+#include "../../../common/ipcfifoTGDSUser.h"
 #include "dsregs_asm.h"
-#include "main.h"
+#include "../../include/main.h"
 #include "keypadTGDS.h"
-#include "interrupts.h"
+#include "../../include/interrupts.h"
 #include "utilsTGDS.h"
 #include "spifwTGDS.h"
 

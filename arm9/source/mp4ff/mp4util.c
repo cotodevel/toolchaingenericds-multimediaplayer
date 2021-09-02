@@ -33,7 +33,7 @@
 #include "mp4ffint.h"
 #include <stdlib.h>
 
-int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, uint32_t size)
+int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, unsigned int size)
 {
     int32_t result = 1;
 
@@ -49,7 +49,7 @@ int32_t mp4ff_truncate(mp4ff_t * f)
 	return f->stream->truncate(f->stream->user_data);
 }
 
-int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, uint32_t size)
+int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, unsigned int size)
 {
     int32_t result = 1;
 
@@ -60,13 +60,13 @@ int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, uint32_t size)
     return result;
 }
 
-int32_t mp4ff_write_int32(mp4ff_t *f,const uint32_t data)
+int32_t mp4ff_write_int32(mp4ff_t *f,const unsigned int data)
 {
-	uint32_t result;
-    uint32_t a, b, c, d;
+	unsigned int result;
+    unsigned int a, b, c, d;
     int8_t temp[4];
     
-    *(uint32_t*)temp = data;
+    *(unsigned int*)temp = data;
     a = (uint8_t)temp[0];
     b = (uint8_t)temp[1];
     c = (uint8_t)temp[2];
@@ -106,10 +106,10 @@ uint64_t mp4ff_read_int64(mp4ff_t *f)
     return result;
 }
 
-uint32_t mp4ff_read_int32(mp4ff_t *f)
+unsigned int mp4ff_read_int32(mp4ff_t *f)
 {
-    uint32_t result;
-    uint32_t a, b, c, d;
+    unsigned int result;
+    unsigned int a, b, c, d;
     int8_t data[4];
     
     mp4ff_read_data(f, data, 4);
@@ -119,13 +119,13 @@ uint32_t mp4ff_read_int32(mp4ff_t *f)
     d = (uint8_t)data[3];
 
     result = (a<<24) | (b<<16) | (c<<8) | d;
-    return (uint32_t)result;
+    return (unsigned int)result;
 }
 
-uint32_t mp4ff_read_int24(mp4ff_t *f)
+unsigned int mp4ff_read_int24(mp4ff_t *f)
 {
-    uint32_t result;
-    uint32_t a, b, c;
+    unsigned int result;
+    unsigned int a, b, c;
     int8_t data[4];
     
     mp4ff_read_data(f, data, 3);
@@ -134,13 +134,13 @@ uint32_t mp4ff_read_int24(mp4ff_t *f)
     c = (uint8_t)data[2];
 
     result = (a<<16) | (b<<8) | c;
-    return (uint32_t)result;
+    return (unsigned int)result;
 }
 
 uint16_t mp4ff_read_int16(mp4ff_t *f)
 {
-    uint32_t result;
-    uint32_t a, b;
+    unsigned int result;
+    unsigned int a, b;
     int8_t data[2];
     
     mp4ff_read_data(f, data, 2);
@@ -151,12 +151,12 @@ uint16_t mp4ff_read_int16(mp4ff_t *f)
     return (uint16_t)result;
 }
 
-char * mp4ff_read_string(mp4ff_t * f,uint32_t length)
+char * mp4ff_read_string(mp4ff_t * f,unsigned int length)
 {
 	char * str = (char*)TGDSARM9Malloc(length + 1);
 	if (str!=0)
 	{
-		if ((uint32_t)mp4ff_read_data(f,str,length)!=length)
+		if ((unsigned int)mp4ff_read_data(f,str,length)!=length)
 		{
 			TGDSARM9Free(str);
 			str = 0;
@@ -176,11 +176,11 @@ uint8_t mp4ff_read_char(mp4ff_t *f)
     return output;
 }
 
-uint32_t mp4ff_read_mp4_descr_length(mp4ff_t *f)
+unsigned int mp4ff_read_mp4_descr_length(mp4ff_t *f)
 {
     uint8_t b;
     uint8_t numBytes = 0;
-    uint32_t length = 0;
+    unsigned int length = 0;
 
     do
     {

@@ -31,6 +31,9 @@
 #ifndef MP4FF_INTERNAL_H
 #define MP4FF_INTERNAL_H
 
+#include "typedefsTGDS.h"
+#include <stdio.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -139,10 +142,10 @@ extern "C" {
 /* file callback structure */
 typedef struct
 {
-    uint32_t (*read)(void *user_data, void *buffer, uint32_t length);
-    uint32_t (*write)(void *udata, void *buffer, uint32_t length);
-    uint32_t (*seek)(void *user_data, uint64_t position);
-    uint32_t (*truncate)(void *user_data);
+    unsigned int (*read)(void *user_data, void *buffer, unsigned int length);
+    unsigned int (*write)(void *udata, void *buffer, unsigned int length);
+    unsigned int (*seek)(void *user_data, uint64_t position);
+    unsigned int (*truncate)(void *user_data);
     void *user_data;
 } mp4ff_callback_t;
 
@@ -158,7 +161,7 @@ typedef struct
 typedef struct
 {
     mp4ff_tag_t *tags;
-    uint32_t count;
+    unsigned int count;
 } mp4ff_metadata_t;
 
 
@@ -202,10 +205,10 @@ typedef struct
     uint8_t *decoderConfig;
     int32_t decoderConfigLen;
 
-    uint32_t maxBitrate;
-    uint32_t avgBitrate;
+    unsigned int maxBitrate;
+    unsigned int avgBitrate;
 
-    uint32_t timeScale;
+    unsigned int timeScale;
     uint64_t duration;
 
 } mp4ff_track_t;
@@ -241,19 +244,19 @@ typedef struct
 
 
 /* mp4util.c */
-int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, uint32_t size);
-int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, uint32_t size);
+int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, unsigned int size);
+int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, unsigned int size);
 uint64_t mp4ff_read_int64(mp4ff_t *f);
-uint32_t mp4ff_read_int32(mp4ff_t *f);
-uint32_t mp4ff_read_int24(mp4ff_t *f);
+unsigned int mp4ff_read_int32(mp4ff_t *f);
+unsigned int mp4ff_read_int24(mp4ff_t *f);
 uint16_t mp4ff_read_int16(mp4ff_t *f);
 uint8_t mp4ff_read_char(mp4ff_t *f);
-int32_t mp4ff_write_int32(mp4ff_t *f,const uint32_t data);
-uint32_t mp4ff_read_mp4_descr_length(mp4ff_t *f);
+int32_t mp4ff_write_int32(mp4ff_t *f,const unsigned int data);
+unsigned int mp4ff_read_mp4_descr_length(mp4ff_t *f);
 int64_t mp4ff_position(const mp4ff_t *f);
 int32_t mp4ff_set_position(mp4ff_t *f, const int64_t position);
 int32_t mp4ff_truncate(mp4ff_t * f);
-char * mp4ff_read_string(mp4ff_t * f,uint32_t length);
+char * mp4ff_read_string(mp4ff_t * f,unsigned int length);
 
 /* mp4atom.c */
 static int32_t mp4ff_atom_get_size(const int8_t *data);
@@ -293,7 +296,7 @@ static int32_t mp4ff_meta_find_by_name(const mp4ff_t *f, const char *item, char 
 int32_t mp4ff_parse_metadata(mp4ff_t *f, const int32_t size);
 int32_t mp4ff_tag_delete(mp4ff_metadata_t *tags);
 int32_t mp4ff_meta_get_num_items(const mp4ff_t *f);
-int32_t mp4ff_meta_get_by_index(const mp4ff_t *f, uint32_t index,
+int32_t mp4ff_meta_get_by_index(const mp4ff_t *f, unsigned int index,
                             char **item, char **value);
 int32_t mp4ff_meta_get_title(const mp4ff_t *f, char **value);
 int32_t mp4ff_meta_get_artist(const mp4ff_t *f, char **value);
@@ -326,15 +329,15 @@ int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int
 int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip);
 
 int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
-                          uint8_t **audio_buffer,  uint32_t *bytes);
+                          uint8_t **audio_buffer,  unsigned int *bytes);
 int32_t mp4ff_get_decoder_config(const mp4ff_t *f, const int32_t track,
-                                 uint8_t** ppBuf, uint32_t* pBufSize);
+                                 uint8_t** ppBuf, unsigned int* pBufSize);
 int32_t mp4ff_total_tracks(const mp4ff_t *f);
 int32_t mp4ff_time_scale(const mp4ff_t *f, const int32_t track);
 int32_t mp4ff_num_samples(const mp4ff_t *f, const int32_t track);
 
-uint32_t mp4ff_meta_genre_to_index(const char * genrestr);//returns 1-based index, 0 if not found
-const char * mp4ff_meta_index_to_genre(uint32_t idx);//returns pointer to static string
+unsigned int mp4ff_meta_genre_to_index(const char * genrestr);//returns 1-based index, 0 if not found
+const char * mp4ff_meta_index_to_genre(unsigned int idx);//returns pointer to static string
 
 
 #ifdef __cplusplus

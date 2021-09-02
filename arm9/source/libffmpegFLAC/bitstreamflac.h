@@ -7,6 +7,7 @@
 #define BITSTREAM_H
 
 #include <stdint.h>
+#include "typedefsTGDS.h"
 
 #ifdef BUILD_STANDALONE
   #include <config.h>

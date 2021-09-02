@@ -101,7 +101,6 @@ export DIRS_ARM9_SRC = data/	\
 			source/mikmod/mmio/	\
 			source/mikmod/playercode/	\
 			source/emulated/	\
-			source/emulated/libspc/	\
 			source/emulated/api68/	\
 			source/emulated/emu68/	\
 			source/emulated/file68/	\
@@ -115,6 +114,7 @@ export DIRS_ARM9_SRC = data/	\
 export DIRS_ARM9_HEADER = data/	\
 			build/	\
 			include/	\
+			source/	\
 			source/gui/	\
 			source/TGDSMemoryAllocator/	\
 			source/aac/	\
@@ -132,7 +132,6 @@ export DIRS_ARM9_HEADER = data/	\
 			source/mikmod/mmio/	\
 			source/mikmod/playercode/	\
 			source/emulated/	\
-			source/emulated/libspc/	\
 			source/emulated/api68/	\
 			source/emulated/emu68/	\
 			source/emulated/file68/	\

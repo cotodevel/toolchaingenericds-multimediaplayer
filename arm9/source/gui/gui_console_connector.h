@@ -27,7 +27,7 @@ USA
 #include <time.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include "ipcfifoTGDSUser.h"
+#include "../../../common/ipcfifoTGDSUser.h"
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"

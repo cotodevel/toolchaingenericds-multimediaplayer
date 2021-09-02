@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 #include "misc.h"
-#include "ivorbisfile.h"
+#include "tremor/ivorbisfile.h"
 
 typedef struct
 {

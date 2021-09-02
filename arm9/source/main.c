@@ -18,13 +18,13 @@ USA
 
 */
 
-#include "main.h"
+#include "../include/main.h"
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
 
-#include "gui_console_connector.h"
+#include "gui/gui_console_connector.h"
 #include "misc.h"
 #include "sound.h"
 #include "soundTGDS.h"
@@ -33,7 +33,7 @@ USA
 #include "dswnifi_lib.h"
 #include "TGDSLogoLZSSCompressed.h"
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
-#include "click_raw.h"
+#include "../build/click_raw.h"
 #include "utilsTGDS.h"
 #include "nds_cp15_misc.h"
 
@@ -901,7 +901,7 @@ void menuShow(){
 //ToolchainGenericDS-LinkedModule User implementation: Called if TGDS-LinkedModule fails to reload ARM9.bin from DLDI.
 char args[8][MAX_TGDSFILENAME_LENGTH];
 char *argvs[8];
-int TGDSProjectReturnFromLinkedModule() __attribute__ ((optnone)) {
+int TGDSProjectReturnFromLinkedModule() {
 	return -1;
 }
 

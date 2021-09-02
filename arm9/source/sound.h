@@ -20,11 +20,11 @@
 #ifndef _SOUND_INCLUDED
 #define _SOUND_INCLUDED
 
-#include "ipcfifoTGDSUser.h"
-#include <aacdec.h>
+#include "../../common/ipcfifoTGDSUser.h"
+#include "aac/pub/aacdec.h"
 #include "misc.h"
 #include "http.h"
-#include "api68.h"
+#include "emulated/api68/api68.h"
 #include "id3.h"
 #include "soundTGDS.h"
 #define ARM9COPY 0
@@ -85,7 +85,7 @@
 
 
 // mikmod
-#include "drv_nos.h"
+#include "mikmod/drivers/drv_nos.h"
 
 // sound stuff
 

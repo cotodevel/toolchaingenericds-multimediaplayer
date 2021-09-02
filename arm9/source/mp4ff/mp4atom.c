@@ -44,14 +44,14 @@
 #    include <string.h>
 #endif
 #include "mp4ffint.h"
-
+#include "typedefsTGDS.h"
 #define       COPYRIGHT_SYMBOL        ((int8_t)0xA9)
 
 /* parse atom header size */
 static int32_t mp4ff_atom_get_size(const int8_t *data)
 {
-    uint32_t result;
-    uint32_t a, b, c, d;
+    unsigned int result;
+    unsigned int a, b, c, d;
 
     a = (uint8_t)data[0];
     b = (uint8_t)data[1];
@@ -283,7 +283,7 @@ static int32_t mp4ff_read_stsz(mp4ff_t *f)
 static int32_t mp4ff_read_esds(mp4ff_t *f)
 {
     uint8_t tag;
-    uint32_t temp;
+    unsigned int temp;
 
     mp4ff_read_char(f); /* version */
     mp4ff_read_int24(f); /* flags */
@@ -556,7 +556,7 @@ static int32_t mp4ff_read_mvhd(mp4ff_t *f)
 static int32_t mp4ff_read_tkhd(mp4ff_t *f)
 {
     uint8_t version;
-    uint32_t flags;
+    unsigned int flags;
     version = mp4ff_read_char(f); /* version */
     flags = mp4ff_read_int24(f); /* flags */
     if (version==1)
@@ -597,7 +597,7 @@ static int32_t mp4ff_read_tkhd(mp4ff_t *f)
 
 static int32_t mp4ff_read_mdhd(mp4ff_t *f)
 {
-    uint32_t version;
+    unsigned int version;
 
     version = mp4ff_read_int32(f);
     if (version==1)
@@ -609,13 +609,13 @@ static int32_t mp4ff_read_mdhd(mp4ff_t *f)
     }
     else //version == 0
     {
-        uint32_t temp;
+        unsigned int temp;
 
         mp4ff_read_int32(f);//creation-time
         mp4ff_read_int32(f);//modification-time
         f->track[f->total_tracks - 1]->timeScale = mp4ff_read_int32(f);//timescale
         temp = mp4ff_read_int32(f);
-        f->track[f->total_tracks - 1]->duration = (temp == (uint32_t)(-1)) ? (uint64_t)(-1) : (uint64_t)(temp);
+        f->track[f->total_tracks - 1]->duration = (temp == (unsigned int)(-1)) ? (uint64_t)(-1) : (uint64_t)(temp);
     }
     mp4ff_read_int16(f);
     mp4ff_read_int16(f);
@@ -638,7 +638,7 @@ static int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size)
             return 1;
         if (atom_type == ATOM_ILST)
         {
-            mp4ff_parse_metadata(f, (uint32_t)(subsize-(header_size+4)));
+            mp4ff_parse_metadata(f, (unsigned int)(subsize-(header_size+4)));
         } else {
             mp4ff_set_position(f, mp4ff_position(f)+subsize-header_size);
         }
