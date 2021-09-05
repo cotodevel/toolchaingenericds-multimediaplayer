@@ -4,8 +4,8 @@
 
 #include "misc.h"
 #include "InterruptsARMCores_h.h"
-#include "ipcfifoTGDSUser.h"
-#include "main.h"
+#include "../../common/ipcfifoTGDSUser.h"
+#include "../include/main.h"
 #include "dswnifi_lib.h"
 #include "posixHandleTGDS.h"
 

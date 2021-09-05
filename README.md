@@ -1,6 +1,6 @@
 SDK: TGDS1.63
 
-TGDS1.63-1Stable: Stable branch. MP3 / AAC up to 44Khz 128K. Anything higher than that will cause stuttering.
+master: Development branch. Use TGDS1.63-1Stable: branch for stable features.
 
 This is the ToolchainGenericDS-audioplayer project:
 

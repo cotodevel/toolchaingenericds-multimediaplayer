@@ -1,5 +1,5 @@
 #ifndef _SPC_INCLUDED
-#define _sID_INCLUDED
+#define _SPC_INCLUDED
 
 #ifdef __cplusplus
 extern "C" {

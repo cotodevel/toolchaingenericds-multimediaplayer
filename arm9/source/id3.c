@@ -27,8 +27,8 @@
 #include "fatfslayerTGDS.h"
 
 // for ogg vorbis stuff
-#include <ivorbiscodec.h>
-#include <ivorbisfile.h>
+#include "tremor/ivorbiscodec.h"
+#include "tremor/ivorbisfile.h"
 
 void stripCRLF(char *str)
 {

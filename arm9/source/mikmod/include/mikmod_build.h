@@ -29,7 +29,7 @@
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
-#include "virtualfile.h"
+#include "../virtualfile.h"
 
 #ifndef _MIKMOD_H_
 #define _MIKMOD_H_
