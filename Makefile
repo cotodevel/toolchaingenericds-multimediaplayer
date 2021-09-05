@@ -20,7 +20,7 @@
 
 #ToolchainGenericDS specific: 
 export SOURCE_MAKEFILE7 = default
-export SOURCE_MAKEFILE9 = default
+export SOURCE_MAKEFILE9 = custom
 
 #Translate paths to windows with forward slashes
 cpath := $(shell pwd)
