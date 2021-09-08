@@ -1739,7 +1739,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 		}
 		else
 		{
-			setSoundInterpolation(4);
+			setSoundInterpolation(2);
 		}
 		
 		setSoundFrequency(soundData.mp3SampleRate);
