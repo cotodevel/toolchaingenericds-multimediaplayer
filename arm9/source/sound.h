@@ -35,8 +35,8 @@
 #define STATE_STOPPED 2
 #define STATE_UNLOADED 3
 
-#define MP3_READ_SIZE (2048*2)
-#define MP3_WRITE_SIZE (2048*2)
+#define MP3_READ_SIZE (2048)
+#define MP3_WRITE_SIZE (2048)
 #define STREAM_MP3_READ_SIZE 1024
 #define STREAM_BUFFER_SIZE (1024*512) // 512 kb buffer
 #define STREAM_WIFI_READ_SIZE (1024*20) // 20 kb recieve
