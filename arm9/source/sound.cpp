@@ -1633,6 +1633,13 @@ void clearLoop()
 
 bool initSoundStreamUser(char * fName, char * ext){
 	
+	//almost works
+	updateRequested = true;
+	//soundLoaded = true;
+	//sndPaused = false;
+	//playing = true;
+	cutOff = false;
+	
 	if(strcmp(ext, ".it") == 0  || strcmp(ext, ".mod") == 0 || strcmp(ext, ".s3m") == 0 || strcmp(ext, ".xm") == 0)
 	{
 		// tracker file!
@@ -1739,7 +1746,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 		}
 		else
 		{
-			setSoundInterpolation(2);
+			setSoundInterpolation(1);
 		}
 		
 		setSoundFrequency(soundData.mp3SampleRate);

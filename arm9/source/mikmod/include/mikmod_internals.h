@@ -684,6 +684,8 @@ extern void Voice_SetPanning_internal(SBYTE,ULONG);
 extern void Voice_SetVolume_internal(SBYTE,UWORD);
 extern void Voice_Stop_internal(SBYTE);
 extern BOOL Voice_Stopped_internal(SBYTE);
+extern void MikMod_RegisterAllDrivers(void);
+extern void MikMod_RegisterAllLoaders(void);
 
 #ifdef __cplusplus
 }
