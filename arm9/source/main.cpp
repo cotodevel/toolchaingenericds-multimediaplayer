@@ -36,6 +36,7 @@ USA
 #include "../build/click_raw.h"
 #include "utilsTGDS.h"
 #include "nds_cp15_misc.h"
+#include "mikmod_internals.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * RecentPlaylistfileClassListCtx = NULL;		//Recent Played
