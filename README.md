@@ -13,7 +13,7 @@ After compiling, run the example in NDS.
 Project Specific description: 
 
 TGDS Audio Player, supported formats are:
--	IMA-ADPCM (Intel)/WAV/MP3/AAC/Ogg/FLAC/NSF/SPC/GBS/+ others working.  Streaming mp3, ogg and acc is stripped since it´s 2019 and the DS does not support HTTPS (TLS1.2+)
+-	IMA-ADPCM (Intel)/WAV/MP3/ (Up to 192K)AAC - M4A - M4B/Ogg/FLAC/NSF/SPC/GBS/+ others working.  Streaming mp3, ogg and acc is stripped since it´s 2019 and the DS does not support HTTPS (TLS1.2+)
 
 Buttons:
 (Start): File Browser -> (A) to play audio file

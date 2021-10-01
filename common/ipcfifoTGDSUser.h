@@ -65,6 +65,9 @@ typedef sint16 int16;
 #define TGDS_ARM7_MALLOCSIZE (int)(112*1024)
 #define TGDSDLDI_ARM7_ADDRESS (u32)(TGDS_ARM7_MALLOCSTART + TGDS_ARM7_MALLOCSIZE)
 
+#define FIFO_TGDSAUDIOPLAYER_DISABLEIRQ (u32)(0xFFAACC00)
+#define FIFO_TGDSAUDIOPLAYER_ENABLEIRQ (u32)(0xFFAACC01)
+
 #endif
 
 #ifdef __cplusplus
@@ -74,6 +77,12 @@ extern "C" {
 //NOT weak symbols : the implementation of these is project-defined (here)
 extern void HandleFifoNotEmptyWeakRef(volatile u32 cmd1);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
+
+
+#ifdef ARM9
+extern void enableFastMode();
+extern void disableFastMode();
+#endif
 
 #ifdef __cplusplus
 }

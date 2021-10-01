@@ -40,8 +40,6 @@ USA
 #include "spifwTGDS.h"
 #include "click_raw.h"
 
-
-
 #endif
 
 #ifdef ARM9
@@ -60,6 +58,17 @@ void HandleFifoNotEmptyWeakRef(volatile u32 cmd1){
 	switch (cmd1) {
 		//NDS7: 
 		#ifdef ARM7
+		case(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ):{
+			REG_DISPSTAT = (DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
+			REG_IE = REG_IE | (IRQ_VBLANK|IRQ_VCOUNT);
+		}
+		break;
+		
+		case(FIFO_TGDSAUDIOPLAYER_DISABLEIRQ):{
+			REG_DISPSTAT = 0;
+			REG_IE = REG_IE & ~(IRQ_VBLANK|IRQ_VCOUNT);
+		}
+		break;
 		#endif
 		
 		//NDS9: 
@@ -73,3 +82,13 @@ __attribute__((section(".itcm")))
 #endif
 void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 }
+
+#ifdef ARM9
+void enableFastMode(){
+	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_DISABLEIRQ);
+}
+
+void disableFastMode(){
+	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ);
+}
+#endif
