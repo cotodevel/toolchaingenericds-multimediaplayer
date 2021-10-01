@@ -277,14 +277,14 @@ static int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size);
 int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type);
 
 /* mp4sample.c */
-static int32_t mp4ff_chunk_of_sample(const mp4ff_t *f, const int32_t track, const int32_t sample,
+extern int32_t mp4ff_chunk_of_sample(const mp4ff_t *f, const int32_t track, const int32_t sample,
                                      int32_t *chunk_sample, int32_t *chunk);
-static int32_t mp4ff_chunk_to_offset(const mp4ff_t *f, const int32_t track, const int32_t chunk);
-static int32_t mp4ff_sample_range_size(const mp4ff_t *f, const int32_t track,
+extern int32_t mp4ff_chunk_to_offset(const mp4ff_t *f, const int32_t track, const int32_t chunk);
+extern int32_t mp4ff_sample_range_size(const mp4ff_t *f, const int32_t track,
                                        const int32_t chunk_sample, const int32_t sample);
-static int32_t mp4ff_sample_to_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
-int32_t mp4ff_audio_frame_size(const mp4ff_t *f, const int32_t track, const int32_t sample);
-int32_t mp4ff_set_sample_position(mp4ff_t *f, const int32_t track, const int32_t sample);
+extern int32_t mp4ff_sample_to_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
+extern int32_t mp4ff_audio_frame_size(const mp4ff_t *f, const int32_t track, const int32_t sample);
+extern int32_t mp4ff_set_sample_position(mp4ff_t *f, const int32_t track, const int32_t sample);
 
 #ifdef USE_TAGGING
 /* mp4meta.c */
@@ -324,9 +324,9 @@ int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size,int meta_only);
 int32_t parse_atoms(mp4ff_t *f,int meta_only);
 
 int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const int32_t sample);
-int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const int32_t sample);
-int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
-int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip);
+extern int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const int32_t sample);
+extern int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
+extern int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip);
 
 int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
                           uint8_t **audio_buffer,  unsigned int *bytes);

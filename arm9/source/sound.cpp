@@ -1633,12 +1633,9 @@ void clearLoop()
 
 bool initSoundStreamUser(char * fName, char * ext){
 	
-	//almost works
 	updateRequested = true;
-	//soundLoaded = true;
-	//sndPaused = false;
-	//playing = true;
 	cutOff = false;
+	enableFastMode();
 	
 	if(strcmp(ext, ".it") == 0  || strcmp(ext, ".mod") == 0 || strcmp(ext, ".s3m") == 0 || strcmp(ext, ".xm") == 0)
 	{

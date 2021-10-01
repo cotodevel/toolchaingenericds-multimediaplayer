@@ -351,6 +351,7 @@ int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const i
     return (int32_t)(-1);
 }
 
+__attribute__((section(".itcm")))
 int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t i, co = 0;
@@ -373,6 +374,7 @@ int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const i
     return (int64_t)(-1);
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t i, co = 0;
@@ -387,6 +389,7 @@ int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int
     return 0;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip)
 {
 	int32_t i, co = 0;
@@ -413,11 +416,13 @@ int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t o
 	return (int32_t)(-1);
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_find_sample_use_offsets(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip)
 {
 	return mp4ff_find_sample(f,track,offset + mp4ff_get_sample_offset(f,track,0),toskip);
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
                           uint8_t **audio_buffer,  unsigned int *bytes)
 {
@@ -450,7 +455,7 @@ int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
     return *bytes;
 }
 
-
+__attribute__((section(".itcm")))
 int32_t mp4ff_read_sample_v2(mp4ff_t *f, const int track, const int sample,unsigned char *buffer)
 {
     int32_t result = 0;

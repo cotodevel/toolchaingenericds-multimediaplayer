@@ -31,8 +31,8 @@
 #include <stdlib.h>
 #include "mp4ffint.h"
 
-
-static int32_t mp4ff_chunk_of_sample(const mp4ff_t *f, const int32_t track, const int32_t sample,
+__attribute__((section(".itcm")))
+int32_t mp4ff_chunk_of_sample(const mp4ff_t *f, const int32_t track, const int32_t sample,
                                      int32_t *chunk_sample, int32_t *chunk)
 {
     int32_t total_entries = 0;
@@ -78,7 +78,8 @@ static int32_t mp4ff_chunk_of_sample(const mp4ff_t *f, const int32_t track, cons
     return 0;
 }
 
-static int32_t mp4ff_chunk_to_offset(const mp4ff_t *f, const int32_t track, const int32_t chunk)
+__attribute__((section(".itcm")))
+int32_t mp4ff_chunk_to_offset(const mp4ff_t *f, const int32_t track, const int32_t chunk)
 {
     const mp4ff_track_t * p_track = f->track[track];
 
@@ -94,7 +95,8 @@ static int32_t mp4ff_chunk_to_offset(const mp4ff_t *f, const int32_t track, cons
     return 0;
 }
 
-static int32_t mp4ff_sample_range_size(const mp4ff_t *f, const int32_t track,
+__attribute__((section(".itcm")))
+int32_t mp4ff_sample_range_size(const mp4ff_t *f, const int32_t track,
                                        const int32_t chunk_sample, const int32_t sample)
 {
     int32_t i, total;
@@ -117,7 +119,8 @@ static int32_t mp4ff_sample_range_size(const mp4ff_t *f, const int32_t track,
     return total;
 }
 
-static int32_t mp4ff_sample_to_offset(const mp4ff_t *f, const int32_t track, const int32_t sample)
+__attribute__((section(".itcm")))
+int32_t mp4ff_sample_to_offset(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t chunk, chunk_sample, chunk_offset1, chunk_offset2;
 
@@ -129,6 +132,7 @@ static int32_t mp4ff_sample_to_offset(const mp4ff_t *f, const int32_t track, con
     return chunk_offset2;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_audio_frame_size(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t bytes;
@@ -144,6 +148,7 @@ int32_t mp4ff_audio_frame_size(const mp4ff_t *f, const int32_t track, const int3
     return bytes;
 }
 
+__attribute__((section(".itcm")))
 int32_t mp4ff_set_sample_position(mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t offset;
