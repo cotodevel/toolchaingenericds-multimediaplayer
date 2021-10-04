@@ -23,7 +23,6 @@ USA
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
-
 #include "gui/gui_console_connector.h"
 #include "misc.h"
 #include "sound.h"
@@ -37,6 +36,7 @@ USA
 #include "utilsTGDS.h"
 #include "nds_cp15_misc.h"
 #include "mikmod_internals.h"
+#include "fatfslayerTGDS.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * RecentPlaylistfileClassListCtx = NULL;		//Recent Played
@@ -718,6 +718,49 @@ static inline void handleInput(){
 		}
 	}
 	
+	//Audio track ended? Play next audio file
+	if((pendingPlay == false) && (cutOff == true)){ 
+		
+		bool ret = readDirectoryIntoFileClass(globalPath, playlistfileClassListCtx);
+		if(ret == true){
+			curFileIndex = getNextFileClassByExtensionFromList(playlistfileClassListCtx, "/ima/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs", curFileIndex); //first occurrence
+			curFileIndex++; //next occurence
+			curFileIndex = getNextFileClassByExtensionFromList(playlistfileClassListCtx, "/ima/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs", curFileIndex);
+		}
+		
+		if(curFileIndex >= 0){
+			strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
+		}
+		else{ //rewind and play
+			curFileIndex = 0;
+			curFileIndex = getNextFileClassByExtensionFromList(playlistfileClassListCtx, "/ima/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs", curFileIndex);
+			strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
+		}
+		
+		//Let decoder close context so we can start again
+		closeSound();
+		IRQWait(0, IRQ_VBLANK);
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		IRQWait(0, IRQ_VBLANK);
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		IRQWait(0, IRQ_VBLANK);
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		IRQWait(0, IRQ_VBLANK);
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		pendingPlay = true;		
+	}
 }
 
 static u32 bufDraw[80/4];
