@@ -27,6 +27,9 @@ Buttons:
 
 /release folder has the latest binary precompiled for your convenience.
 
+Latest stable release:
+[https://bitbucket.org/Coto88/toolchaingenericds-audioplayer/get/TGDS1.64Stable.zip]
+
 Notes:
  
  - DLDI patch the file manually if it isn't detected by the loader.
