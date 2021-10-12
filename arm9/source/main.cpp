@@ -37,6 +37,7 @@ USA
 #include "nds_cp15_misc.h"
 #include "mikmod_internals.h"
 #include "fatfslayerTGDS.h"
+#include "loader.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * RecentPlaylistfileClassListCtx = NULL;		//Recent Played
@@ -282,20 +283,8 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 	struct FileClass * fileClassInst = NULL;
 	fileClassInst = FAT_FindFirstFile(curPath, menuIteratorfileClassListCtx, startFromIndex);
 	while(fileClassInst != NULL){
-		//directory?
-		if(fileClassInst->type == FT_DIR){
-			char tmpBuf[MAX_TGDSFILENAME_LENGTH+1];
-			strcpy(tmpBuf, fileClassInst->fd_namefullPath);
-			parseDirNameTGDS(tmpBuf);
-			strcpy(fileClassInst->fd_namefullPath, tmpBuf);
-		}
 		//file?
-		else if(fileClassInst->type  == FT_FILE){
-			char tmpBuf[MAX_TGDSFILENAME_LENGTH+1];
-			strcpy(tmpBuf, fileClassInst->fd_namefullPath);
-			parsefileNameTGDS(tmpBuf);
-			strcpy(fileClassInst->fd_namefullPath, tmpBuf);
-			
+		if(fileClassInst->type  == FT_FILE){
 			//current playlist only allows known audio formats
 			char tmpName[MAX_TGDSFILENAME_LENGTH+1];
 			char ext[MAX_TGDSFILENAME_LENGTH+1];
@@ -361,6 +350,10 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 		//more file/dir objects?
 		fileClassInst = FAT_FindNextFile(curPath, menuIteratorfileClassListCtx);
 	}
+	
+	//Sort list alphabetically
+	bool ignoreFirstFileClass = true;
+	sortFileClassListAsc(menuIteratorfileClassListCtx, (char**)ARM7_PAYLOAD, ignoreFirstFileClass);
 	
 	//actual file lister
 	clrscr();
