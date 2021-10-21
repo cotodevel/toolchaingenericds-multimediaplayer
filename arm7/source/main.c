@@ -40,20 +40,17 @@ USA
 //---------------------------------------------------------------------------------
 int main(int argc, char **argv) {
 //---------------------------------------------------------------------------------
+	/*			TGDS 1.6 Standard ARM7 Init code start	*/
 	//wait for VRAM Block to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
 	while (!(*((vuint8*)0x04000240) & 0x2));
 	
-	/*			TGDS 1.5 Standard ARM7 Init code start	*/
 	installWifiFIFO();		
-	/*			TGDS 1.5 Standard ARM7 Init code end	*/
-	
-	if(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){ //discard FIFO errors
-		REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-	}
-	
-    while (1) {
+	/*			TGDS 1.6 Standard ARM7 Init code end	*/
+	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
+    
+	while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQWait(0, IRQ_VBLANK | IRQ_VCOUNT | IRQ_IPCSYNC | IRQ_RECVFIFO_NOT_EMPTY | IRQ_SCREENLID);
+		IRQWait(0, IRQ_IPCSYNC | IRQ_RECVFIFO_NOT_EMPTY | IRQ_SCREENLID);
 	}
    
 	return 0;
