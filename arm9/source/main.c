@@ -995,11 +995,9 @@ int main(int argc, char **argv) {
 	DisableSoundSampleContext();
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
+	REG_IE = REG_IE & ~(IRQ_TIMER3|IRQ_VCOUNT); //disable VCOUNT and WIFI timer
 	
-	while (1){		
-		if(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){ //discard FIFO errors
-			REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-		}
+	while (1){	
 
 		handleInput();
 		

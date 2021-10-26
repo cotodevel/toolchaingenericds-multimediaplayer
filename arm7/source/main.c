@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     
 	while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQWait(0, IRQ_IPCSYNC | IRQ_RECVFIFO_NOT_EMPTY | IRQ_SCREENLID);
+		IRQWait(0, IRQ_IPCSYNC);
 	}
    
 	return 0;
