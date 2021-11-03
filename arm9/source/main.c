@@ -39,9 +39,8 @@ USA
 #include "fileBrowse.h"
 
 //TGDS Dir API: Directory Iterator(s)
-struct FileClassList * RecentPlaylistfileClassListCtx = NULL;		//Recent Played
-struct FileClassList * menuIteratorfileClassListCtx = NULL;			//Menu Directory Iterator
-struct FileClassList * playlistfileClassListCtx = NULL;				//Playlist Directory Iterator
+struct FileClassList * playListRead = NULL;			//Menu Directory Iterator
+struct FileClassList * activePlayListRead = NULL;				//Playlist Directory Iterator
 
 //static vector<string> songLst;
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
@@ -236,7 +235,15 @@ static bool pendingPlay = false;
 static int curFileIndex = 0;
 static int lastRand = 0;
 
-static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileIndex){	//MUST be same as the template one at "fileBrowse.h" but added some custom code
+char debug[256*300];
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Os")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileIndex){	//MUST be same as the template one at "fileBrowse.h" but added some custom code
 	scanKeys();
 	while((keysDown() & KEY_START) || (keysDown() & KEY_A) || (keysDown() & KEY_B)){
 		scanKeys();
@@ -244,8 +251,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 	}
 	
 	//Create TGDS Dir API context
-	cleanFileList(playlistfileClassListCtx);
-	cleanFileList(menuIteratorfileClassListCtx);
+	cleanFileList(playListRead);
 	
 	//Use TGDS Dir API context
 	int pressed = 0;
@@ -255,104 +261,25 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 		strcpy(filStub.fd_namefullPath, "");
 		filStub.isIterable = true;
 		filStub.d_ino = -1;
-		filStub.parentFileClassList = menuIteratorfileClassListCtx;
+		filStub.parentFileClassList = playListRead;
 	}
 	char curPath[MAX_TGDSFILENAME_LENGTH+1];
 	strcpy(curPath, Path);
 	
-	if(pushEntryToFileClassList(true, filStub.fd_namefullPath, filStub.type, -1, menuIteratorfileClassListCtx) != NULL){
-		//OK item added
-	}
-	else{
-		printf("failed to add an item to a FileClass Directory Iterator! ");
-		while(1==1);
-	}
-	
-	if(pushEntryToFileClassList(true, filStub.fd_namefullPath, filStub.type, -1, playlistfileClassListCtx) != NULL){
-		//OK item added
-	}
-	else{
-		printf("failed to add an item to a FileClass Directory Iterator! ");
-		while(1==1);
-	}
-	
 	int j = 1;
 	int startFromIndex = 1;
 	*curFileIndex = startFromIndex;
-	struct FileClass * fileClassInst = NULL;
-	fileClassInst = FAT_FindFirstFile(curPath, menuIteratorfileClassListCtx, startFromIndex);
-	while(fileClassInst != NULL){
-		//file?
-		if(fileClassInst->type  == FT_FILE){
-			//current playlist only allows known audio formats
-			char tmpName[MAX_TGDSFILENAME_LENGTH+1];
-			char ext[MAX_TGDSFILENAME_LENGTH+1];
-			
-			strcpy(tmpName, fileClassInst->fd_namefullPath);	
-			separateExtension(tmpName, ext);
-			strlwr(ext);
-			
-			if(
-				(strcmp(ext,".ima") == 0)
-				||
-				(strcmp(ext,".wav") == 0)
-				||
-				(strcmp(ext,".it") == 0)
-				||
-				(strcmp(ext,".mod") == 0)
-				||
-				(strcmp(ext,".s3m") == 0)
-				||
-				(strcmp(ext,".xm") == 0)
-				||
-				(strcmp(ext,".mp3") == 0)
-				||
-				(strcmp(ext,".mp2") == 0)
-				||
-				(strcmp(ext,".mpa") == 0)
-				||
-				(strcmp(ext,".ogg") == 0)
-				||
-				(strcmp(ext,".aac") == 0)
-				||
-				(strcmp(ext,".m4a") == 0)
-				||
-				(strcmp(ext,".m4b") == 0)
-				||
-				(strcmp(ext,".flac") == 0)
-				||
-				(strcmp(ext,".sid") == 0)
-				||
-				(strcmp(ext,".nsf") == 0)
-				||
-				(strcmp(ext,".spc") == 0)
-				||
-				(strcmp(ext,".sndh") == 0)
-				||
-				(strcmp(ext,".snd") == 0)
-				||
-				(strcmp(ext,".sc68") == 0)
-				||
-				(strcmp(ext,".gbs") == 0)
-			){
-				if(pushEntryToFileClassList(fileClassInst->isIterable, fileClassInst->fd_namefullPath, fileClassInst->type, fileClassInst->d_ino, playlistfileClassListCtx) != NULL){
-					//OK item added
-				}
-				else{
-					printf("failed to add an item to a FileClass Directory Iterator! ");
-					while(1==1);
-				}
-			}
-		}
-		
-		
-		//more file/dir objects?
-		fileClassInst = FAT_FindNextFile(curPath, menuIteratorfileClassListCtx);
-	}
+	
+	//Generate an active playlist
+	readDirectoryIntoFileClass(Path, playListRead);
+	cleanFileList(activePlayListRead);
+	pushEntryToFileClassList(true, filStub.fd_namefullPath, filStub.type, -1, activePlayListRead); //first stub item pushed because printf hides it
+	int itemsFound = buildFileClassByExtensionFromList(playListRead, activePlayListRead, (char**)ARM7_PAYLOAD, (const char**)"/ima/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs");
+	activePlayListRead->FileDirCount--; //skipping the first item pushed before
 	
 	//Sort list alphabetically
 	bool ignoreFirstFileClass = true;
-	sortFileClassListAsc(menuIteratorfileClassListCtx, (char**)ARM7_PAYLOAD, ignoreFirstFileClass);
+	sortFileClassListAsc(playListRead, (char**)ARM7_PAYLOAD, ignoreFirstFileClass);
 	
 	//actual file lister
 	clrscr();
@@ -369,7 +296,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 	int itemRead=1;
 	
 	while(1){
-		int fileClassListSize = getCurrentDirectoryCount(menuIteratorfileClassListCtx) + 1;	//+1 the stub
+		int fileClassListSize = getCurrentDirectoryCount(playListRead) + 1;	//+1 the stub
 		int itemsToLoad = (fileClassListSize - curjoffset);
 		
 		//check if remaining items are enough
@@ -378,11 +305,11 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 		}
 		
 		while(itemRead < itemsToLoad ){		
-			if(getFileClassFromList(itemRead+curjoffset, menuIteratorfileClassListCtx)->type == FT_DIR){
-				printfCoords(0, itemRead, "--- %s >%d",getFileClassFromList(itemRead+curjoffset, menuIteratorfileClassListCtx)->fd_namefullPath, TGDSPrintfColor_Yellow);
+			if(getFileClassFromList(itemRead+curjoffset, playListRead)->type == FT_DIR){
+				printfCoords(0, itemRead, "--- %s >%d",getFileClassFromList(itemRead+curjoffset, playListRead)->fd_namefullPath, TGDSPrintfColor_Yellow);
 			}
 			else{
-				printfCoords(0, itemRead, "--- %s",getFileClassFromList(itemRead+curjoffset, menuIteratorfileClassListCtx)->fd_namefullPath);
+				printfCoords(0, itemRead, "--- %s",getFileClassFromList(itemRead+curjoffset, playListRead)->fd_namefullPath);
 			}
 			itemRead++;
 		}
@@ -483,15 +410,15 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 		}
 		
 		//reload DIR (forward)
-		else if( (pressed&KEY_A) && (getFileClassFromList(j+curjoffset, menuIteratorfileClassListCtx)->type == FT_DIR) ){
-			struct FileClass * fileClassChosen = getFileClassFromList(j+curjoffset, menuIteratorfileClassListCtx);
+		else if( (pressed&KEY_A) && (getFileClassFromList(j+curjoffset, playListRead)->type == FT_DIR) ){
+			struct FileClass * fileClassChosen = getFileClassFromList(j+curjoffset, playListRead);
 			newDir = fileClassChosen->fd_namefullPath;
 			reloadDirA = true;
 			break;
 		}
 		
 		//file chosen
-		else if( (pressed&KEY_A) && (getFileClassFromList(j+curjoffset, menuIteratorfileClassListCtx)->type == FT_FILE) ){
+		else if( (pressed&KEY_A) && (getFileClassFromList(j+curjoffset, playListRead)->type == FT_FILE) ){
 			break;
 		}
 		
@@ -512,7 +439,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 	//enter a dir
 	if(reloadDirA == true){
 		//Free TGDS Dir API context
-		//freeFileList(menuIteratorfileClassListCtx);	//can't because we keep the menuIteratorfileClassListCtx handle across folders
+		//freeFileList(playListRead);	//can't because we keep the playListRead handle across folders
 		
 		enterDir((char*)newDir, Path);
 		return true;
@@ -521,17 +448,17 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 	//leave a dir
 	if(reloadDirB == true){
 		//Free TGDS Dir API context
-		//freeFileList(menuIteratorfileClassListCtx);	//can't because we keep the menuIteratorfileClassListCtx handle across folders
+		//freeFileList(playListRead);	//can't because we keep the playListRead handle across folders
 		
 		//rewind to preceding dir in TGDSCurrentWorkingDirectory
 		leaveDir(Path);
 		return true;
 	}
 	
-	strcpy((char*)outBuf, getFileClassFromList(j+curjoffset, menuIteratorfileClassListCtx)->fd_namefullPath);
+	strcpy((char*)outBuf, getFileClassFromList(j+curjoffset, playListRead)->fd_namefullPath);
 	clrscr();
 	printf("                                   ");
-	if(getFileClassFromList(j+curjoffset, menuIteratorfileClassListCtx)->type == FT_DIR){
+	if(getFileClassFromList(j+curjoffset, playListRead)->type == FT_DIR){
 		//printf("you chose Dir:%s",outBuf);
 	}
 	else{
@@ -540,7 +467,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 	}
 	
 	//Free TGDS Dir API context
-	//freeFileList(menuIteratorfileClassListCtx);
+	//freeFileList(playListRead);
 	return false;
 }		
 
@@ -596,71 +523,88 @@ static inline void handleInput(){
 	}
 	
 	if (keysDown() & KEY_L){
-		int oldLstSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);
-		if(oldLstSize > 0){
-			strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(oldLstSize - 1, RecentPlaylistfileClassListCtx)->fd_namefullPath);
-			popEntryfromFileClassList(RecentPlaylistfileClassListCtx);
-			lastRand = oldLstSize - 1;
-			
-			pendingPlay = true;
+		curFileIndex--;
+		if(curFileIndex <= 1){
+			curFileIndex = 1;
 		}
-		else{
-			clrscr();
-			printfCoords(0, 6, "No audio files in recent playlist. Play some first. ");
-		}
+		strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, activePlayListRead)->fd_namefullPath);		
+		
+		//Let decoder close context so we can start again
+		closeSound();
+		
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		
+		pendingPlay = true;
 		scanKeys();
-		while(keysDown() & KEY_L){
+		while(keysHeld() & KEY_L){
 			scanKeys();
 		}
 		menuShow();
 	}
 	
 	if (keysDown() & KEY_R){
-		//Play Random song from current folder
-		int lstSize = getCurrentDirectoryCount(playlistfileClassListCtx);
-		
-		if(lstSize > 0){
-			closeSound();
-			
-			//pick one and play
-			int randFile = -1;
-			while( (randFile = getRand(lstSize)) == lastRand){
-				if(lstSize == 1){
-					break;	//means rand() will loop forever here because the random number will always be 0
-				}
-			}
-			
-			//remember playlist as long the audio file is unique. (for L button)
-			int oldPlsSize = getCurrentDirectoryCount(RecentPlaylistfileClassListCtx);
-			if(oldPlsSize >= 0){
-				struct FileClass * fileClassInst = getFileClassFromList(randFile, playlistfileClassListCtx);
-				if(pushEntryToFileClassList(fileClassInst->isIterable, fileClassInst->fd_namefullPath, fileClassInst->type, fileClassInst->d_ino, RecentPlaylistfileClassListCtx) != NULL){
-					//OK item added
-				}
-				else{
-					printf("failed to add an item to a RecentPlaylistfileClassListCtx FileClass Directory Iterator! ");
-					while(1==1);
-				}
-				
-				strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(randFile, playlistfileClassListCtx)->fd_namefullPath);
-				pendingPlay = true;
-				
-				scanKeys();
-				while(keysDown() & KEY_R){
-					scanKeys();
-				}
-				lastRand = randFile;				
-			}
+		int lstSize = getCurrentDirectoryCount(activePlayListRead);
+		curFileIndex++;
+		if(curFileIndex >= (lstSize - 1)){
+			curFileIndex = (lstSize - 1);
 		}
+		strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, activePlayListRead)->fd_namefullPath);		
+		
+		//Let decoder close context so we can start again
+		closeSound();
+		
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		pendingPlay = true;
+		scanKeys();
+		while(keysHeld() & KEY_R){
+			scanKeys();
+		}
+		menuShow();
 	}
 	
 	if (keysDown() & KEY_START){
-		
 		if(soundLoaded == false){
 			while( ShowBrowserC((char *)globalPath, curChosenBrowseFile, &pendingPlay, &curFileIndex) == true ){	//as long you keep using directories ShowBrowser will be true
 				//navigating DIRs here...
 			}
-			
 			scanKeys();
 			while(keysDown() & KEY_START){
 				scanKeys();
@@ -712,22 +656,11 @@ static inline void handleInput(){
 	
 	//Audio track ended? Play next audio file
 	if((pendingPlay == false) && (cutOff == true)){ 
-		
-		bool ret = readDirectoryIntoFileClass(globalPath, playlistfileClassListCtx);
-		if(ret == true){
-			curFileIndex = getNextFileClassByExtensionFromList(playlistfileClassListCtx, "/ima/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs", curFileIndex); //first occurrence
-			curFileIndex++; //next occurence
-			curFileIndex = getNextFileClassByExtensionFromList(playlistfileClassListCtx, "/ima/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs", curFileIndex);
-		}
-		
-		if(curFileIndex >= 0){
-			strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
-		}
-		else{ //rewind and play
+		curFileIndex++;
+		if(curFileIndex >= getCurrentDirectoryCount(activePlayListRead)){
 			curFileIndex = 0;
-			curFileIndex = getNextFileClassByExtensionFromList(playlistfileClassListCtx, "/ima/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs", curFileIndex);
-			strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, playlistfileClassListCtx)->fd_namefullPath);
 		}
+		strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, activePlayListRead)->fd_namefullPath);
 		
 		//Let decoder close context so we can start again
 		closeSound();
@@ -974,19 +907,13 @@ int main(int argc, char **argv) {
 	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
 
 	//Init TGDS FS Directory Iterator Context(s). Mandatory to init them like this!! Otherwise several functions won't work correctly.
-	RecentPlaylistfileClassListCtx = initFileList();
-	cleanFileList(RecentPlaylistfileClassListCtx);
-	
-	playlistfileClassListCtx = initFileList();
-	cleanFileList(playlistfileClassListCtx);
-	
-	menuIteratorfileClassListCtx = initFileList();	
-	cleanFileList(menuIteratorfileClassListCtx);
+	playListRead = initFileList();
+	activePlayListRead = initFileList();
 	
 	menuShow();
 	
 	memset(globalPath, 0, sizeof(globalPath));
-	strcpy(globalPath,"/");
+	strcpy(globalPath,"/music");
 	
 	MikMod_RegisterAllDrivers();
 	MikMod_RegisterAllLoaders();

@@ -46,9 +46,12 @@ extern void drawMandel(double factor);
 extern void menuShow();
 
 //TGDS Dir API: Directory Iterator(s)
-extern struct FileClassList * RecentPlaylistfileClassListCtx;		//Recent Played
-extern struct FileClassList * menuIteratorfileClassListCtx;			//Menu Directory Iterator
-extern struct FileClassList * playlistfileClassListCtx;				//Playlist Directory Iterator
+extern struct FileClassList * playListRead;			//Internal playlist required by active playlist
+extern struct FileClassList * activePlayListRead;	//active playlist, actual playlist
+
+extern bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileIndex);
+
+extern char debug[256*300];
 
 #ifdef __cplusplus
 }
