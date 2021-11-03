@@ -27,10 +27,6 @@ USA
 #include "ipcfifoTGDSUser.h"
 #include "usrsettingsTGDS.h"
 #include "timerTGDS.h"
-#include "CPUARMTGDS.h"
-#include <dswifi7.h>
-#include "wifi_arm7.h"
-#include "wifi_shared.h"
 #include "spiTGDS.h"
 #include "spifwTGDS.h"
 #include "powerTGDS.h"
@@ -44,7 +40,6 @@ int main(int argc, char **argv) {
 	//wait for VRAM Block to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
 	while (!(*((vuint8*)0x04000240) & 0x2));
 	
-	installWifiFIFO();		
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
     

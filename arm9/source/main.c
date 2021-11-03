@@ -29,7 +29,6 @@ USA
 #include "soundTGDS.h"
 #include "keypadTGDS.h"
 #include "dmaTGDS.h"
-#include "dswnifi_lib.h"
 #include "TGDSLogoLZSSCompressed.h"
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
 #include "../build/click_raw.h"
@@ -37,7 +36,7 @@ USA
 #include "nds_cp15_misc.h"
 #include "mikmod_internals.h"
 #include "fatfslayerTGDS.h"
-#include "loader.h"
+#include "fileBrowse.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * RecentPlaylistfileClassListCtx = NULL;		//Recent Played
@@ -241,7 +240,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 	scanKeys();
 	while((keysDown() & KEY_START) || (keysDown() & KEY_A) || (keysDown() & KEY_B)){
 		scanKeys();
-		IRQWait(0, IRQ_VBLANK);
+		
 	}
 	
 	//Create TGDS Dir API context
@@ -395,7 +394,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			while(pressed&KEY_DOWN){
 				scanKeys();
 				pressed = keysDown();
-				IRQWait(0, IRQ_VBLANK);
+				
 			}
 		}
 		
@@ -414,7 +413,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			while(pressed&KEY_DOWN){
 				scanKeys();
 				pressed = keysDown();
-				IRQWait(0, IRQ_VBLANK);
+				
 			}
 		}
 		
@@ -433,7 +432,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			while(pressed&KEY_LEFT){
 				scanKeys();
 				pressed = keysDown();
-				IRQWait(0, IRQ_VBLANK);
+				
 			}
 		}
 		
@@ -452,7 +451,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			while(pressed&KEY_RIGHT){
 				scanKeys();
 				pressed = keysDown();
-				IRQWait(0, IRQ_VBLANK);
+				
 			}
 		}
 		
@@ -461,7 +460,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			while(pressed&KEY_UP){
 				scanKeys();
 				pressed = keysDown();
-				IRQWait(0, IRQ_VBLANK);
+				
 			}
 		}
 		
@@ -479,7 +478,7 @@ static bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 			while(pressed&KEY_UP){
 				scanKeys();
 				pressed = keysDown();
-				IRQWait(0, IRQ_VBLANK);
+				
 			}
 		}
 		
@@ -564,9 +563,9 @@ static inline void handleInput(){
 	scanKeys();
 	
 	if (keysDown() & KEY_UP){
-		struct XYTscPos touchPos;
+		struct touchPosition touchPos;
 		XYReadScrPosUser(&touchPos);
-		volumeUp(touchPos.touchXpx, touchPos.touchYpx);
+		volumeUp(touchPos.px, touchPos.py);
 		menuShow();
 		scanKeys();
 		while(keysDown() & KEY_UP){
@@ -575,9 +574,9 @@ static inline void handleInput(){
 	}
 	
 	if (keysDown() & KEY_DOWN){
-		struct XYTscPos touchPos;
+		struct touchPosition touchPos;
 		XYReadScrPosUser(&touchPos);
-		volumeDown(touchPos.touchXpx, touchPos.touchYpx);
+		volumeDown(touchPos.px, touchPos.py);
 		menuShow();
 		scanKeys();
 		while(keysDown() & KEY_DOWN){
@@ -592,7 +591,7 @@ static inline void handleInput(){
 		scanKeys();
 		while(keysDown() & KEY_TOUCH){
 			scanKeys();
-			IRQWait(0, IRQ_VBLANK);
+			
 		}
 	}
 	
@@ -665,7 +664,7 @@ static inline void handleInput(){
 			scanKeys();
 			while(keysDown() & KEY_START){
 				scanKeys();
-				IRQWait(0, IRQ_VBLANK);
+				
 			}
 		}
 		else{
@@ -675,7 +674,7 @@ static inline void handleInput(){
 			scanKeys();
 			while(keysDown() & KEY_START){
 				scanKeys();
-				IRQWait(0, IRQ_VBLANK);
+				
 			}
 			menuShow();
 		}
@@ -691,7 +690,7 @@ static inline void handleInput(){
 		scanKeys();
 		while(keysDown() & KEY_B){
 			scanKeys();
-			IRQWait(0, IRQ_VBLANK);
+			
 		}
 	}
 	
@@ -707,7 +706,7 @@ static inline void handleInput(){
 		scanKeys();
 		while(keysDown() & KEY_X){
 			scanKeys();
-			IRQWait(0, IRQ_VBLANK);
+			
 		}
 	}
 	
@@ -732,22 +731,22 @@ static inline void handleInput(){
 		
 		//Let decoder close context so we can start again
 		closeSound();
-		IRQWait(0, IRQ_VBLANK);
+		
 		updateStream();	
 		updateStream();
 		updateStream();
 		updateStream();
-		IRQWait(0, IRQ_VBLANK);
+		
 		updateStream();	
 		updateStream();
 		updateStream();
 		updateStream();
-		IRQWait(0, IRQ_VBLANK);
+		
 		updateStream();	
 		updateStream();
 		updateStream();
 		updateStream();
-		IRQWait(0, IRQ_VBLANK);
+		
 		updateStream();	
 		updateStream();
 		updateStream();
@@ -966,7 +965,6 @@ int main(int argc, char **argv) {
 	{
 		printf("FS Init error.");
 	}
-	switch_dswnifi_mode(dswifi_idlemode);
 	asm("mcr	p15, 0, r0, c7, c10, 4");
 	flush_icache_all();
 	flush_dcache_all();
@@ -997,6 +995,8 @@ int main(int argc, char **argv) {
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
 	REG_IE = REG_IE & ~(IRQ_TIMER3|IRQ_VCOUNT); //disable VCOUNT and WIFI timer
 	
+	REG_IE = (REG_IE | IRQ_VBLANK);
+	
 	while (1){	
 
 		handleInput();
@@ -1018,7 +1018,7 @@ int main(int argc, char **argv) {
 		updateStream();
 		updateStream();
 		
-		IRQWait(0, IRQ_VBLANK);
+		
 	}
 	
 	return 0;

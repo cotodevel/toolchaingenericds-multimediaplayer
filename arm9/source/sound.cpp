@@ -264,6 +264,13 @@ void circularCopy(void *dst, void *src, int copySize, int *position, int bufferS
 
 // update function
 __attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void updateStreamCustomDecoder(u32 srcFrmt){
 	switch(srcFrmt)
 	{
@@ -553,6 +560,13 @@ void allocateStreamBuffer()
 // sound stream wrapper
 //---------------------
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void freeSoundCustomDecoder(u32 srcFrmt){
 	switch(srcFrmt)
 	{
@@ -738,6 +752,13 @@ void yield()
 }
 
 __attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void decodeFlacFrame()
 {
 	while(!flacFinished && !cutOff)
@@ -813,6 +834,13 @@ void decodeFlacFrame()
 }
 
 __attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void seekFlac()
 {
 	while(1)
@@ -1631,6 +1659,13 @@ void clearLoop()
 	module->wrap = 0;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 bool initSoundStreamUser(char * fName, char * ext){
 	
 	updateRequested = true;
@@ -2303,7 +2338,13 @@ bool initSoundStreamUser(char * fName, char * ext){
 	return false;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
 
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 bool loadSound(char *fName){
 	int srcFormat = playSoundStream(fName, _FileHandleVideo, _FileHandleAudio);
 	if((srcFormat != SRC_WAV) || (srcFormat != SRC_WAVADPCM)){		
@@ -2317,11 +2358,25 @@ bool loadSound(char *fName){
 	return true;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 bool stopSoundStreamUser(){
 	//stop adpcm / wav playback
 	return stopSoundStream(_FileHandleVideo, _FileHandleAudio, &internalCodecType);
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void closeSoundUser(){
 	if(isWIFIConnected()){
 		disconnectWifi();
@@ -2912,6 +2967,13 @@ void pauseSound(bool pause)
 	sndPaused = pause;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void getSoundLoc(u32 *loc, u32 *max)
 {
 	// return a dummy value representing 0 for files that aren't loaded.
@@ -2949,6 +3011,13 @@ void getSoundLoc(u32 *loc, u32 *max)
 	*max = soundData.len;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void setSoundLoc(u32 loc)
 {
 	seekSpecial = true;
@@ -2984,6 +3053,13 @@ void setSoundLoc(u32 loc)
 	seekSpecial = false;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int getState()
 {
 	if(soundData.sourceFmt == SRC_NONE)
@@ -3010,6 +3086,13 @@ int getState()
 	return STATE_STOPPED;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int getStreamLag()
 {
 	return lagCursor;

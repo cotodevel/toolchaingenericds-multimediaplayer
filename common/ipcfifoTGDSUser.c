@@ -36,7 +36,6 @@ USA
 #include <string.h>
 
 #include "main.h"
-#include "wifi_arm7.h"
 #include "spifwTGDS.h"
 #include "click_raw.h"
 
@@ -46,7 +45,6 @@ USA
 
 #include <stdbool.h>
 #include "main.h"
-#include "wifi_arm9.h"
 #include "sound.h"
 
 #endif
@@ -54,7 +52,7 @@ USA
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-void HandleFifoNotEmptyWeakRef(volatile u32 cmd1){
+void HandleFifoNotEmptyWeakRef(volatile u32 cmd1, volatile u32 cmd2){
 	switch (cmd1) {
 		//NDS7: 
 		#ifdef ARM7
@@ -85,10 +83,10 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 
 #ifdef ARM9
 void enableFastMode(){
-	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_DISABLEIRQ);
+	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_DISABLEIRQ, 0xFF);
 }
 
 void disableFastMode(){
-	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ);
+	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ, 0xFF);
 }
 #endif
