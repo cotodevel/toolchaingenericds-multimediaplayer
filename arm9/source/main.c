@@ -913,7 +913,7 @@ int main(int argc, char **argv) {
 	menuShow();
 	
 	memset(globalPath, 0, sizeof(globalPath));
-	strcpy(globalPath,"/music");
+	strcpy(globalPath,"/");
 	
 	MikMod_RegisterAllDrivers();
 	MikMod_RegisterAllLoaders();
