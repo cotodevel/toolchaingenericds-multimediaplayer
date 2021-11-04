@@ -1670,8 +1670,6 @@ bool initSoundStreamUser(char * fName, char * ext){
 	
 	updateRequested = true;
 	cutOff = false;
-	enableFastMode();
-	
 	if(strcmp(ext, ".it") == 0  || strcmp(ext, ".mod") == 0 || strcmp(ext, ".s3m") == 0 || strcmp(ext, ".xm") == 0)
 	{
 		// tracker file!
@@ -2346,6 +2344,7 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 bool loadSound(char *fName){
+	enableFastMode();
 	int srcFormat = playSoundStream(fName, _FileHandleVideo, _FileHandleAudio);
 	if((srcFormat != SRC_WAV) || (srcFormat != SRC_WAVADPCM)){		
 		char tmpName[256];
@@ -2353,7 +2352,12 @@ bool loadSound(char *fName){
 		strcpy(tmpName, fName);	
 		separateExtension(tmpName, ext);
 		strlwr(ext);
-		return initSoundStreamUser(fName, ext);
+		bool ret = initSoundStreamUser(fName, ext);
+		if(ret == false){
+			//Invalid sound stream? disable fast mode
+			disableFastMode();
+		}
+		return ret;
 	}
 	return true;
 }
@@ -2381,6 +2385,7 @@ void closeSoundUser(){
 	if(isWIFIConnected()){
 		disconnectWifi();
 	}
+	disableFastMode();
 }
 
 void soundPrevTrack(int x, int y)

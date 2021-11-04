@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     
 	while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQWait(0, IRQ_IPCSYNC);
+		IRQWait(0, IRQ_VBLANK | IRQ_TIMER1); //Both happen when sound stream is enabled or disabled
 	}
    
 	return 0;
