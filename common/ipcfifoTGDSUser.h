@@ -33,7 +33,6 @@ USA
 #include "dsregs.h"
 #include "dsregs_asm.h"
 #include "ipcfifoTGDS.h"
-#include "dswnifi.h"
 #include "utilsTGDS.h"
 
 struct sIPCSharedTGDSSpecific {
@@ -75,14 +74,15 @@ extern "C" {
 #endif
 
 //NOT weak symbols : the implementation of these is project-defined (here)
-extern void HandleFifoNotEmptyWeakRef(volatile u32 cmd1);
+extern void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
-
 
 #ifdef ARM9
 extern void enableFastMode();
 extern void disableFastMode();
 #endif
+
+extern void setupLibUtils();
 
 #ifdef __cplusplus
 }

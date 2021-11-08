@@ -6,7 +6,6 @@
 #include "InterruptsARMCores_h.h"
 #include "../../common/ipcfifoTGDSUser.h"
 #include "../include/main.h"
-#include "dswnifi_lib.h"
 #include "posixHandleTGDS.h"
 
 #include <stdio.h>
@@ -155,21 +154,17 @@ int findValidSockID(int sock)
 int recvData(int sock, char *data, int len)
 {	
 	int id = findValidSockID(sock);
-	return recv(sock, data, len, 0);
+	return -1;
 }
 
 void wifiClose(int sock)
 {
-	int id = findValidSockID(sock);
-	
 	//if(wifiConn[id].isSSL)
 	//{
 		//CyaSSL_shutdown(wifiConn[id].ssl);	//SSL_shutdown
 		//CyaSSL_free(wifiConn[id].ssl);	//SSL_free
 		//CyaSSL_CTX_free(wifiConn[id].ctx);	//SSL_CTX_free
 	//}
-	
-	closesocket(sock); // close socket for good
 	
 	//wifiConn[id].isSSL = false;
 	//wifiConn[id].sock = -1;
@@ -183,36 +178,28 @@ void wifiClose(int sock)
 //		-> idle:	disconnectWifi()
 //mode nifi local
 void connectNifiLocal(){
-	switch_dswnifi_mode(dswifi_localnifimode);
+	
 }
 
 //mode nifi over internet
 void connectNifiOverInternet(){
-	switch_dswnifi_mode(dswifi_udpnifimode);
+	
 }
 
 //disconnect nifi
 void disconnectNifi(){
-	switch_dswnifi_mode(dswifi_idlemode);
+	
 }
 
 //Wifi AP Internet
 void disconnectWifi()
 {
-	disconnectNifi();
 	wifiEnabled = false;
 }
 
 void connectWifi()
 {
-	if(isWIFIConnected() == false){
-		if(connectDSWIFIAP(DSWNIFI_ENTER_WIFIMODE) == true){
-			wifiEnabled = true;
-		}
-		else{
-			disconnectWifi();
-		}
-	}
+	
 }
 
 bool wifiEnabled = false;
@@ -226,21 +213,6 @@ void initWifi()
 	//wifi/nifi init
 	disconnectWifi();
 	
-	/*
-	// CyaSSL init
-	if (CyaSSL_Init() == SSL_SUCCESS){	//InitCyaSSL();
-		//CyaSSL Init OK.
-	}
-	else{
-		printfDebugger("CyaSSL Init ERROR.");
-	}
-	
-	// init the ssl settings block
-	for(int i = 0;i < NUM_CONNECTIONS; i++)
-	{
-		wifiConn[i].sock = -1;
-	}
-	*/
 }
 
 
