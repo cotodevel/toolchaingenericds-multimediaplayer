@@ -36,7 +36,7 @@ USA
 #include "nds_cp15_misc.h"
 #include "mikmod_internals.h"
 #include "fatfslayerTGDS.h"
-#include "fileBrowse.h"
+#include "loader.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * playListRead = NULL;			//Menu Directory Iterator
