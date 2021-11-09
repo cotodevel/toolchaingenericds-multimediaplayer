@@ -24,9 +24,7 @@ USA
 #include "biosTGDS.h"
 #include "ipcfifoTGDSUser.h"
 #include "spifwTGDS.h"
-#include "wifi_arm7.h"
 #include "main.h"
-#include "eventsTGDS.h"
 
 //User Handler Definitions
 #ifdef ARM9

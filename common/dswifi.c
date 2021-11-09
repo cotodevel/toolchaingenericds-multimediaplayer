@@ -26,7 +26,6 @@ USA
 
 #ifdef ARM9
 #include "dswnifi_lib.h"
-#include "dswnifi.h"
 #include "wifi_arm9.h"
 #include "dswifi9.h"
 #include "wifi_shared.h"
