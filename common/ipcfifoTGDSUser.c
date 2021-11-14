@@ -127,7 +127,8 @@ void setupLibUtils(){
 		(SoundStreamSetupSoundARM7LibUtils_fn)&setupSound,	//ARM7: void setupSound()
 		(SoundSampleContextInitARM7LibUtils_fn)&initSoundSampleContext, //ARM7: initSoundSampleContext()
 		(SoundSampleContextEnableARM7LibUtils_fn)&EnableSoundSampleContext, // ARM7 & ARM9: void EnableSoundSampleContext(int SndSamplemode)
-		(SoundSampleContextDisableARM7LibUtils_fn)&DisableSoundSampleContext	//ARM7 & ARM9: void DisableSoundSampleContext()
+		(SoundSampleContextDisableARM7LibUtils_fn)&DisableSoundSampleContext,	//ARM7 & ARM9: void DisableSoundSampleContext()
+		(initMallocARM7LibUtils_fn)&initARM7Malloc //ARM7: void initARM7Malloc(u32 ARM7MallocStartaddress, u32 ARM7MallocSize);
 	);
 	#endif
 }
