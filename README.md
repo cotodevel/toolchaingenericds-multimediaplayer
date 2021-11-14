@@ -1,8 +1,8 @@
 ![ToolchainGenericDS](img/TGDS-Logo.png)
 
-NTR/TWL SDK: TGDS1.64
+NTR/TWL SDK: TGDS1.65
 
-master: Development branch. Use TGDS1.64Stable: branch for stable features.
+master: Development branch. Use TGDS1.65: branch for stable features.
 
 This is the ToolchainGenericDS-audioplayer project:
 
