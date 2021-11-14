@@ -875,6 +875,12 @@ int TGDSProjectReturnFromLinkedModule() {
 }
 
 __attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int main(int argc, char **argv) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
