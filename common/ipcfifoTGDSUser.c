@@ -55,6 +55,12 @@ USA
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 	switch (cmd1) {
 		//NDS7: 

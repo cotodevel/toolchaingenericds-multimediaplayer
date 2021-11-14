@@ -875,6 +875,12 @@ int TGDSProjectReturnFromLinkedModule() {
 }
 
 __attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int main(int argc, char **argv) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
@@ -882,10 +888,21 @@ int main(int argc, char **argv) {
 	GUI_init(project_specific_console);
 	GUI_clear();
 	
+	//xmalloc init removes args, so save them
+	int i = 0;
+	for(i = 0; i < argc; i++){
+		argvs[i] = argv[i];
+	}
+
 	bool isCustomTGDSMalloc = true;
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
+	//argv destroyed here because of xmalloc init, thus restore them
+	for(i = 0; i < argc; i++){
+		argv[i] = argvs[i];
+	}
+
 	printf("     ");
 	printf("     ");
 	
