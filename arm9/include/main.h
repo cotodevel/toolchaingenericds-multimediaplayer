@@ -51,8 +51,6 @@ extern struct FileClassList * activePlayListRead;	//active playlist, actual play
 
 extern bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileIndex);
 
-extern char debug[256*300];
-
 #ifdef __cplusplus
 }
 #endif

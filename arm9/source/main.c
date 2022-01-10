@@ -235,8 +235,6 @@ static bool pendingPlay = false;
 static int curFileIndex = 0;
 static int lastRand = 0;
 
-char debug[256*300];
-
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("Os")))
 #endif
