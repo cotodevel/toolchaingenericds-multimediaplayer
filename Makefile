@@ -60,6 +60,7 @@ export DIRS_ARM7_SRC = build/	\
 			data/	\
 			source/	\
 			source/interrupts/	\
+			source/petitfs-src/	\
 			../common/	\
 			../common/templateCode/source/	\
 			../common/templateCode/data/arm7/	
@@ -68,6 +69,7 @@ export DIRS_ARM7_HEADER = build/	\
 			data/	\
 			source/	\
 			source/interrupts/	\
+			source/petitfs-src/	\
 			include/	\
 			../common/	\
 			../common/templateCode/source/	\

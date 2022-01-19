@@ -35,9 +35,12 @@ USA
 #include "ipcfifoTGDS.h"
 #include "utilsTGDS.h"
 
+#ifdef ARM9
+#include "fatfslayerTGDS.h"
+#endif
+
 struct sIPCSharedTGDSSpecific {
-	uint32 frameCounter7;	//VBLANK counter7
-	uint32 frameCounter9;	//VBLANK counter9
+	char filename[256];
 };
 
 //types used by DSOrganize
@@ -61,12 +64,14 @@ typedef sint16 int16;
 
 //TGDS Memory Layout ARM7/ARM9 Cores
 #define TGDS_ARM7_MALLOCSTART (u32)(0x06000000)
-#define TGDS_ARM7_MALLOCSIZE (int)(112*1024)
+#define TGDS_ARM7_MALLOCSIZE (int)(224*1024)
 #define TGDSDLDI_ARM7_ADDRESS (u32)(TGDS_ARM7_MALLOCSTART + TGDS_ARM7_MALLOCSIZE)
 
+#define FIFO_DIRECTVIDEOFRAME_SETUP (u32)(0xFFFFABCB)
+#define FIFO_DIRECTVIDEOFRAME_RENDER (u32)(0xFFFFABCC)
 #define FIFO_TGDSAUDIOPLAYER_DISABLEIRQ (u32)(0xFFAACC00)
 #define FIFO_TGDSAUDIOPLAYER_ENABLEIRQ (u32)(0xFFAACC01)
-
+#define FIFO_TGDSAUDIOPLAYER_STOPSOUND (u32)(0xFFAACC02)
 #endif
 
 #ifdef __cplusplus
@@ -83,6 +88,11 @@ extern void disableFastMode();
 #endif
 
 extern void setupLibUtils();
+extern struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific();
+
+#ifdef ARM9
+extern u32 setupDirectVideoFrameRender(struct fd * videoStructFD, char * videoStructFDFilename);
+#endif
 
 #ifdef __cplusplus
 }

@@ -25,7 +25,6 @@
 #include <stdlib.h>
 #include "tremor/ivorbiscodec.h"
 #include "tremor/ivorbisfile.h"
-#include "emulated/spc.h"
 #include "mikmod/include/mikmod_build.h"
 #include "emulated/sid.h"
 #include "emulated/nsf.h"
@@ -120,6 +119,7 @@ static volatile bool inTrack = false;
 static volatile bool isSwitching = false;
 
 //spc
+struct fd audioHandleFD;
 static uint8_t *spcfile = NULL;
 static u32 spcLength = 0;
 
@@ -158,7 +158,6 @@ void decodeFlacFrame();
 void seekFlac();
 void sidDecode();
 void nsfDecode();
-void spcDecode();
 void sndhDecode();
 void gbsDecode();
 void mp3Decode();
@@ -502,14 +501,16 @@ void updateStreamCustomDecoder(u32 srcFrmt){
 			//checkKeys();
 		}
 		break;
+		/*
 		case SRC_SPC:{
 			swapAndSend(ARM7COMMAND_SOUND_COPY);
 			
 			//checkKeys();			
-			spcDecode();
+			//spcDecode();
 			//checkKeys();
 		}
 		break;
+		*/
 		case SRC_SNDH:{
 			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 	
 			TGDSIPC->soundIPC.channels = 2;
@@ -727,7 +728,7 @@ void freeSoundCustomDecoder(u32 srcFrmt){
 			
 			spcfile = NULL;
 			
-			spcFree();
+			//spcFree(); todo
 			
 			break;
 		case SRC_SNDH:		
@@ -950,17 +951,6 @@ void nsfDecode()
     GetSamples(&tBuffer[3*NSF_OUT_SIZE/4],NSF_OUT_SIZE/4);
 	
 	inTrack = false;
-}
-
-void spcDecode()
-{
-	spcPlay(lBuffer, rBuffer);
-	//checkKeys();
-	spcPlay(lBuffer + (SPC_OUT_SIZE >> 2), rBuffer + (SPC_OUT_SIZE >> 2));
-	//checkKeys();
-	spcPlay(lBuffer + (SPC_OUT_SIZE >> 1), rBuffer + (SPC_OUT_SIZE >> 1));
-	//checkKeys();
-	spcPlay(lBuffer + ((SPC_OUT_SIZE >> 2) * 3), rBuffer + ((SPC_OUT_SIZE >> 2) * 3));
 }
 
 void sndhDecode()
@@ -2209,33 +2199,11 @@ bool initSoundStreamUser(char * fName, char * ext){
 	
 	if(strcmp(ext, ".spc") == 0)
 	{
-		// SNES audio file
-		
-		internalCodecType = soundData.sourceFmt = SRC_SPC;
-		soundData.bufLoc = 0;
-		
-		FILE *df = fopen(fName,"r");
-		spcLength = flength(df);
-		
-		spcfile = (uint8_t *)trackMalloc(spcLength, "spc file temporary");
-		fread(spcfile, 1, spcLength, df);
-		fclose(df);
-		
-		if(!spcInit(spcfile, spcLength))
-		{
-			trackFree(spcfile);
-			return false;
-		}
-		
-		soundData.channels = 2;
-		setSoundInterpolation(2);
-		setSoundFrequency(SPC_FREQ);	
-		setSoundLength(SPC_OUT_SIZE);
-		
-		mallocData(SPC_OUT_SIZE);
-		
-		spcDecode();
-		startSound9();
+		//ARM7 SPC playback 
+		char fileName[256];
+		memset(fileName, 0, sizeof(fileName));
+		strcpy(fileName, fName);
+		u32 returnStatus = setupDirectVideoFrameRender(&audioHandleFD, (char*)&fileName[2]);
 		
 		return true;
 	}

@@ -180,6 +180,7 @@ extern void checkEndSound();
 extern u32 getSoundChannels();
 extern int internalCodecType;
 extern void copyData();
+extern struct fd audioHandleFD;
 
 #ifdef __cplusplus
 }

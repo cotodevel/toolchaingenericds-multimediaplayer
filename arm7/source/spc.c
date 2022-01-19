@@ -29,8 +29,8 @@
 #include <string.h>
 #include <stdint.h>
 #include "spc.h"
-#include "sound.h"
-#include "misc.h"
+#include "soundTGDS.h"
+//#include "misc.h"
 
 /* rather than comment out asserts, just define NDEBUG */
 #define NDEBUG
@@ -721,10 +721,10 @@ static char tmpYear[20];
 
 bool spcInit(uint8_t* buffer, u32 buffersize)
 {
-	ram = (SNESram *)trackMalloc(sizeof(SNESram), "snes ram");
+	ram = (SNESram *)TGDSARM7Malloc(sizeof(SNESram));
 
 #if SPC_BRRCACHE
-	BRRcache = (int16_t *)trackMalloc((0x20000 + 32) * sizeof(int16_t), "snes brrcache");
+	BRRcache = (int16_t *)TGDSARM7Malloc((0x20000 + 32) * sizeof(int16_t));
 #endif
 
     memcpy(spc_emu.cycle_table, cycle_table, sizeof cycle_table );
@@ -735,12 +735,13 @@ bool spcInit(uint8_t* buffer, u32 buffersize)
 	
 	LoadID666(buffer+0x2e);
 	
-	if(ID666.year != 0)
-		sprintf(tmpYear, "%d", ID666.year);
-	else
-		strcpy(tmpYear, "");
-	
-	samples = (int32_t *)trackMalloc(WAV_CHUNK_SIZE*2*sizeof(int32_t), "spc render buffer");
+	if(ID666.year != 0){
+		//sprintf(tmpYear, "%d", ID666.year);
+	}
+	else{
+		//strcpy(tmpYear, "");
+	}
+	samples = (int32_t *)TGDSARM7Malloc(WAV_CHUNK_SIZE*2*sizeof(int32_t));
 	
 	return true;
 }
@@ -766,18 +767,18 @@ bool spcPlay(s16 *lBuf, s16 *rBuf)
 void spcFree()
 {
 	if(samples)
-		trackFree(samples);
+		TGDSARM7Free(samples);
 	
 	samples = NULL;
 	
 	if(ram)
-		trackFree(ram);
+		TGDSARM7Free(ram);
 	
 	ram = NULL;
 
 #if SPC_BRRCACHE	
 	if(BRRcache)
-		trackFree(BRRcache);
+		TGDSARM7Free(BRRcache);
 
 	BRRcache = NULL;
 #endif
@@ -802,3 +803,55 @@ char *getSPCMeta(int which)
 	return NULL;
 }
 
+void spcDecode(){
+	spcPlay(lBufferARM7, rBufferARM7);
+	//checkKeys();
+	spcPlay(lBufferARM7 + (SPC_OUT_SIZE >> 2), rBufferARM7 + (SPC_OUT_SIZE >> 2));
+	//checkKeys();
+	spcPlay(lBufferARM7 + (SPC_OUT_SIZE >> 1), rBufferARM7 + (SPC_OUT_SIZE >> 1));
+	//checkKeys();
+	spcPlay(lBufferARM7 + ((SPC_OUT_SIZE >> 2) * 3), rBufferARM7 + ((SPC_OUT_SIZE >> 2) * 3));
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void timerAudioCallback(){
+	
+	s16 *bufL, *bufR;
+	
+	if(sndCursor == 0){
+		memcpy((void *)strpcmL0 + ((SPC_OUT_SIZE*1)>>1), (const void *)strpcmL1 + ((SPC_OUT_SIZE*1)>>1), SPC_OUT_SIZE>>1); 
+		memcpy((void *)strpcmR0 + ((SPC_OUT_SIZE*1)>>1), (const void *)strpcmR1 + ((SPC_OUT_SIZE*1)>>1), SPC_OUT_SIZE>>1); 
+		
+		spcDecode();
+		
+		bufL = strpcmL1;
+		bufR = strpcmR1;
+		
+		
+	}
+	else{
+		memcpy((void *)strpcmL1 + ((SPC_OUT_SIZE*0)>>1), (const void *)strpcmL0 + ((SPC_OUT_SIZE*1)>>1), SPC_OUT_SIZE>>1); 
+		memcpy((void *)strpcmR1 + ((SPC_OUT_SIZE*0)>>1), (const void *)strpcmR0 + ((SPC_OUT_SIZE*1)>>1), SPC_OUT_SIZE>>1); 
+		
+		spcDecode();
+		
+		bufL = strpcmL0;
+		bufR = strpcmR0;
+		
+	}
+	
+	// Left channel
+	SCHANNEL_SOURCE((sndCursor << 1)) = (uint32)bufL;
+	SCHANNEL_CR((sndCursor << 1)) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0) | SOUND_16BIT;
+	
+	// Right channel
+	SCHANNEL_SOURCE((sndCursor << 1) + 1) = (uint32)bufR;
+	SCHANNEL_CR((sndCursor << 1) + 1) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0x3FF) | SOUND_16BIT;
+	
+	sndCursor = 1 - sndCursor;
+}

@@ -2,7 +2,9 @@
 
 NTR/TWL SDK: TGDS1.65
 
-master: Development branch. Use TGDS1.65: branch for stable features.
+TGDS1.65-ARM7SPCSlow branch. Use TGDS1.65: branch for stable features.
+
+Notes: Added ARM7 SPC Player, still VERY VERY slow and there's no point in trying to make it faster.
 
 This is the ToolchainGenericDS-audioplayer project:
 

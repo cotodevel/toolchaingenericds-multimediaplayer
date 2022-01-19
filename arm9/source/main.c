@@ -511,8 +511,13 @@ static inline void handleInput(){
 	
 	
 	if (keysDown() & KEY_TOUCH){
+		
+		/*
 		u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
 		setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
+		*/
+		SendFIFOWords(FIFO_TGDSAUDIOPLAYER_STOPSOUND, 0xFF);
+			
 		scanKeys();
 		while(keysDown() & KEY_TOUCH){
 			scanKeys();
@@ -882,7 +887,7 @@ __attribute__ ((optnone))
 int main(int argc, char **argv) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
-	bool project_specific_console = false;	//set default console or custom console: custom console
+	bool project_specific_console = true;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
 	GUI_clear();
 	

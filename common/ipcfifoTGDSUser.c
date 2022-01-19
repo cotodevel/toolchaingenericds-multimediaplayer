@@ -38,7 +38,6 @@ USA
 
 #include "main.h"
 #include "spifwTGDS.h"
-#include "click_raw.h"
 #include "wifi_arm7.h"
 
 #endif
@@ -61,10 +60,41 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
+	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (struct sIPCSharedTGDSSpecific*)(TGDSIPCUserStartAddress);
+	return sIPCSharedTGDSSpecificInst;
+}
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 	switch (cmd1) {
 		//NDS7: 
 		#ifdef ARM7
+		
+		case(FIFO_TGDSAUDIOPLAYER_STOPSOUND):{
+			playerStopARM7();
+		}
+		break;
+		
+		case(FIFO_DIRECTVIDEOFRAME_SETUP):{
+			handleARM7FSSetup();
+		}
+		break;
+		
+		case(FIFO_DIRECTVIDEOFRAME_RENDER):{
+			handleARM7FSRender();
+		}
+		break;
+		
+		
 		case(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ):{
 			REG_DISPSTAT = (DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
 			REG_IE = REG_IE | (IRQ_VBLANK|IRQ_VCOUNT);
@@ -100,15 +130,44 @@ void disableFastMode(){
 }
 #endif
 
+
+#ifdef ARM9
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+u32 setupDirectVideoFrameRender(struct fd * videoStructFD, char * videoStructFDFilename){
+	
+	//Memory Setup: ARM7 TGDS 64K = 0x03800000 ~ 0x03810000. TGDS Sound Streaming code: Disabled, ARM7 has 32K WRAM now
+	WRAM_CR = WRAM_0KARM9_32KARM7;
+	
+	struct sIPCSharedTGDSSpecific* sharedIPC = getsIPCSharedTGDSSpecific();
+	char * filename = (char*)&sharedIPC->filename[0];
+	strcpy(filename, videoStructFDFilename);
+	
+	uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
+	fifomsg[33] = (uint32)0xFFFFCCAA;
+	SendFIFOWords(FIFO_DIRECTVIDEOFRAME_SETUP, 0xFF);
+	while(fifomsg[33] == (uint32)0xFFFFCCAA){
+		swiDelay(1);
+	}
+	return fifomsg[33];
+}
+#endif
+
+
 //Libutils setup: TGDS project uses Soundstream, WIFI, ARM7 malloc, etc.
 void setupLibUtils(){
-	//libutils:
+	//libutils: uses TGDS sound stream + ARM7 malloc, but no wifi 
 	
 	//Stage 0
 	#ifdef ARM9
 	initializeLibUtils9(
-		(HandleFifoNotEmptyWeakRefLibUtils_fn)&libUtilsFIFONotEmpty, //ARM7 & ARM9
-		(timerWifiInterruptARM9LibUtils_fn)&Timer_50ms, //ARM9 
+		NULL, //ARM7 & ARM9
+		NULL, //ARM9 
 		(SoundSampleContextEnableARM7LibUtils_fn)&EnableSoundSampleContext, // ARM7 & ARM9: void EnableSoundSampleContext(int SndSamplemode)
 		(SoundSampleContextDisableARM7LibUtils_fn)&DisableSoundSampleContext,	//ARM7 & ARM9: void DisableSoundSampleContext()
 		(SoundStreamStopSoundStreamARM9LibUtils_fn)&stopSoundStream,	//ARM9: bool stopSoundStream(struct fd * tgdsStructFD1, struct fd * tgdsStructFD2, int * internalCodecType)
@@ -119,9 +178,9 @@ void setupLibUtils(){
 	//Stage 1
 	#ifdef ARM7
 	initializeLibUtils7(
-		(HandleFifoNotEmptyWeakRefLibUtils_fn)&libUtilsFIFONotEmpty, //ARM7 & ARM9
-		(wifiUpdateVBLANKARM7LibUtils_fn)&Wifi_Update, //ARM7
-		(wifiInterruptARM7LibUtils_fn)&Wifi_Interrupt,  //ARM7
+		NULL, //ARM7 & ARM9
+		NULL, //ARM7
+		NULL, //ARM7
 		(SoundStreamTimerHandlerARM7LibUtils_fn)&TIMER1Handler, //ARM7: void TIMER1Handler()
 		(SoundStreamStopSoundARM7LibUtils_fn)&stopSound, 	//ARM7: void stopSound()
 		(SoundStreamSetupSoundARM7LibUtils_fn)&setupSound,	//ARM7: void setupSound()
