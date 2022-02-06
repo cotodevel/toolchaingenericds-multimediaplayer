@@ -562,8 +562,8 @@ static inline void handleInput(){
 	if (keysDown() & KEY_R){
 		int lstSize = getCurrentDirectoryCount(activePlayListRead);
 		curFileIndex++;
-		if(curFileIndex >= (lstSize - 1)){
-			curFileIndex = (lstSize - 1);
+		if(curFileIndex >= lstSize){
+			curFileIndex = lstSize;
 		}
 		strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, activePlayListRead)->fd_namefullPath);		
 		
