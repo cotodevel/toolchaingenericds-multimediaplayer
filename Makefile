@@ -20,7 +20,7 @@
 
 #ToolchainGenericDS specific: 
 export SOURCE_MAKEFILE7 = default
-export SOURCE_MAKEFILE9 = custom
+export SOURCE_MAKEFILE9 = default
 
 #Shared
 include $(DEFAULT_GCC_PATH)/Makefile.basenewlib
