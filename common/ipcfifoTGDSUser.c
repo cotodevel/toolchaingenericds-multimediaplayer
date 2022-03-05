@@ -109,8 +109,6 @@ void setupLibUtils(){
 	initializeLibUtils9(
 		(HandleFifoNotEmptyWeakRefLibUtils_fn)&libUtilsFIFONotEmpty, //ARM7 & ARM9
 		(timerWifiInterruptARM9LibUtils_fn)&Timer_50ms, //ARM9 
-		(SoundSampleContextEnableARM7LibUtils_fn)&EnableSoundSampleContext, // ARM7 & ARM9: void EnableSoundSampleContext(int SndSamplemode)
-		(SoundSampleContextDisableARM7LibUtils_fn)&DisableSoundSampleContext,	//ARM7 & ARM9: void DisableSoundSampleContext()
 		(SoundStreamStopSoundStreamARM9LibUtils_fn)&stopSoundStream,	//ARM9: bool stopSoundStream(struct fd * tgdsStructFD1, struct fd * tgdsStructFD2, int * internalCodecType)
 		(SoundStreamUpdateSoundStreamARM9LibUtils_fn)&updateStream //ARM9: void updateStream() 
 	);
@@ -125,9 +123,6 @@ void setupLibUtils(){
 		(SoundStreamTimerHandlerARM7LibUtils_fn)&TIMER1Handler, //ARM7: void TIMER1Handler()
 		(SoundStreamStopSoundARM7LibUtils_fn)&stopSound, 	//ARM7: void stopSound()
 		(SoundStreamSetupSoundARM7LibUtils_fn)&setupSound,	//ARM7: void setupSound()
-		(SoundSampleContextInitARM7LibUtils_fn)&initSoundSampleContext, //ARM7: initSoundSampleContext()
-		(SoundSampleContextEnableARM7LibUtils_fn)&EnableSoundSampleContext, // ARM7 & ARM9: void EnableSoundSampleContext(int SndSamplemode)
-		(SoundSampleContextDisableARM7LibUtils_fn)&DisableSoundSampleContext,	//ARM7 & ARM9: void DisableSoundSampleContext()
 		(initMallocARM7LibUtils_fn)&initARM7Malloc //ARM7: void initARM7Malloc(u32 ARM7MallocStartaddress, u32 ARM7MallocSize);
 	);
 	#endif

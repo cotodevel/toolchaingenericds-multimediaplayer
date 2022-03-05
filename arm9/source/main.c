@@ -512,7 +512,7 @@ static inline void handleInput(){
 	
 	if (keysDown() & KEY_TOUCH){
 		u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
-		setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample
+		//setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample //todo: use writeARM7SoundChannelFromSource() instead
 		scanKeys();
 		while(keysDown() & KEY_TOUCH){
 			scanKeys();
@@ -932,7 +932,6 @@ int main(int argc, char **argv) {
 	
 	MikMod_RegisterAllDrivers();
 	MikMod_RegisterAllLoaders();
-	DisableSoundSampleContext();
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
 	REG_IE = REG_IE & ~(IRQ_TIMER3|IRQ_VCOUNT); //disable VCOUNT and WIFI timer
