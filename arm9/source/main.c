@@ -477,7 +477,14 @@ static inline int getRand(int size){
 	return getRand(size);
 }
 
-static inline void handleInput(){
+//ToolchainGenericDS-LinkedModule User implementation: Called if TGDS-LinkedModule fails to reload ARM9.bin from DLDI.
+char args[8][MAX_TGDSFILENAME_LENGTH];
+char *argvs[8];
+int TGDSProjectReturnFromLinkedModule() {
+	return -1;
+}
+
+void handleInput(){
 	if(pendingPlay == true){
 		soundLoaded = loadSound((char*)curChosenBrowseFile);
 		pendingPlay = false;
@@ -606,8 +613,27 @@ static inline void handleInput(){
 			scanKeys();
 			while(keysDown() & KEY_START){
 				scanKeys();
-				
 			}
+			
+			//handle TVS files only when pressing Start
+			char tmpName[256];
+			char ext[256];
+			strcpy(tmpName, curChosenBrowseFile);
+			separateExtension(tmpName, ext);
+			strlwr(ext);
+			//TGDS-LinkedModule: TGDS-videoplayer's TVS file
+			if(strncmp(ext,".tvs", 4) == 0){
+				int argCount = 3;	
+				strcpy(&args[0][0], TGDSPROJECTNAME);	//Arg0: Parent TGDS Project name
+				strcpy(&args[1][0], "0:/TGDS-lm-videoplayer.bin");	//Arg1: self TGDS-LinkedModule filename
+				strcpy(&args[2][0], curChosenBrowseFile);	//Arg1: self TGDS-LinkedModule filename
+				int i = 0;
+				for(i = 0; i < argCount; i++){
+					argvs[i] = (char*)&args[i][0];
+				}
+				TGDSProjectRunLinkedModule("0:/TGDS-lm-videoplayer.bin", argCount, argvs, TGDSPROJECTNAME, 0, 0, 0, 0);
+			}
+			
 		}
 		else{
 			clrscr();
@@ -863,13 +889,6 @@ void menuShow(){
 		printf("Playing: %s", curChosenBrowseFile);
 	}
 	printf("Current Volume: %d", (int)getVolume());
-}
-
-//ToolchainGenericDS-LinkedModule User implementation: Called if TGDS-LinkedModule fails to reload ARM9.bin from DLDI.
-char args[8][MAX_TGDSFILENAME_LENGTH];
-char *argvs[8];
-int TGDSProjectReturnFromLinkedModule() {
-	return -1;
 }
 
 __attribute__((section(".itcm")))

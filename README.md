@@ -4,7 +4,7 @@ NTR/TWL SDK: TGDS1.65
 
 master: Development branch. Use TGDS1.65: branch for stable features.
 
-This is the ToolchainGenericDS-audioplayer project:
+This is the ToolchainGenericDS-multimediaplayer project:
 
 Compile Toolchain: To compile this project you will need to follow the steps at https://bitbucket.org/Coto88/toolchaingenericds : Then simply extract the project somewhere.
 
@@ -14,11 +14,20 @@ After compiling, run the example in NDS.
 
 Project Specific description: 
 
-TGDS Audio Player, supported formats are:
+TGDS Multimedia Player, supported formats are:
 -	IMA-ADPCM (Intel)/WAV/MP3/ (Up to 192K)AAC - M4A - M4B/Ogg/FLAC/NSF/SPC/GBS/+ others working.  Streaming mp3, ogg and acc is stripped since it´s 2019 and the DS does not support HTTPS (TLS1.2+)
+-	.TVS video + audio file support: See https://bitbucket.org/Coto88/toolchaingenericds-videoplayer for compatible multimedia files conversion 
+
+NTR Mode Usage:
+    - copy all files from /release/arm7dldi-ntr folder to SD:/ root . If it prompts for overwrite: Yes to All. 
+    - Run the NDS file
+	
+TWL Mode Usage:
+    - copy all files from /release/arm7dldi-twl folder to SD:/ root . If it prompts for overwrite: Yes to All. 
+    - Now open TWiLightMenu (you must set it up first, so you can run TWL mode apps), and run the TWL file. 
 
 Buttons:
-(Start): File Browser -> (A) to play audio file
+(Start): File Browser -> (A) to play multimedia file
 (L): Recent Playlist 
 (R): Random audio file playback
 (B): Stop audio playback 
@@ -27,13 +36,11 @@ Buttons:
 (D-PAD: Up): Volume + 
 (Select): this menu
 
-/release folder has the latest binary precompiled for your convenience.
-
 Latest stable release:
-https://bitbucket.org/Coto88/toolchaingenericds-audioplayer/get/TGDS1.65.zip
+https://bitbucket.org/Coto88/toolchaingenericds-multimediaplayer/get/TGDS1.65.zip
 
 Notes:
- 
+ - TWL mode todo. Only NTR mode implemented now. 
  - DLDI patch the file manually if it isn't detected by the loader.
  - Be careful to NOT to set the volume too high! Prevent hearing loss!
 
