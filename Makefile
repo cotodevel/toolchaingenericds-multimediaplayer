@@ -27,7 +27,7 @@ include $(DEFAULT_GCC_PATH)/Makefile.basenewlib
 
 #Custom
 # Project Specific
-export TGDSPROJECTNAME = ToolchainGenericDS-audioplayer
+export TGDSPROJECTNAME = ToolchainGenericDS-multimediaplayer
 export EXECUTABLE_FNAME = $(TGDSPROJECTNAME).nds
 export EXECUTABLE_VERSION_HEADER =	0.1
 export EXECUTABLE_VERSION =	"$(EXECUTABLE_VERSION_HEADER)"
