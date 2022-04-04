@@ -37,7 +37,7 @@ export ELF_ARM7 = arm7.elf
 export ELF_ARM9 = arm9.elf
 #NTR TGDS7 & TGDS9
 export TARGET_LIBRARY_NAME_7 = 
-export TARGET_LIBRARY_NAME_9 = libffmpegFLAC
+export TARGET_LIBRARY_NAME_9 = emulated
 export TARGET_LIBRARY_FILE_7	=	lib$(TARGET_LIBRARY_NAME_7).a
 export TARGET_LIBRARY_FILE_9	=	lib$(TARGET_LIBRARY_NAME_9).a
 export TARGET_LIBRARY_LIBNAME_7	=	l$(TARGET_LIBRARY_NAME_7)
@@ -49,7 +49,12 @@ export TARGET_LIBRARY_LIBNAME_9	=	l$(TARGET_LIBRARY_NAME_9)
 export DIRS_ARM9_SRCLIB = data/	\
 			build/	\
 			/	\
-			src/	\
+			../emulated/	\
+			../emulated/api68/	\
+			../emulated/emu68/	\
+			../emulated/file68/	\
+			../emulated/io68/	\
+			../emulated/gbs/	\
 			../tremor/	\
 			$(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_MAKEFILES_SRC)/templateCode/
 			
@@ -58,8 +63,13 @@ export DIRS_ARM9_HEADERLIB = ../../../templateCode/data/arm9/	\
 			data/	\
 			build/	\
 			/	\
-			src/	\
 			../	\
+			../emulated/	\
+			../emulated/api68/	\
+			../emulated/emu68/	\
+			../emulated/file68/	\
+			../emulated/io68/	\
+			../emulated/gbs/	\
 			../aac/	\
 			../aac/pub/	\
 			../aac/real/	\
@@ -102,9 +112,9 @@ d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_
 
 #ARM9 specific definitions. -fno-common so we force initialized data to rodata
 MAPFILE = $(DIR_ARM9).map
-AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_AS_COMPILER_FLAGS_9)		$(GLOBAL_AS_COMPILER_FLAGS)	
-CC_ASFLAGS		=	-marm	-Os	-mthumb-interwork	-DARM9	-Dappver='$(EXECUTABLE_VERSION)'	-fno-exceptions	-nostdlib	-DASM_OPCODES	-DBUILD_STANDALONE	
-CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	-fno-rtti	
+AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_AS_COMPILER_FLAGS_9)		$(GLOBAL_AS_COMPILER_FLAGS)
+CC_FLAGS		=	-march=armv5t	-mthumb-interwork	-mfloat-abi=soft	-Ofast	-marm	-Wall -ftree-vectorize	-ffast-math	-FPIC	-DNDS	-DARM9	-DNTRMODE	-fno-exceptions		-ffunction-sections	-fdata-sections	-DTGDSBinVersion='$(TOOLCHAIN_GENERIC_DS_VER)'	-DNOCRYPT
+CPP_FLAGS		=	$(CC_FLAGS)	
 BUILD			= 	$(BUILD_ARM9)
 DIR_SRC			=	$(DIRS_ARM9_SRCLIB)
 ################################################################################################

@@ -20,7 +20,7 @@
 
 #ToolchainGenericDS specific: 
 export SOURCE_MAKEFILE7 = default
-export SOURCE_MAKEFILE9 = default
+export SOURCE_MAKEFILE9 = custom
 
 #Shared
 include $(DEFAULT_GCC_PATH)/Makefile.basenewlib
@@ -81,27 +81,6 @@ export DIRS_ARM9_SRC = data/	\
 			source/interrupts/	\
 			source/gui/	\
 			source/TGDSMemoryAllocator/	\
-			source/aac/	\
-			source/aac/pub/	\
-			source/aac/real/	\
-			source/aac/real/asm/	\
-			source/libffmpegFLAC/	\
-			source/libffmpegFLAC/src/	\
-			source/mp4ff/	\
-			source/mad/	\
-			source/mikmod/	\
-			source/mikmod/drivers/	\
-			source/mikmod/include/	\
-			source/mikmod/loaders/	\
-			source/mikmod/mmio/	\
-			source/mikmod/playercode/	\
-			source/emulated/	\
-			source/emulated/api68/	\
-			source/emulated/emu68/	\
-			source/emulated/file68/	\
-			source/emulated/io68/	\
-			source/emulated/gbs/	\
-			source/tremor/	\
 			../common/	\
 			../common/templateCode/source/	\
 			../common/templateCode/data/arm9/	
