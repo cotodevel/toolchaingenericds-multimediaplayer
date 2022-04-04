@@ -133,12 +133,12 @@ _start:
 	bl initHardware
 	
 	ldr	lr, =exception_sysexit
-	ldr r0,=(0x02300000 - (0x8000  + 0x1000))
+	ldr r0,=(0x02300000 - (0x8000  + 0x1000))	@TGDS_LM_CTX
 	blx getArgcFromTGDSLinkedModule
 	mov r2,r0	@TGDS-LinkedModule´s argc
 	
 	push {r2}
-	ldr r0,=(0x02300000 - (0x8000  + 0x1000))
+	ldr r0,=(0x02300000 - (0x8000  + 0x1000))	@TGDS_LM_CTX
 	blx getArgvFromTGDSLinkedModule
 	mov r3,r0	@TGDS-LinkedModule´s argv
 	pop {r2}

@@ -87,7 +87,7 @@ void closeSoundUser(){
 }
 
 static inline void menuShow(){
-	struct TGDS_Linked_Module * TGDSLinkedModuleCtx = (struct TGDS_Linked_Module *)((int)0x02300000 - (0x8000  + 0x1000));
+	struct TGDS_Linked_Module * TGDSLinkedModuleCtx = TGDS_LM_CTX;
 	clrscr();
 	printf("     ");
 	printf("     ");
@@ -139,7 +139,7 @@ void TGDSProjectReturnFromLinkedModuleDeciderStub() {	//TGDS-Linked Module imple
 	memset(thisArgv, 0, sizeof(thisArgv));
 	strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
 	strcpy(&thisArgv[1][0], fnameRead);	//Arg1:	NDS Binary reloaded
-	strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
+	strcpy(&thisArgv[2][0], curChosenBrowseFile);	//Arg2: NDS Binary ARG0	//OK //strcpy(&thisArgv[2][0], "0:/hello-o-abc1.bin");					
 	addARGV(3, (char*)&thisArgv);
 	if(TGDSMultibootRunNDSPayload(fnameRead) == false){  //Should fail it returns false. (Audio track)
 		printf("boot failed");
@@ -206,6 +206,7 @@ void playTVSFile(char * tvsFile){
 		
 		setBacklight(POWMAN_BACKLIGHT_TOP_BIT);				
 		TGDSVideoPlayback = true;
+		strcpy(curChosenBrowseFile, tvsFile);
 	}
 	else{
 		TGDSVideoPlayback = false;
@@ -257,7 +258,7 @@ int main(int argc, char **argv) {
 	REG_IME = 1;
 	
 	//Generate TGDS-LM context
-	struct TGDS_Linked_Module * TGDSLinkedModuleCtx = (struct TGDS_Linked_Module *)((int)0x02300000 - (0x8000  + 0x1000));
+	struct TGDS_Linked_Module * TGDSLinkedModuleCtx = TGDS_LM_CTX;
 	TGDSLinkedModuleCtx->returnAddressTGDSLinkedModule = (u32)&TGDSProjectReturnFromLinkedModuleDeciderStub;	//Implemented when TGDS-LM boots
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
