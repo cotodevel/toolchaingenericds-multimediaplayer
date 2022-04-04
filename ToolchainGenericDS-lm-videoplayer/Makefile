@@ -120,8 +120,8 @@ endif
 	$(MAKE)	-R	-C	$(DIR_ARM9)/
 	
 $(EXECUTABLE_FNAME)	:	compile
-	mv $(CURDIR)/arm9/$(BINSTRIP_RULE_9) $(CURDIR)
-	mv $(CURDIR)/arm9/$(TGDSPROJECTNAME)_twl.bin $(CURDIR)
+	mv $(CURDIR)/arm9/$(BINSTRIP_RULE_9) ../release/arm7dldi-ntr/
+	mv $(CURDIR)/arm9/$(TGDSPROJECTNAME)_twl.bin ../release/arm7dldi-twl/
 	-@echo '$(TGDSPROJECTNAME) (NTR/TWL) emitted.'
 	
 #---------------------------------------------------------------------------------
@@ -142,7 +142,7 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/Makefile
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
-	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME)_twl.bin	$(CURDIR)/common/templateCode/ $(CURDIR)/$(BINSTRIP_RULE_9)
+	-@rm -fr $(EXECUTABLE_FNAME)	../release/arm7dldi-ntr/$(TGDSPROJECTNAME).bin	../release/arm7dldi-twl/$(TGDSPROJECTNAME)_twl.bin	$(CURDIR)/common/templateCode/ $(CURDIR)/$(BINSTRIP_RULE_9)
 
 rebase:
 	git reset --hard HEAD

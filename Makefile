@@ -160,6 +160,7 @@ endif
 ifeq ($(SOURCE_MAKEFILE9),default)
 	cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC9_NOFPIC)	$(CURDIR)/$(DIR_ARM9)
 endif
+	$(MAKE)	-R	-C	ToolchainGenericDS-lm-videoplayer/
 	$(MAKE)	-R	-C	$(DIR_ARM9)/
 
 $(EXECUTABLE_FNAME)	:	compile
@@ -180,6 +181,7 @@ ifeq ($(SOURCE_MAKEFILE7),default)
 	-@rm -rf $(CURDIR)/$(DIR_ARM7)/Makefile
 endif
 #--------------------------------------------------------------------	
+	$(MAKE)	clean	-C	ToolchainGenericDS-lm-videoplayer/
 	$(MAKE)	clean	-C	$(DIR_ARM9)/
 	$(MAKE) clean	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/
 ifeq ($(SOURCE_MAKEFILE9),default)
