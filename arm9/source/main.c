@@ -870,9 +870,10 @@ void drawMandel(double factor){
 void menuShow(){
 	clrscr();
 	printf("                              ");
-	printf("Audio Formats: IMA-ADPCM (Intel)/WAV/MP3/AAC/Ogg");
-	printf("/FLAC/NSF/SPC/GBS/+ others");
-	printf("                              ");
+	printf("%s >%d", TGDSPROJECTNAME, TGDSPrintfColor_Yellow);
+	printf("Formats: ");
+	printf("IMA-ADPCM (Intel)/WAV/MP3/AAC/Ogg >%d", TGDSPrintfColor_Yellow);
+	printf("/FLAC/NSF/SPC/GBS/.TVS VideoStream >%d", TGDSPrintfColor_Yellow);
 	printf("(Start): File Browser -> (A) to play audio file");
 	printf("(L): Recent Playlist ");
 	printf("(R): Random audio file playback ");
@@ -881,7 +882,6 @@ void menuShow(){
 	printf("(D-PAD: Down): Volume - ");
 	printf("(D-PAD: Up): Volume + ");
 	printf("(Select): this menu");
-	
 	if(soundLoaded == false){
 		printf("Playback: Stopped.");
 	}
