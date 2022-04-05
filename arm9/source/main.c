@@ -625,13 +625,20 @@ void handleInput(){
 			if(strncmp(ext,".tvs", 4) == 0){
 				int argCount = 3;	
 				strcpy(&args[0][0], TGDSPROJECTNAME);	//Arg0: Parent TGDS Project name
-				strcpy(&args[1][0], "0:/TGDS-lm-videoplayer.bin");	//Arg1: self TGDS-LinkedModule filename
-				strcpy(&args[2][0], curChosenBrowseFile);	//Arg1: self TGDS-LinkedModule filename
+				//Arg1: self TGDS-LinkedModule filename: NTR/TWL
+				if(__dsimode == true){
+					strcpy(&args[1][0], "0:/TGDS-lm-videoplayer_twl.bin");
+				}
+				else{
+					strcpy(&args[1][0], "0:/TGDS-lm-videoplayer.bin");	
+				}
+				strcpy(tmpName, &args[1][0]);
+				strcpy(&args[2][0], curChosenBrowseFile);	//Arg2: .TVS File chosen
 				int i = 0;
 				for(i = 0; i < argCount; i++){
 					argvs[i] = (char*)&args[i][0];
 				}
-				TGDSProjectRunLinkedModule("0:/TGDS-lm-videoplayer.bin", argCount, argvs, TGDSPROJECTNAME, 0, 0, 0, 0);
+				TGDSProjectRunLinkedModule(tmpName, argCount, argvs, TGDSPROJECTNAME, 0, 0, 0, 0);
 			}
 			
 		}
