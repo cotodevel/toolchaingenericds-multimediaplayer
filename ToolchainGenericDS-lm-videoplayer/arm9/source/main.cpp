@@ -62,6 +62,7 @@ USA
 
 //TGDS-target project ARM7 NTR/TWL payloads
 #include "arm7_ntr.h" 
+#include "arm7_twl.h" 
 
 ////////////////These payloads are prebuilt from ToolchainGenericDS-multiboot project. 
 #include "arm7bootldr.h"
@@ -286,7 +287,9 @@ int main(int argc, char **argv) {
 			}
 			//TWL ARM7 payload
 			else{
-				//todo
+				TGDS_LM_ARM7LZSSPayloadSize = TGDSLinkedModuleCtx->TGDS_LM_ARM7PAYLOADLZSSSize = arm7_twl_size;
+				memcpy ((void *)TGDS_LM_ARM7LZSSPayloadSourceBuffer, (const void *)&arm7_twl[0], TGDS_LM_ARM7LZSSPayloadSize);
+				coherent_user_range_by_size((u32)TGDS_LM_ARM7LZSSPayloadSourceBuffer, TGDS_LM_ARM7LZSSPayloadSize);
 			}
 			TGDSLinkedModuleCtx->arm7EntryAddress = (u32)0x03800000;
 			TGDSLinkedModuleCtx->arm7BootCodeSize = (int)(*(unsigned int *)TGDS_LM_ARM7LZSSPayloadSourceBuffer >> 8);

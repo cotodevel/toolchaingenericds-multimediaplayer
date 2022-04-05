@@ -40,8 +40,7 @@ Latest stable release:
 https://bitbucket.org/Coto88/toolchaingenericds-multimediaplayer/get/TGDS1.65.zip
 
 Notes:
- - TWL mode todo. Only NTR mode implemented now. 
- - DLDI patch the file manually if it isn't detected by the loader.
+ - NTR Mode: DLDI patch the file manually if it isn't detected by the loader. TWL Mode doesn't need it.
  - Be careful to NOT to set the volume too high! Prevent hearing loss!
 
 Many thanks to DSOrganize and it's author(s), since the audio player code was taken from there... except there is no memory issues this time to play audio files at all!!!!
