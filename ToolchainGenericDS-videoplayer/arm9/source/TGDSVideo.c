@@ -203,7 +203,7 @@ int TGDSVideoRender(){
 				TGDSVideoPlayback = false;
 				
 				//Exit inmediately to TGDS-LM Caller on videoplayback end
-				leaveTGDSLMNow();
+				TGDSProjectReturnToCaller(callerNDSBinary);
 			}
 		}
 	}

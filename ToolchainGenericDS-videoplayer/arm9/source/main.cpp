@@ -60,14 +60,6 @@ USA
 #include "lz77.h"
 #include "interrupts.h"
 
-//TGDS-target project ARM7 NTR/TWL payloads
-#include "arm7_ntr.h" 
-#include "arm7_twl.h" 
-
-////////////////These payloads are prebuilt from ToolchainGenericDS-multiboot project. 
-#include "arm7bootldr.h"
-#include "arm7bootldr_twl.h"
-
 struct FileClassList * menuIteratorfileClassListCtx = NULL;
 char curChosenBrowseFile[256+1];
 char globalPath[MAX_TGDSFILENAME_LENGTH+1];
@@ -109,18 +101,11 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-void TGDSProjectReturnFromLinkedModuleDeciderStub() {	//TGDS-Linked Module implementation
-	struct TGDS_Linked_Module * TGDSLinkedModuleCtx = (struct TGDS_Linked_Module *)((int)0x02300000 - (0x8000  + 0x1000));
-	char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-	memset(thisArgv, 0, sizeof(thisArgv));
-	strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	NDS Binary loaded
-	strcpy(&thisArgv[1][0], (char*)&TGDSLinkedModuleCtx->TGDSMainAppName);					//Arg1: ARGV0
-	addARGV(2, (char*)&thisArgv);
-	
+void TGDSProjectReturnToCaller(char * NDSPayload){	//TGDS-Linked Module implementation
 	char fnameRead[256];
 	memset(fnameRead, 0, sizeof(fnameRead));
 	strcpy(fnameRead, "0:/");
-	strcat(fnameRead, TGDSLinkedModuleCtx->TGDSMainAppName);
+	strcat(fnameRead, NDSPayload);
 	
 	if(__dsimode == true){
 		strcat(fnameRead, ".srl");
@@ -129,52 +114,23 @@ void TGDSProjectReturnFromLinkedModuleDeciderStub() {	//TGDS-Linked Module imple
 		strcat(fnameRead, ".nds");
 	}
 	
+	setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
 	clrscr();
-	printf(" ---- ");
-	printf(" ---- ");
-	printf(" ---- ");
-	printf(" ---- ");
-	
-	printf("trying: %s", fnameRead);
-	
 	memset(thisArgv, 0, sizeof(thisArgv));
 	strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
 	strcpy(&thisArgv[1][0], fnameRead);	//Arg1:	NDS Binary reloaded
-	strcpy(&thisArgv[2][0], curChosenBrowseFile);	//Arg2: NDS Binary ARG0	//OK //strcpy(&thisArgv[2][0], "0:/hello-o-abc1.bin");					
+	strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
 	addARGV(3, (char*)&thisArgv);
 	if(TGDSMultibootRunNDSPayload(fnameRead) == false){  //Should fail it returns false. (Audio track)
 		printf("boot failed");
 	}
+	
 	while(1==1){
 		swiDelay(1);
 	}
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-void reloadARM7PlayerPayload(u32 arm7entryaddress, int arm7BootCodeSize){
-	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
-	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
-	
-	//NTR ARM7 payload
-	if(__dsimode == false){
-		coherent_user_range_by_size((u32)&arm7bootldr[0], arm7BootCodeSize);
-		setValueSafe(&fifomsg[0], (u32)&arm7bootldr[0]);
-	}
-	//TWL ARM7 payload
-	else{
-		coherent_user_range_by_size((u32)&arm7bootldr_twl[0], arm7BootCodeSize);
-		setValueSafe(&fifomsg[0], (u32)&arm7bootldr_twl[0]);
-	}
-	setValueSafe(&fifomsg[1], (u32)arm7BootCodeSize);
-	setValueSafe(&fifomsg[2], (u32)arm7entryaddress);
-	SendFIFOWords(FIFO_ARM7_RELOAD, 0xFF);
-}
-
+char callerNDSBinary[256];
 //ToolchainGenericDS-LinkedModule User implementation: Stubbed here as TGDS-LM isn't Parent TGDS App
 char args[8][MAX_TGDSFILENAME_LENGTH];
 char *argvs[8];
@@ -222,27 +178,8 @@ void playTVSFile(char * tvsFile){
 			IRQVBlankWait();
 		}
 		
-		//leave TGDS-LM payload
-		leaveTGDSLMNow();
+		TGDSProjectReturnToCaller(callerNDSBinary);
 	}
-}
-
-//User call to leave TGDS-LM properly
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-void leaveTGDSLMNow(){
-	SendFIFOWords(FIFO_TGDSVIDEOPLAYER_STOPSOUND, 0xFF);
-	swiDelay(900);
-	setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
-	swiDelay(900);
-	REG_IME = 0;
-	REG_IE = 0;
-	leaveTGDSLM((u32)&TGDSProjectReturnFromLinkedModuleDeciderStub);	
 }
 
 __attribute__((section(".itcm")))
@@ -258,12 +195,8 @@ int main(int argc, char **argv) {
 	setSnemulDSSpecial0xFFFF0000MPUSettings();
 	REG_IME = 1;
 	
-	//Generate TGDS-LM context
-	struct TGDS_Linked_Module * TGDSLinkedModuleCtx = TGDS_LM_CTX;
-	TGDSLinkedModuleCtx->returnAddressTGDSLinkedModule = (u32)&TGDSProjectReturnFromLinkedModuleDeciderStub;	//Implemented when TGDS-LM boots
-	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
-	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
+	bool isTGDSCustomConsole = true;	//set default console or custom console: default console
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
 	
@@ -272,64 +205,7 @@ int main(int argc, char **argv) {
 	for(i = 0; i < argc; i++){
 		argvs[i] = argv[i];
 	}
-	
-	//ARM7 reload
-	{
-		u8 * TGDS_LM_ARM7LZSSPayloadSourceBuffer = (u8*)&TGDSLinkedModuleCtx->TGDS_LM_ARM7PAYLOADLZSS[0];
-		int TGDS_LM_ARM7LZSSPayloadSize = TGDSLinkedModuleCtx->TGDS_LM_ARM7PAYLOADLZSSSize;
-		
-		//Use newly built custom ARM7 payload. Note: These values are hardcoded from ARM7 NTR/TWL linker settings
-		{
-			if(__dsimode == false){
-				TGDS_LM_ARM7LZSSPayloadSize = TGDSLinkedModuleCtx->TGDS_LM_ARM7PAYLOADLZSSSize = arm7_ntr_size;
-				memcpy ((void *)TGDS_LM_ARM7LZSSPayloadSourceBuffer, (const void *)&arm7_ntr[0], TGDS_LM_ARM7LZSSPayloadSize);
-				coherent_user_range_by_size((u32)TGDS_LM_ARM7LZSSPayloadSourceBuffer, TGDS_LM_ARM7LZSSPayloadSize);
-			}
-			//TWL ARM7 payload
-			else{
-				TGDS_LM_ARM7LZSSPayloadSize = TGDSLinkedModuleCtx->TGDS_LM_ARM7PAYLOADLZSSSize = arm7_twl_size;
-				memcpy ((void *)TGDS_LM_ARM7LZSSPayloadSourceBuffer, (const void *)&arm7_twl[0], TGDS_LM_ARM7LZSSPayloadSize);
-				coherent_user_range_by_size((u32)TGDS_LM_ARM7LZSSPayloadSourceBuffer, TGDS_LM_ARM7LZSSPayloadSize);
-			}
-			TGDSLinkedModuleCtx->arm7EntryAddress = (u32)0x03800000;
-			TGDSLinkedModuleCtx->arm7BootCodeSize = (int)(*(unsigned int *)TGDS_LM_ARM7LZSSPayloadSourceBuffer >> 8);
-		}
-		
-		if(TGDS_LM_ARM7LZSSPayloadSize > 0){
-			//Stage 1:
-			//Reload internal bootstub ARM7 payload
-			reloadStatus = (u32)0xFFFFFFFF;
-			reloadARM7PlayerPayload((u32)0x023D0000, 64*1024);
-			while(reloadStatus == (u32)0xFFFFFFFF){
-				swiDelay(1);	
-			}
-			
-			//Stage 2:
-			//Reload target TGDS-LM ARM7 payload here
-			memset((void *)ARM7_PAYLOAD, 0x0, 64*1024);
-			coherent_user_range_by_size((uint32)ARM7_PAYLOAD, 64*1024);
-			
-			//LZSS Decompress
-			swiDecompressLZSSWram((void *)TGDS_LM_ARM7LZSSPayloadSourceBuffer,(void *)ARM7_PAYLOAD);
-			coherent_user_range_by_size((uint32)ARM7_PAYLOAD, 64*1024);
-			
-			//Boot			
-			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
-			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
-			setValueSafe(&fifomsg[0], (u32)TGDSLinkedModuleCtx->arm7EntryAddress);
-			setValueSafe(&fifomsg[1], (u32)TGDSLinkedModuleCtx->arm7BootCodeSize);
-			SendFIFOWords(FIFO_TGDSMBRELOAD_SETUP, 0xFF);
-			while (getValueSafe(&fifomsg[0]) == (u32)TGDSLinkedModuleCtx->arm7EntryAddress){
-				swiDelay(1);
-			}
-		}
-	}
-	
-	/*			TGDS 1.6 Standard ARM9 Init code start	*/
-	isTGDSCustomConsole = true;	//set default console or custom console: custom console
-	GUI_init(isTGDSCustomConsole);
-	GUI_clear();
-	
+
 	bool isCustomTGDSMalloc = true;
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
 	sint32 fwlanguage = (sint32)getLanguage();
@@ -345,27 +221,7 @@ int main(int argc, char **argv) {
 		printf("FS Init ok.");
 	}
 	else{
-		printf("FS Init error: %d :(", ret);
-		while(1==1){
-			*(u32*)0x08000000 = (u32)0xc070FFFF;
-		}
-	}
-	
-	//Reload TGDSLMARM7 flags here because hot-reloaded payload
-	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
-	coherent_user_range_by_size((uint32)TGDSIPC, sizeof(struct sIPCSharedTGDS));
-	TGDSLinkedModuleCtx->TGDSLMARM7Flags = TGDSIPC->TGDSLMARM7Flags;
-	//TGDSLinkedModuleCtx->TGDSLMARM9Flags = TGDSIPC->TGDSLMARM9Flags; //TGDS-LM ARM9 are generated the moment this payload booted up. Must ignore this or ARM9 flags are destroyed by ARM7 payload reload (IPC)
-	
-	//Enable wifi only if ARM9 payload and current reloaded ARM7 payload has the features available
-	if(
-		(wifiswitchDsWnifiModeARM9LibUtilsCallback != NULL)
-		&&
-		((TGDSLinkedModuleCtx->TGDSLMARM7Flags & TGDS_LM_WIFI_ABILITY) == TGDS_LM_WIFI_ABILITY)
-		&&
-		((TGDSLinkedModuleCtx->TGDSLMARM9Flags & TGDS_LM_WIFI_ABILITY) == TGDS_LM_WIFI_ABILITY)
-	){
-		wifiswitchDsWnifiModeARM9LibUtilsCallback(dswifi_idlemode);
+		printf("FS Init error: %d", ret);
 	}
 	
 	asm("mcr	p15, 0, r0, c7, c10, 4");
@@ -381,21 +237,22 @@ int main(int argc, char **argv) {
 		int i;
 		for (i=0; i<argc; i++) {
 			if (argv[i]) {
-				printf("[%d] %s \n", i, argv[i]);
+				printf("[%d] %s ", i, argv[i]);
 			}
 		}
 	} 
 	else {
-		printf("No arguments passed!\n");
+		printf("No arguments passed!");
 	}
 	
 	//Discard FIFO errors
 	if(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){ 
 		REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
 	}
-	
+
 	//Play TVS by argv
 	if(argc > 2){
+		strcpy(callerNDSBinary, (char *)argv[0]);
 		playTVSFile((char *)argv[2]);
 	}
 	else{
@@ -412,28 +269,11 @@ int main(int argc, char **argv) {
 			IRQVBlankWait();
 		}
 		
-		//leave TGDS-LM payload
-		leaveTGDSLMNow();
+		TGDSProjectReturnToCaller(callerNDSBinary);
 	}
-	
+
 	while(1) {
 		scanKeys();	
-		/*
-		if (keysDown() & KEY_START){
-			SendFIFOWords(FIFO_TGDSVIDEOPLAYER_STOPSOUND, 0xFF);
-			setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
-			while(ShowBrowser((char *)globalPath, (char *)&curChosenBrowseFile[0]) == true){	//as long you keep using directories ShowBrowser will be true
-				
-			}
-			//play TVS here
-			playTVSFile((char *)&curChosenBrowseFile[0]);
-			menuShow();
-			while(keysDown() & KEY_START){
-				scanKeys();
-			}
-		}
-		*/
-		
 		if (keysDown() & KEY_UP){
 			volumeUp(0, 0);
 			menuShow();
@@ -453,14 +293,6 @@ int main(int argc, char **argv) {
 				IRQWait(0, IRQ_VBLANK);
 			}
 		}
-		
-		/*
-		if (keysDown() & KEY_LEFT){
-			REG_IME = 0;
-			REG_IE = 0;
-			leaveTGDSLM((u32)&TGDSProjectReturnFromLinkedModuleDeciderStub);	
-		}
-		*/
 		
 		TGDSVideoRender();
 	}
