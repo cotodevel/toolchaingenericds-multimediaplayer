@@ -21,21 +21,21 @@
 #ToolchainGenericDS specific: Use Makefiles from either TGDS, or custom
 #Note: Woopsi template mostly targets ARM9 SDK. Thus the default ARM7 template is used
 export SOURCE_MAKEFILE7 = custom
-export SOURCE_MAKEFILE9 = custom
+export SOURCE_MAKEFILE9 = default
 
 #Shared
 include $(DEFAULT_GCC_PATH)/Makefile.basenewlib
 
 #Custom
 # Project Specific
-export TGDSPROJECTNAME = TGDS-lm-videoplayer
-export EXECUTABLE_FNAME = $(TGDSPROJECTNAME).bin
+export TGDSPROJECTNAME = ToolchainGenericDS-videoplayer
+export EXECUTABLE_FNAME = $(TGDSPROJECTNAME).nds
 export EXECUTABLE_VERSION_HEADER =	0.1
 export EXECUTABLE_VERSION =	"$(EXECUTABLE_VERSION_HEADER)"
 export TGDSPKG_TARGET_NAME := /
 #The ndstool I use requires to have the elf section removed, so these rules create elf headerless- binaries.
 export BINSTRIP_RULE_7 =	arm7.bin
-export BINSTRIP_RULE_9 =	$(EXECUTABLE_FNAME)
+export BINSTRIP_RULE_9 =	arm9.bin
 export DIR_ARM7 = arm7
 export BUILD_ARM7	=	build
 export DIR_ARM9 = arm9
@@ -48,7 +48,7 @@ export NONSTRIPELF_ARM9 = arm9-nonstripped.elf
 export TARGET_LIBRARY_CRT0_FILE_7 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_9 = nds_arm_ld_crt0
 export TARGET_LIBRARY_LINKER_FILE_7 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_7).S
-export TARGET_LIBRARY_LINKER_FILE_9 = $(TARGET_LIBRARY_CRT0_FILE_9).S
+export TARGET_LIBRARY_LINKER_FILE_9 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_9).S
 
 export TARGET_LIBRARY_TGDS_NTR_7 = toolchaingen7
 export TARGET_LIBRARY_TGDS_NTR_9 = toolchaingen9
@@ -106,10 +106,8 @@ compile	:
 	-cp	-r	$(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_MAKEFILES_SRC)/templateCode/	$(CURDIR)/common/
 	-cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC7_FPIC)	$(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)
 	-$(MAKE)	-R	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/
-	-mv $(DIR_ARM7)/$(BINSTRIP_RULE_7)	$(DIR_ARM9)/data/
 	-cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC9_FPIC)	$(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)
 	-$(MAKE)	-R	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/
-
 ifeq ($(SOURCE_MAKEFILE7),default)
 	cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC7_NOFPIC)	$(CURDIR)/$(DIR_ARM7)
 endif
@@ -120,9 +118,12 @@ endif
 	$(MAKE)	-R	-C	$(DIR_ARM9)/
 	
 $(EXECUTABLE_FNAME)	:	compile
-	mv $(CURDIR)/arm9/$(BINSTRIP_RULE_9) ../release/arm7dldi-ntr/
-	mv $(CURDIR)/arm9/$(TGDSPROJECTNAME)_twl.bin ../release/arm7dldi-twl/
-	-@echo '$(TGDSPROJECTNAME) (NTR/TWL) emitted.'
+	-@echo 'ndstool begin'
+	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 $(CURDIR)/arm9/$(BINSTRIP_RULE_9) -e9  0x02000000	-b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; "
+	-mv $@	../release/arm7dldi-ntr
+	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7 arm7/arm7-nonstripped_dsi.elf -9 arm9/arm9-nonstripped_dsi.elf
+	-mv ${@:.nds=.srl}	../release/arm7dldi-twl
+	-@echo 'ndstool end: built: $@'
 	
 #---------------------------------------------------------------------------------
 # Clean
@@ -142,7 +143,7 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/Makefile
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
-	-@rm -fr $(EXECUTABLE_FNAME)	../release/arm7dldi-ntr/$(TGDSPROJECTNAME).bin	../release/arm7dldi-twl/$(TGDSPROJECTNAME)_twl.bin	$(CURDIR)/common/templateCode/ $(CURDIR)/$(BINSTRIP_RULE_9)
+	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl	$(CURDIR)/common/templateCode/	../release/arm7dldi-ntr/$(TGDSPROJECTNAME).nds	../release/arm7dldi-twl/$(TGDSPROJECTNAME).srl
 
 rebase:
 	git reset --hard HEAD

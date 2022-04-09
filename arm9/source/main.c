@@ -621,26 +621,54 @@ void handleInput(){
 			strcpy(tmpName, curChosenBrowseFile);
 			separateExtension(tmpName, ext);
 			strlwr(ext);
+			
 			//TGDS-LinkedModule: TGDS-videoplayer's TVS file
 			if(strncmp(ext,".tvs", 4) == 0){
-				int argCount = 3;	
-				strcpy(&args[0][0], TGDSPROJECTNAME);	//Arg0: Parent TGDS Project name
-				//Arg1: self TGDS-LinkedModule filename: NTR/TWL
+				strcpy(tmpName, curChosenBrowseFile);
+				/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				char startPath[MAX_TGDSFILENAME_LENGTH+1];
+				strcpy(startPath,"/");
 				if(__dsimode == true){
-					strcpy(&args[1][0], "0:/TGDS-lm-videoplayer_twl.bin");
+					strcpy(curChosenBrowseFile, "0:/ToolchainGenericDS-videoplayer.srl");
 				}
 				else{
-					strcpy(&args[1][0], "0:/TGDS-lm-videoplayer.bin");	
+					strcpy(curChosenBrowseFile, "0:/ToolchainGenericDS-videoplayer.nds");
 				}
-				strcpy(tmpName, &args[1][0]);
-				strcpy(&args[2][0], curChosenBrowseFile);	//Arg2: .TVS File chosen
-				int i = 0;
-				for(i = 0; i < argCount; i++){
-					argvs[i] = (char*)&args[i][0];
+				//Send args
+				printf("[Booting %s]", curChosenBrowseFile);
+				printf("Want to send argument?");
+				printf("(A) Yes: (Start) Choose arg.");
+				printf("(B) No. ");
+				
+				int argcCount = 0;
+				argcCount++;
+				printf("[Booting... Please wait] >%d", TGDSPrintfColor_Red);
+				
+				char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+				memset(thisArgv, 0, sizeof(thisArgv));
+				strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+				strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	NDS Binary reloaded
+				strcpy(&thisArgv[2][0], tmpName);					//Arg2: NDS Binary ARG0
+				addARGV(3, (char*)&thisArgv);				
+				if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+					printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
+					printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
+					printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
+					printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
+					while(1==1){
+						scanKeys();
+						if(keysDown()&KEY_A){
+							scanKeys();
+							while(keysDown() & KEY_A){
+								scanKeys();
+							}
+							break;
+						}
+					}
+					menuShow();
 				}
-				TGDSProjectRunLinkedModule(tmpName, argCount, argvs, TGDSPROJECTNAME, 0, 0, 0, 0);
+				/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			}
-			
 		}
 		else{
 			clrscr();

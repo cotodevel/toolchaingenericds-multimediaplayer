@@ -53,10 +53,10 @@ extern float rotateY;
 extern float camDist;
 extern char args[8][MAX_TGDSFILENAME_LENGTH];
 extern char *argvs[8];
-extern void reloadARM7PlayerPayload(u32 arm7entryaddress, int arm7BootCodeSize);
 extern void setSnemulDSSpecial0xFFFF0000MPUSettings();
 extern void playTVSFile(char * tvsFile);
-extern void leaveTGDSLMNow();
+extern void TGDSProjectReturnToCaller(char * NDSPayload);
+extern char callerNDSBinary[256];
 
 #ifdef __cplusplus
 }

@@ -113,9 +113,6 @@ $(TARGET_LIBRARY_CRT0_FILE_7).o:	$(TARGET_LIBRARY_LINKER_FILE_7)
 	$(CPP)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o	$(OBJDIR)/$@	-c	$<
 	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm7_ld.ld $(CURDIR)
 	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm7_ld.specs $(CURDIR)
-	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)dsi_arm7.ld $(CURDIR)
-	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)dsi_arm7_ld.specs $(CURDIR)
-	
 	-@echo 'S Compile end: crt0s'
 
 #Linkage. 
@@ -135,15 +132,9 @@ $(ELF_ARM7): $(OBJPROG)
 $(BINSTRIP_RULE_7): $(ELF_ARM7)
 	-@echo 'STRIP End: Remove ELF header and build baremetal Binary executable: $<	->	$@ !'
 	$(OBJCOPY) 	-S -O binary	$<	$@
-	$(BIN2LZSS)	-ewn	$@
-	-mv $@	../arm9/data/${@:.bin=_ntr.bin}
 	-rm	$<
-	$(OBJCOPY) 	-S -O binary	${<:.elf=-nonstripped_dsi.elf}	${@:.bin=_twl.bin}
-	$(BIN2LZSS)	-ewn	${@:.bin=_twl.bin}
-	-mv ${@:.bin=_twl.bin}	../arm9/data/${@:.bin=_twl.bin}
-	-rm	${<:.elf=-nonstripped_dsi.elf}
 ################################################################################################
 	
 clean:
 	-@echo 'cleanup $(DIR_ARM7)'
-	-@rm -fr $(BINSTRIP_RULE_7)	$(MAPFILE)	$(CURDIR)/nds_arm7_ld.specs	$(CURDIR)/nds_arm7_ld.ld	$(CURDIR)/dsi_arm7_ld.specs	$(CURDIR)/dsi_arm7.ld	$(CURDIR)/arm7-nonstripped_dsi.elf $(CURDIR)/arm7-nonstripped_dsi.map	../arm9/data/${BINSTRIP_RULE_7:.bin=_ntr.bin}	../arm9/data/${BINSTRIP_RULE_7:.bin=_twl.bin}
+	-@rm -fr $(BINSTRIP_RULE_7)	$(MAPFILE)	$(CURDIR)/nds_arm7_ld.specs	$(CURDIR)/nds_arm7_ld.ld	$(CURDIR)/arm7-nonstripped_dsi.elf $(CURDIR)/arm7-nonstripped_dsi.map
