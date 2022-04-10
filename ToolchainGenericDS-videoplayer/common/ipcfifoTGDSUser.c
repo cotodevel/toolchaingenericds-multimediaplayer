@@ -185,7 +185,7 @@ void disableFastMode(){
 
 #endif
 
-//Libutils setup: TGDS project uses Soundstream, WIFI, ARM7 malloc, etc. (LinkedModule of course requires them, thus, ARM7 binary currently used MUST use extended libutils as well)
+//Libutils setup: TGDS project uses Soundstream, WIFI, ARM7 malloc, etc.
 void setupLibUtils(){
 	//libutils:
 	

@@ -477,12 +477,8 @@ static inline int getRand(int size){
 	return getRand(size);
 }
 
-//ToolchainGenericDS-LinkedModule User implementation: Called if TGDS-LinkedModule fails to reload ARM9.bin from DLDI.
 char args[8][MAX_TGDSFILENAME_LENGTH];
 char *argvs[8];
-int TGDSProjectReturnFromLinkedModule() {
-	return -1;
-}
 
 void handleInput(){
 	if(pendingPlay == true){
@@ -622,7 +618,7 @@ void handleInput(){
 			separateExtension(tmpName, ext);
 			strlwr(ext);
 			
-			//TGDS-LinkedModule: TGDS-videoplayer's TVS file
+			//TGDS-MB + TGDS-videoplayer TVS file
 			if(strncmp(ext,".tvs", 4) == 0){
 				strcpy(tmpName, curChosenBrowseFile);
 				/////////////////////////////////////////////////////////////////////////////////////////////////////////////
