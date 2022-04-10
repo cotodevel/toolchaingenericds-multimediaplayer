@@ -52,7 +52,6 @@ extern struct FileClassList * activePlayListRead;	//active playlist, actual play
 
 extern char args[8][MAX_TGDSFILENAME_LENGTH];
 extern char *argvs[8];
-extern int TGDSProjectReturnFromLinkedModule();
 
 extern bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileIndex);
 extern void handleInput();

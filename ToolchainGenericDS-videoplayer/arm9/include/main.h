@@ -27,7 +27,7 @@ USA
 #include "utilsTGDS.h"
 #include "utilsTGDS.h"
 
-#define TGDSPROJECTNAME ((char*) "ToolchainGenericDS-LinkedModule")
+#define TGDSPROJECTNAME ((char*) "ToolchainGenericDS-videoplayer")
 
 #endif
 

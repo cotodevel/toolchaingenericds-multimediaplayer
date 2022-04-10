@@ -80,11 +80,9 @@ void closeSoundUser(){
 }
 
 static inline void menuShow(){
-	struct TGDS_Linked_Module * TGDSLinkedModuleCtx = TGDS_LM_CTX;
 	clrscr();
 	printf("     ");
 	printf("     ");
-	printf("Caller TGDS-Project: %s", (char*)&TGDSLinkedModuleCtx->TGDSMainAppName);
 	printf("Current file: %s ", curChosenBrowseFile);
 	printf("ToolchainGenericDS-videoplayer ");
 	printf("(Select): This menu. ");
@@ -131,20 +129,8 @@ void TGDSProjectReturnToCaller(char * NDSPayload){	//TGDS-Linked Module implemen
 }
 
 char callerNDSBinary[256];
-//ToolchainGenericDS-LinkedModule User implementation: Stubbed here as TGDS-LM isn't Parent TGDS App
 char args[8][MAX_TGDSFILENAME_LENGTH];
 char *argvs[8];
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-int TGDSProjectReturnFromLinkedModule(){	//Stubbed TGDS-LinkedModule implementation, since it can't call itself when returning.
-	return -1;
-}
 
 void playTVSFile(char * tvsFile){
 	//Process TVS file
