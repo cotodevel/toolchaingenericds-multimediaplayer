@@ -117,7 +117,7 @@ void TGDSProjectReturnToCaller(char * NDSPayload){	//TGDS-Linked Module implemen
 	memset(thisArgv, 0, sizeof(thisArgv));
 	strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
 	strcpy(&thisArgv[1][0], fnameRead);	//Arg1:	NDS Binary reloaded
-	strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
+	strcpy(&thisArgv[2][0], curChosenBrowseFile);					//Arg2: NDS Binary ARG0
 	addARGV(3, (char*)&thisArgv);
 	if(TGDSMultibootRunNDSPayload(fnameRead) == false){  //Should fail it returns false. (Audio track)
 		printf("boot failed");
@@ -237,8 +237,10 @@ int main(int argc, char **argv) {
 	}
 
 	//Play TVS by argv
-	if(argc > 2){
+	if((argv != NULL) && (argv[0] != NULL)){
 		strcpy(callerNDSBinary, (char *)argv[0]);
+	}
+	if(argc > 2){
 		playTVSFile((char *)argv[2]);
 	}
 	else{
