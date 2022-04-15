@@ -55,6 +55,8 @@ extern char *argvs[8];
 
 extern bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileIndex);
 extern void handleInput();
+extern void setPixel(int row, int col, u16 color);
+extern struct rgbMandel mandelbrot(float real, float imag);
 
 #ifdef __cplusplus
 }
