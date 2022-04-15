@@ -55,7 +55,13 @@ char globalPath[MAX_TGDSFILENAME_LENGTH+1];
 #define VRAM_A            ((u16*)0x06000000)
 #define PIXEL_ENABLE (1<<15)
 
-static inline void setPixel(int row, int col, u16 color) {
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void setPixel(int row, int col, u16 color) {
 	VRAM_A[OFFSET(row, col, SCREENWIDTH)] = color | PIXEL_ENABLE;
 }
 
@@ -69,7 +75,14 @@ static inline void setPixel(int row, int col, u16 color) {
 //3: and then the colours generated will get sliced by the shift in 2), towards their lighter version, also, upcoming colours resemble the rainbow colors affinity. 
 //4: cuadratic "textures" appearing are the result of the decreasing precision of the "palette body" while heading towards the golden number. The mandelbrot is unaffected because the formula keeps "the body" of it 1:1
 static float stepsAccess = 0.001;
-static inline struct rgbMandel mandelbrot(float real, float imag) {
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+struct rgbMandel mandelbrot(float real, float imag) {
 	stepsAccess = stepsAccess + 0.002;
 	int value = 31;
 	float zReal = real;
@@ -236,7 +249,7 @@ static int curFileIndex = 0;
 static int lastRand = 0;
 
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("Os")))
+__attribute__((optimize("O0")))
 #endif
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))

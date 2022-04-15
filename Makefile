@@ -145,7 +145,7 @@ endif
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
 	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 $(CURDIR)/arm9/$(BINSTRIP_RULE_9) -e9  0x02000000	-b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; "
-	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7 arm7/arm7-nonstripped_dsi.elf -9 arm9/arm9-nonstripped_dsi.elf
+	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7 arm7/arm7-nonstripped_dsi.elf -9 $(CURDIR)/arm9/arm9_twl.bin -e9  0x02000000
 	-mv ${@:.nds=.srl}	/E
 	-@echo 'ndstool end: built: $@'
 	
