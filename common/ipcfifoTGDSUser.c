@@ -32,6 +32,7 @@ USA
 #include "dsregs_asm.h"
 #include "InterruptsARMCores_h.h"
 #include "libutilsShared.h"
+#include "microphoneShared.h"
 
 #ifdef ARM7
 #include <string.h>
@@ -126,7 +127,8 @@ void setupLibUtils(){
 		(SoundStreamStopSoundARM7LibUtils_fn)&stopSound, 	//ARM7: void stopSound()
 		(SoundStreamSetupSoundARM7LibUtils_fn)&setupSound,	//ARM7: void setupSound()
 		(initMallocARM7LibUtils_fn)&initARM7Malloc, //ARM7: void initARM7Malloc(u32 ARM7MallocStartaddress, u32 ARM7MallocSize);
-		(wifiDeinitARM7ARM9LibUtils_fn)&DeInitWIFI  //ARM7 & ARM9: DeInitWIFI()
+		(wifiDeinitARM7ARM9LibUtils_fn)&DeInitWIFI,  //ARM7 & ARM9: DeInitWIFI()
+		(MicInterruptARM7LibUtils_fn)&micInterrupt //ARM7: micInterrupt()
 	);
 	#endif
 }
