@@ -26,6 +26,7 @@ USA
 
 #ifdef ARM9
 #include "dswnifi_lib.h"
+#include "dswnifi.h"
 #include "wifi_arm9.h"
 #include "dswifi9.h"
 #include "wifi_shared.h"
@@ -73,12 +74,20 @@ bool TGDSRecvHandlerUser(struct frameBlock * frameBlockRecv, int DSWnifiMode){
 		
 		//NIFI local
 		case(dswifi_localnifimode):{
+			clrscr();
+			printf(" ---- ");
+			printf(" ---- ");
+			printf("DSWNIFIStatus:LocalNifi!");
 			return true;
 		}
 		break;
 		
 		//UDP NIFI
 		case(dswifi_udpnifimode):{
+			clrscr();
+			printf(" ---- ");
+			printf(" ---- ");
+			printf("DSWNIFIStatus:UDPNifi!");
 			return true;
 		}
 		break;
@@ -103,6 +112,22 @@ void OnDSWIFIudpnifiEnable(){
 
 void OnDSWIFIGDBStubEnable(){
 
+}
+
+//UDP Nifi:
+//Step 1: TGDS Project is asked for Remote Companion's IP (AKA: WAN Remote TCP/IP)
+void ONDSWIFI_UDPNifiInvalidIP(char * targetIP){
+	
+}
+
+//Step 2: TGDS Project connected successfully to Remote Companion
+void ONDSWIFI_UDPNifiRemoteServerConnected(char * targetIP){
+	
+}
+
+//Step 3: TGDS Project connected successfully to another DS implementing the DSWNFI protocol
+void ONDSWIFI_UDPNifiExternalDSConnected(char * externalDSIP){
+	
 }
 
 //GDBStub Callbacks

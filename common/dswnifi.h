@@ -38,9 +38,9 @@ extern "C"{
 //				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	
 //}
 
-//GDBStub Callbacks
-extern void onGDBStubConnect();
-extern void onGDBStubDisconnected();
+extern void ONDSWIFI_UDPNifiInvalidIP(char * targetIP);
+extern void ONDSWIFI_UDPNifiRemoteServerConnected(char * targetIP);
+extern void ONDSWIFI_UDPNifiExternalDSConnected(char * externalDSIP);
 
 #ifdef __cplusplus
 }
