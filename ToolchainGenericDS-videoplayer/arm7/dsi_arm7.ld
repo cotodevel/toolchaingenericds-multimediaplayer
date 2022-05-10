@@ -1,266 +1,117 @@
-/*--------------------------------------------------------------------------------
-	This Source Code Form is subject to the terms of the Mozilla Public License,
-	v. 2.0. If a copy of the MPL was not distributed with this file, You can
-	obtain one at https://mozilla.org/MPL/2.0/.
---------------------------------------------------------------------------------*/
+/*
+			Copyright (C) 2017  Coto
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+USA
+*/
+
+/* TGDS Linker file changelog:
+0.3 (Date 08 May 2022): Rewritten so data is mapped manually across ARM payload. Better relocation handling.
+0.2 (Somewhere 2020): Ported to TWL, broken when relocating stuff sometimes.
+0.1 (Somewhere 2017): Base, broken when relocating stuff sometimes. 
+*/
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
-ENTRY(_start)
-
-PHDRS {
-	init  PT_LOAD FLAGS(7);
-	arm7  PT_LOAD FLAGS(7);
-	arm7i PT_LOAD FLAGS(0x100007);
-}
-
-MEMORY {
-	ewram  : ORIGIN = 0x02380000, LENGTH = 12M - 512K
-	rom    : ORIGIN = 0x08000000, LENGTH = 32M
-	iwram  : ORIGIN = 0x03800000, LENGTH = 64K
-
-	twl_ewram : ORIGIN = 0x02e80000, LENGTH = 512K - 64K
-	twl_iwram : ORIGIN = 0x03000000, LENGTH = 256K
-}
-
-_iwram_start =	ORIGIN(iwram);
-_iwram_end  =	ORIGIN(iwram)+ LENGTH(iwram);
-
+_iwram_start =	0x03800000;
+_iwram_end = _iwram_start + 64K;
+/* ARM ABI says stacks are full decreasing */
+sp_SVC	= _iwram_end - 0x200; /* reset, swi exception*/
+sp_IRQ	= sp_SVC - 0x200;	/*irq exception*/
+sp_FIQ	= sp_IRQ - 0x200;	/* fiq exception */
+sp_ABT	= sp_FIQ - 0x200;	/* prefetch / data aborts exception */
+sp_UND	= sp_ABT - 0x200;	/* undefined exception */
+sp_USR	= sp_UND - 0x200;	/* usr / sys stacks */
+sp_SYS = sp_USR;
 /* ARM7 Specific */
 _arm7_irqcheckbits = 0x0380FFF8;	/* __irq_flags */
 __irq_flagsaux	=	0x04000000 - 0x40;
 _arm7_irqhandler = 0x0380FFFC;	/* __irq_vector */
 
-/* ARM ABI says stacks are full decreasing */
-sp_SVC	= _iwram_end - 0x200;
-sp_IRQ	= sp_SVC - 0x200;
-sp_FIQ	= sp_IRQ - 0x200;
-sp_ABT	= sp_FIQ - 0x200;
-sp_UND	= sp_ABT - 0x200;
-sp_USR	= sp_UND - 0x200;
-sp_SYS	= sp_USR;
-
 SECTIONS
 {
-
-	.twl :
-	{
-		__arm7i_lma__ = LOADADDR(.twl);
-		__arm7i_start__ = .;
-		
-		/* Moved to IWRAM to allow to use backwards compatible NTR 32K Shared WRAM so it doesn't cause IO conflicts
-		*(.twl)
-		*.twl*(.text .stub .text.* .gnu.linkonce.t.*)
-		*.twl*(.rodata)
-		*.twl*(.roda)
-		*.twl*(.rodata.*)
-		*.twl*(.data)
-		*.twl*(.data.*)
-		*.twl*(.gnu.linkonce.d*)
-		*/
-		__arm7i_end__ = .;
-	} >twl_iwram AT>twl_ewram :arm7i
-
-	.twl_bss ALIGN(4) (NOLOAD) :
-	{
-		/* (Moved) BSS Section Start */
-		/*
-		__twl_bss_start__ = .;
-		*(.twl_bss)
-		*.twl.*(.dynbss)
-		*.twl.*(.gnu.linkonce.b*)
-		*.twl.*(.bss*)
-		*.twl.*(COMMON)
-		__twl_bss_end__ = .;
-		*/
-		/* (Moved) BSS Section End */
-		
-	} >twl_iwram :NONE
-
-	.init	:
-	{
-		KEEP (*(SORT_NONE(.init)))
-		. = ALIGN(4);  /* REQUIRED. LD is flaky without it. */
-	} >ewram :init
-
-	.text :
-	{
-		__arm7_lma__ = LOADADDR(.text);
-		__arm7_start__ = .;
-		*(.plt)
-		*(.text .stub .text.* .gnu.linkonce.t.*)
-		KEEP (*(.text.*personality*))
-		/* .gnu.warning sections are handled specially by elf32.em.  */
-		*(.gnu.warning)
-		*(.glue_7t) *(.glue_7) *(.vfp11_veneer)
-		. = ALIGN(4);  /* REQUIRED. LD is flaky without it. */
-		
-		
-		/* ARM7i code moved from .twl section to it allows to use backwards compatible NTR 32K Shared WRAM so it doesn't cause IO conflicts */
-		*(.twl)
-		*.twl*(.text .stub .text.* .gnu.linkonce.t.*)
-		*.twl*(.rodata)
-		*.twl*(.roda)
-		*.twl*(.rodata.*)
-		*.twl*(.data)
-		*.twl*(.data.*)
-		*.twl*(.gnu.linkonce.d*)
-		. = ALIGN(4);  /* REQUIRED. LD is flaky without it. */
-		
-	} >iwram AT>ewram :arm7
-
-	.fini           :
-	{
-		KEEP (*(.fini))
-	} >iwram AT>ewram
-
-	.rodata :
-	{
-		*(.rodata)
-		*all.rodata*(*)
-		*(.roda)
-		*(.rodata.*)
-		*(.gnu.linkonce.r*)
-		SORT(CONSTRUCTORS)
-		. = ALIGN(4);   /* REQUIRED. LD is flaky without it. */
-	} >iwram AT>ewram
-
-	.ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >iwram AT>ewram
-
-	.ARM.exidx   : {
-		__exidx_start = .;
-		*(.ARM.exidx* .gnu.linkonce.armexidx.*)
-		__exidx_end = .;
-	 } >iwram AT>ewram
-
-/* Ensure the __preinit_array_start label is properly aligned.  We
-   could instead move the label definition inside the section, but
-   the linker would then create the section even if it turns out to
-   be empty, which isn't pretty.  */
-	.preinit_array     : {
-		. = ALIGN(32 / 8);
-		PROVIDE (__preinit_array_start = .);
-		KEEP (*(.preinit_array))
-		PROVIDE (__preinit_array_end = .);
-	} >iwram AT>ewram
-
-	.init_array     : {
-		PROVIDE (__init_array_start = .);
-		KEEP (*(.init_array))
-		PROVIDE (__init_array_end = .);
-	} >iwram AT>ewram
-
-	.fini_array     : {
-		PROVIDE (__fini_array_start = .);
-		KEEP (*(.fini_array))
-		PROVIDE (__fini_array_end = .);
-	} >iwram AT>ewram
-
-	.ctors :
-	{
-	/* gcc uses crtbegin.o to find the start of the constructors, so
-		we make sure it is first.  Because this is a wildcard, it
-		doesn't matter if the user does not actually link against
-		crtbegin.o; the linker won't look for a file to match a
-		wildcard.  The wildcard also means that it doesn't matter which
-		directory crtbegin.o is in.  */
-		KEEP (*crtbegin.o(.ctors))
-		KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
-		KEEP (*(SORT(.ctors.*)))
-		KEEP (*(.ctors))
-		. = ALIGN(4);   /* REQUIRED. LD is flaky without it. */
-	} >iwram AT>ewram
-
-	.dtors :
-	{
-		KEEP (*crtbegin.o(.dtors))
-		KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
-		KEEP (*(SORT(.dtors.*)))
-		KEEP (*(.dtors))
-		. = ALIGN(4);   /* REQUIRED. LD is flaky without it. */
-	} >iwram AT>ewram
-
-	.eh_frame :
-	{
-		KEEP (*(.eh_frame))
-		. = ALIGN(4);   /* REQUIRED. LD is flaky without it. */
-	} >iwram AT>ewram
-
-	.gcc_except_table :
-	{
-		*(.gcc_except_table)
-		. = ALIGN(4);   /* REQUIRED. LD is flaky without it. */
-	} >iwram AT>ewram
-	.jcr            : { KEEP (*(.jcr)) } >iwram AT>ewram
-	.got            : { *(.got.plt) *(.got) } >iwram AT>ewram
-
-	.data ALIGN(4) : 	{
-		__data_start = ABSOLUTE(.);
-		*(.data)
-		*(.data.*)
-		*(.gnu.linkonce.d*)
-		CONSTRUCTORS
+	. = _iwram_start; /* crt0 bootstub */
+	.init :
+    {
+        KEEP(*(.init.boot))
+        KEEP(*(.init))
 		. = ALIGN(4);
-		__data_end = ABSOLUTE(.) ;
-	} >iwram AT>ewram
-
-	.bss ALIGN(4) (NOLOAD) :
+    }
+    . = ALIGN(4); /* align to a block of code*/
+    .text :
+    {
+        KEEP(*(.text.boot))
+        KEEP(*(.text))
+		. = ALIGN(4);
+    }
+    . = ALIGN(4); /* align to a block of code*/
+	__text_end = .; 
+    __rodata_start = .;
+    .rodata :
+    {
+        KEEP(*(.rodata))
+		. = ALIGN(4);
+    }
+    . = ALIGN(4); /* align to a block of code*/
+    __rodata_end = .;
+ 
+    __data_start = .;
+    .data :
+    {
+        KEEP(*(.data))
+		. = ALIGN(4);
+    }
+    . = ALIGN(4); /* align to a block of code*/
+    __data_end = .;
+ 
+    __bss_start = .;
+    .bss :
+    {
+        bss = .;
+        KEEP(*(.bss))
+		. = ALIGN(4);
+    }
+    . = ALIGN(4); /* align to a block of code*/
+    __bss_end = .;
+	
+	__exidx_start = .;
+    .ARM.exidx :
+    {
+        ARM.exidx = .;
+        *(.ARM.exidx)
+		. = ALIGN(4);
+    }
+    . = ALIGN(4); /* align to a block of code*/
+    __exidx_end = .;
+	
+	. = ADDR (.ARM.exidx) + SIZEOF (.ARM.exidx);
+	
+	__vma_stub_end__ = .;
+    __end = __vma_stub_end__ + 0x100;
+	
+	.pad ALIGN(4) : AT (__end)
 	{
-		__arm7_end__ = .;
-		
-		/* (Moved) TWL BSS Section Start */
-		__twl_bss_start__ = .;
-		*(.twl_bss)
-		*.twl.*(.dynbss)
-		*.twl.*(.gnu.linkonce.b*)
-		*.twl.*(.bss*)
-		*.twl.*(COMMON)
-		__twl_bss_end__ = .;
-		/* (Moved) TWL BSS Section End */
-		
-		__bss_start = ABSOLUTE(.);
-		__bss_start__ = ABSOLUTE(.);
-		*(.dynbss)
-		*(.gnu.linkonce.b*)
-		*(.bss*)
-		*(COMMON)
-		. = ALIGN(4);    /* REQUIRED. LD is flaky without it. */
-		__bss_end__ = ABSOLUTE(.);
-		__end__ = ABSOLUTE(.);
-		__vma_stub_end__ = __end__;
-	} >iwram
-
-	/* Stabs debugging sections.  */
-	.stab 0 : { *(.stab) }
-	.stabstr 0 : { *(.stabstr) }
-	.stab.excl 0 : { *(.stab.excl) }
-	.stab.exclstr 0 : { *(.stab.exclstr) }
-	.stab.index 0 : { *(.stab.index) }
-	.stab.indexstr 0 : { *(.stab.indexstr) }
-	.comment 0 : { *(.comment) }
-	/*	DWARF debug sections.
-		Symbols in the DWARF debugging sections are relative to the beginning
-		of the section so we begin them at 0.  */
-	/* DWARF 1 */
-	.debug          0 : { *(.debug) }
-	.line           0 : { *(.line) }
-	/* GNU DWARF 1 extensions */
-	.debug_srcinfo  0 : { *(.debug_srcinfo) }
-	.debug_sfnames  0 : { *(.debug_sfnames) }
-	/* DWARF 1.1 and DWARF 2 */
-	.debug_aranges  0 : { *(.debug_aranges) }
-	.debug_pubnames 0 : { *(.debug_pubnames) }
-	/* DWARF 2 */
-	.debug_info     0 : { *(.debug_info) }
-	.debug_abbrev   0 : { *(.debug_abbrev) }
-	.debug_line     0 : { *(.debug_line) }
-	.debug_frame    0 : { *(.debug_frame) }
-	.debug_str      0 : { *(.debug_str) }
-	.debug_loc      0 : { *(.debug_loc) }
-	.debug_macinfo  0 : { *(.debug_macinfo) }
-	/* SGI/MIPS DWARF 2 extensions */
-	.debug_weaknames 0 : { *(.debug_weaknames) }
-	.debug_funcnames 0 : { *(.debug_funcnames) }
-	.debug_typenames 0 : { *(.debug_typenames) }
-	.debug_varnames  0 : { *(.debug_varnames) }
-	/* These must appear regardless of  .  */
+		LONG(0x70C070C0)
+		LONG(0xEEEEFFC0)
+		. = ALIGN(4); 
+	} = 0xff
+	
+	/* stubbed for ARM7i binaries crt0 in NTR mode, but actually used in TWL mode */
+	__arm7i_lma__ = __vma_stub_end__ + 4;
+	__arm7i_start__ = __arm7i_lma__ + 4;
+	__arm7i_end__ = __arm7i_start__ + 4;
+	
+	__arm7_lma__ = __arm7i_end__ + 4;
+	__arm7_start__ = __arm7_lma__ + 4;
+	__arm7_end__ = __arm7_start__ + 4;
 }

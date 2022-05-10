@@ -285,7 +285,7 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 	readDirectoryIntoFileClass(Path, playListRead);
 	cleanFileList(activePlayListRead);
 	pushEntryToFileClassList(true, filStub.fd_namefullPath, filStub.type, -1, activePlayListRead); //first stub item pushed because printf hides it
-	int itemsFound = buildFileClassByExtensionFromList(playListRead, activePlayListRead, (char**)ARM7_PAYLOAD, (const char**)"/ima/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs");
+	int itemsFound = buildFileClassByExtensionFromList(playListRead, activePlayListRead, (char**)ARM7_PAYLOAD, (char*)"/ima/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs");
 	activePlayListRead->FileDirCount--; //skipping the first item pushed before
 	
 	//Sort list alphabetically
