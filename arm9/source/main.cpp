@@ -243,6 +243,7 @@ struct rgbMandel mandelbrot(float real, float imag) {
 	return rgb;
 }
 
+bool keypadLocked=false;
 static bool drawMandelbrt = false;
 static bool pendingPlay = false;
 static int curFileIndex = 0;
@@ -502,226 +503,235 @@ void handleInput(){
 	}
 	
 	scanKeys();
-	
-	if (keysDown() & KEY_UP){
-		struct touchPosition touchPos;
-		XYReadScrPosUser(&touchPos);
-		volumeUp(touchPos.px, touchPos.py);
+	if (keysDown() & KEY_A){
+		keypadLocked=!keypadLocked;
 		menuShow();
-		scanKeys();
-		while(keysDown() & KEY_UP){
+		while(keysDown() & KEY_A){
 			scanKeys();
 		}
 	}
-	
-	if (keysDown() & KEY_DOWN){
-		struct touchPosition touchPos;
-		XYReadScrPosUser(&touchPos);
-		volumeDown(touchPos.px, touchPos.py);
-		menuShow();
-		scanKeys();
-		while(keysDown() & KEY_DOWN){
+
+	if(keypadLocked == false){
+		if (keysDown() & KEY_UP){
+			struct touchPosition touchPos;
+			XYReadScrPosUser(&touchPos);
+			volumeUp(touchPos.px, touchPos.py);
+			menuShow();
 			scanKeys();
-		}
-	}
-	
-	
-	if (keysDown() & KEY_TOUCH){
-		u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
-		//setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample //todo: use writeARM7SoundChannelFromSource() instead
-		scanKeys();
-		while(keysDown() & KEY_TOUCH){
-			scanKeys();
-			
-		}
-	}
-	
-	if (keysDown() & KEY_L){
-		curFileIndex--;
-		if(curFileIndex <= 1){
-			curFileIndex = 1;
-		}
-		strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, activePlayListRead)->fd_namefullPath);		
-		
-		//Let decoder close context so we can start again
-		closeSound();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		
-		pendingPlay = true;
-		scanKeys();
-		while(keysHeld() & KEY_L){
-			scanKeys();
-		}
-		menuShow();
-	}
-	
-	if (keysDown() & KEY_R){
-		int lstSize = getCurrentDirectoryCount(activePlayListRead);
-		curFileIndex++;
-		if(curFileIndex >= lstSize){
-			curFileIndex = lstSize;
-		}
-		strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, activePlayListRead)->fd_namefullPath);		
-		
-		//Let decoder close context so we can start again
-		closeSound();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		pendingPlay = true;
-		scanKeys();
-		while(keysHeld() & KEY_R){
-			scanKeys();
-		}
-		menuShow();
-	}
-	
-	if (keysDown() & KEY_START){
-		if(soundLoaded == false){
-			while( ShowBrowserC((char *)globalPath, curChosenBrowseFile, &pendingPlay, &curFileIndex) == true ){	//as long you keep using directories ShowBrowser will be true
-				//navigating DIRs here...
-			}
-			scanKeys();
-			while(keysDown() & KEY_START){
+			while(keysDown() & KEY_UP){
 				scanKeys();
 			}
-			
-			//handle TVS files only when pressing Start
-			char tmpName[256];
-			char ext[256];
-			strcpy(tmpName, curChosenBrowseFile);
-			separateExtension(tmpName, ext);
-			strlwr(ext);
-			
-			//TGDS-MB + TGDS-videoplayer TVS file
-			if(strncmp(ext,".tvs", 4) == 0){
-				strcpy(tmpName, curChosenBrowseFile);
-				/////////////////////////////////////////////////////////////////////////////////////////////////////////////
-				char startPath[MAX_TGDSFILENAME_LENGTH+1];
-				strcpy(startPath,"/");
-				if(__dsimode == true){
-					strcpy(curChosenBrowseFile, "0:/ToolchainGenericDS-videoplayer.srl");
-				}
-				else{
-					strcpy(curChosenBrowseFile, "0:/ToolchainGenericDS-videoplayer.nds");
-				}
-				//Send args
-				printf("[Booting %s]", curChosenBrowseFile);
-				printf("Want to send argument?");
-				printf("(A) Yes: (Start) Choose arg.");
-				printf("(B) No. ");
-				
-				int argcCount = 0;
-				argcCount++;
-				printf("[Booting... Please wait] >%d", TGDSPrintfColor_Red);
-				
-				char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-				memset(thisArgv, 0, sizeof(thisArgv));
-				strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
-				strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	NDS Binary reloaded
-				strcpy(&thisArgv[2][0], tmpName);					//Arg2: NDS Binary ARG0
-				addARGV(3, (char*)&thisArgv);				
-				if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
-					printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
-					printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
-					printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
-					printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
-					while(1==1){
-						scanKeys();
-						if(keysDown()&KEY_A){
-							scanKeys();
-							while(keysDown() & KEY_A){
-								scanKeys();
-							}
-							break;
-						}
-					}
-					menuShow();
-				}
-				/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		}
+		
+		if (keysDown() & KEY_DOWN){
+			struct touchPosition touchPos;
+			XYReadScrPosUser(&touchPos);
+			volumeDown(touchPos.px, touchPos.py);
+			menuShow();
+			scanKeys();
+			while(keysDown() & KEY_DOWN){
+				scanKeys();
 			}
 		}
-		else{
-			clrscr();
-			printfCoords(0, 6, "Please stop audio playback before listing files. ");
-			
+		
+		
+		if (keysDown() & KEY_TOUCH){
+			u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
+			//setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample //todo: use writeARM7SoundChannelFromSource() instead
 			scanKeys();
-			while(keysDown() & KEY_START){
+			while(keysDown() & KEY_TOUCH){
 				scanKeys();
 				
+			}
+		}
+		
+		if (keysDown() & KEY_L){
+			curFileIndex--;
+			if(curFileIndex <= 1){
+				curFileIndex = 1;
+			}
+			strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, activePlayListRead)->fd_namefullPath);		
+			
+			//Let decoder close context so we can start again
+			closeSound();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			
+			
+			pendingPlay = true;
+			scanKeys();
+			while(keysHeld() & KEY_L){
+				scanKeys();
 			}
 			menuShow();
 		}
 		
-	}
-	
-	if (keysDown() & KEY_B){
-		//Audio stop here....
-		closeSound();
-		
-		menuShow();
-		
-		scanKeys();
-		while(keysDown() & KEY_B){
+		if (keysDown() & KEY_R){
+			int lstSize = getCurrentDirectoryCount(activePlayListRead);
+			curFileIndex++;
+			if(curFileIndex >= lstSize){
+				curFileIndex = lstSize;
+			}
+			strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, activePlayListRead)->fd_namefullPath);		
+			
+			//Let decoder close context so we can start again
+			closeSound();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			
+			pendingPlay = true;
 			scanKeys();
+			while(keysHeld() & KEY_R){
+				scanKeys();
+			}
+			menuShow();
+		}
+		
+		if (keysDown() & KEY_START){
+			if(soundLoaded == false){
+				while( ShowBrowserC((char *)globalPath, curChosenBrowseFile, &pendingPlay, &curFileIndex) == true ){	//as long you keep using directories ShowBrowser will be true
+					//navigating DIRs here...
+				}
+				scanKeys();
+				while(keysDown() & KEY_START){
+					scanKeys();
+				}
+				
+				//handle TVS files only when pressing Start
+				char tmpName[256];
+				char ext[256];
+				strcpy(tmpName, curChosenBrowseFile);
+				separateExtension(tmpName, ext);
+				strlwr(ext);
+				
+				//TGDS-MB + TGDS-videoplayer TVS file
+				if(strncmp(ext,".tvs", 4) == 0){
+					strcpy(tmpName, curChosenBrowseFile);
+					/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+					char startPath[MAX_TGDSFILENAME_LENGTH+1];
+					strcpy(startPath,"/");
+					if(__dsimode == true){
+						strcpy(curChosenBrowseFile, "0:/ToolchainGenericDS-videoplayer.srl");
+					}
+					else{
+						strcpy(curChosenBrowseFile, "0:/ToolchainGenericDS-videoplayer.nds");
+					}
+					//Send args
+					printf("[Booting %s]", curChosenBrowseFile);
+					printf("Want to send argument?");
+					printf("(A) Yes: (Start) Choose arg.");
+					printf("(B) No. ");
+					
+					int argcCount = 0;
+					argcCount++;
+					printf("[Booting... Please wait] >%d", TGDSPrintfColor_Red);
+					
+					char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+					memset(thisArgv, 0, sizeof(thisArgv));
+					strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+					strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	NDS Binary reloaded
+					strcpy(&thisArgv[2][0], tmpName);					//Arg2: NDS Binary ARG0
+					addARGV(3, (char*)&thisArgv);				
+					if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+						printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
+						printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
+						printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
+						printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
+						while(1==1){
+							scanKeys();
+							if(keysDown()&KEY_A){
+								scanKeys();
+								while(keysDown() & KEY_A){
+									scanKeys();
+								}
+								break;
+							}
+						}
+						menuShow();
+					}
+					/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				}
+			}
+			else{
+				clrscr();
+				printfCoords(0, 6, "Please stop audio playback before listing files. ");
+				
+				scanKeys();
+				while(keysDown() & KEY_START){
+					scanKeys();
+					
+				}
+				menuShow();
+			}
 			
 		}
-	}
-	
-	if (keysDown() & KEY_X){
-		if(drawMandelbrt == false){
-			drawMandelbrt = true;
-			double factor = 1.0; 
-			drawMandel(factor);
-			//render TGDSLogo from a LZSS compressed file
-			RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
+		
+		if (keysDown() & KEY_B){
+			//Audio stop here....
+			closeSound();
+			
+			menuShow();
+			
+			scanKeys();
+			while(keysDown() & KEY_B){
+				scanKeys();
+				
+			}
 		}
 		
-		scanKeys();
-		while(keysDown() & KEY_X){
-			scanKeys();
+		if (keysDown() & KEY_X){
+			if(drawMandelbrt == false){
+				drawMandelbrt = true;
+				double factor = 1.0; 
+				drawMandel(factor);
+				//render TGDSLogo from a LZSS compressed file
+				RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
+			}
 			
+			scanKeys();
+			while(keysDown() & KEY_X){
+				scanKeys();
+				
+			}
 		}
 	}
-	
+
 	//Audio track ended? Play next audio file
 	if((pendingPlay == false) && (cutOff == true)){ 
 		curFileIndex++;
@@ -921,6 +931,14 @@ void menuShow(){
 	printf("(Start): File Browser -> (A) to play audio file");
 	printf("(L): Recent Playlist ");
 	printf("(R): Random audio file playback ");
+	
+	if(keypadLocked == false){
+		printf("(A): Keys [Unlocked] >%d", TGDSPrintfColor_Green);
+	}
+	else{
+		printf("(A): Keys [Locked] >%d", TGDSPrintfColor_Red);
+	}
+
 	printf("(B): Stop audio playback ");
 	printf("(X): Mandelbrot demo ");
 	printf("(D-PAD: Down): Volume - ");
@@ -988,8 +1006,6 @@ int main(int argc, char **argv) {
 	playListRead = initFileList();
 	activePlayListRead = initFileList();
 	
-	menuShow();
-	
 	memset(globalPath, 0, sizeof(globalPath));
 	strcpy(globalPath,"/");
 	
@@ -998,9 +1014,10 @@ int main(int argc, char **argv) {
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
 	REG_IE = REG_IE & ~(IRQ_TIMER3|IRQ_VCOUNT); //disable VCOUNT and WIFI timer
-	
 	REG_IE = (REG_IE | IRQ_VBLANK);
-	
+	keypadLocked=false;
+	menuShow();
+
 	while (1){	
 
 		handleInput();

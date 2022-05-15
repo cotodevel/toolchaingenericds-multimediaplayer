@@ -57,6 +57,7 @@ extern bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * c
 extern void handleInput();
 extern void setPixel(int row, int col, u16 color);
 extern struct rgbMandel mandelbrot(float real, float imag);
+extern bool keypadLocked;
 
 #ifdef __cplusplus
 }
