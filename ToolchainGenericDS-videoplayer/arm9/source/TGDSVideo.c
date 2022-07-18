@@ -192,7 +192,7 @@ int TGDSVideoRender(){
 			f_read(&videoHandleFD.fil, (u8*)decodedBuf, nextVideoFrameFileSize + frameDescSize, &nbytes_read);
 			struct videoFrame * frameRendered = (struct videoFrame *)decodedBuf;
 			
-			if(frameRendered->elapsedTimeStampInMilliseconds < (getTimerCounter()+300)  ){ //0.3s seek time ahead to sync better
+			if(frameRendered->elapsedTimeStampInMilliseconds < (getTimerCounter()+700)  ){ //0.7s seek time ahead to sync better
 				nextVideoFrameOffset = frameRendered->nextVideoFrameOffsetInFile;
 				nextVideoFrameFileSize = frameRendered->nextVideoFrameFileSize;
 				int decompSize = lzssDecompress((u8*)decodedBuf + frameDescSize, (u8*)decompBufUncached);
