@@ -19,7 +19,13 @@ USA
 */
 
 //Format name: TVS (ToolchainGenericDS Videoplayer Stream)
-//Format Version: 1.2
+//Format Version: 1.3
+//Changelog:
+//1.3 Add timestamp and synchronize video to audio track.
+//1.2 Add LZSS compression
+//1.1 add 10 FPS support
+//1.0 First version, plays raw uncompressed videoframes
+
 #ifndef __TGDSVideo_h__
 #define __TGDSVideo_h__
 
@@ -28,11 +34,19 @@ USA
 #define TGDSARM9Calloc calloc
 #define TGDSARM9Realloc realloc
 #define TGDSARM9Free free
+#endif
+
+//enable GCC Linux and WIN32 only
+#if !defined(ARM7) && !defined(ARM9)
 #include "TGDSTypes.h"
 #endif
 
 #include <stdio.h>
 #include <stdint.h>
+
+#if !defined(WIN32)
+#include <stdbool.h>
+#endif
 
 #ifdef ARM9
 #include "typedefsTGDS.h"
@@ -60,12 +74,17 @@ USA
 #define TGDSVideoFrameLZSSVRAMCompression (int)(2)
 //... other compression formats
 
+struct videoFrameTimeStamp{
+	int extractedElapsedTimeStampInMilliseconds;
+	int frameIndex;
+};
+
 struct videoFrame{
 	int lastVideoFrameOffsetInFile; //points to previous struct videoFrame *
 	int lastVideoFrameFileSize;
 	int nextVideoFrameOffsetInFile; //points to next struct videoFrame *
 	int nextVideoFrameFileSize;
-
+	int elapsedTimeStampInMilliseconds; //1100ms equals to 1.1s, 100ms equals to 0.1s, etc
 	int currentFrameIndex;	//TGDS-Videoplayer Client: AMMOUNT Cache buffer where up to {videoFramesToCache} will be decompressed into, using the indexed frames format. Rendered frames consume this
 	int frameSize; //holds the uncompressed size
 	u32 LZSSWRAMCompressedFormat; //TGDSVideoFrameNoCompression == always Uncompressed / TGDSVideoFrameLZSSWRAMCompression == always compressed

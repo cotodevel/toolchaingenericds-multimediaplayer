@@ -59,6 +59,7 @@ USA
 #include <stdint.h>
 #include "lz77.h"
 #include "interrupts.h"
+#include "timerTGDS.h"
 
 struct FileClassList * menuIteratorfileClassListCtx = NULL;
 char curChosenBrowseFile[256+1];
@@ -150,6 +151,7 @@ void playTVSFile(char * tvsFile){
 		setBacklight(POWMAN_BACKLIGHT_TOP_BIT);				
 		TGDSVideoPlayback = true;
 		strcpy(curChosenBrowseFile, tvsFile);
+		startTimerCounter(tUnitsMilliseconds); //timer go
 	}
 	else{
 		TGDSVideoPlayback = false;
