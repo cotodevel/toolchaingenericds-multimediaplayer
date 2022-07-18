@@ -3,13 +3,9 @@
 NTR/TWL SDK: TGDS1.65
 
 master: Development branch. Use TGDS1.65: branch for stable features.
-
 This is the ToolchainGenericDS-multimediaplayer project:
-
 Compile Toolchain: To compile this project you will need to follow the steps at https://bitbucket.org/Coto88/toolchaingenericds : Then simply extract the project somewhere.
-
 Compile this project: Open msys, through msys commands head to the directory your extracted this project. Then write: make clean make
-
 After compiling, run the example in NDS.
 
 Project Specific description: 
@@ -26,8 +22,32 @@ TWL Mode Usage:
     - copy all files from /release/arm7dldi-twl folder to SD:/ root . If it prompts for overwrite: Yes to All. 
     - Now open TWiLightMenu (you must set it up first, so you can run TWL mode apps), and run the TWL file. 
 
+Changelog:
+
+-0.4:
+- TGDS-Videoplayer implements proper timestamp support. Which means Video + Audio are synchronized properly and it'll never be out of sync again ;-)
+
+-0.3:
+- TGDS-Videoplayer NTR/TWL port implemented
+
+-0.2:
+- add LZSS compression (from the encoder and TGDS-Videoplayer), shrinking .TVS filesizes in about half.
+- because of the variable, and way lower filesizes, sound streaming works better now and quality has been increassed to 22Khz by default
+
+-0.1 Alpha:
+- Plays up to 10FPS videos (yeah slow I know), but the ARM7DLDI implementation causes some bottlenecks. Audio: IMA-PCM up to 22khz
+
+How to generate .TVS video streams compatible:
+https://bitbucket.org/Coto88/newlib-nds/src/master/installer/shared/6.2_2016q4/bin/TVS-SCRIPT-EXPORT-README.MD
+
+demo:
+misc/fma1.tvs
+misc/fma1.ima
+
+Intro of Full Metal Alchemist 1 Japanese intro converted into .TVS format (if the authors want me to take it down I will)
+
 Buttons:
-(Start): File Browser -> (A) to play multimedia file
+(Start): File Browser -> (A) to play multimedia files
 (L): Recent Playlist 
 (R): Random audio file playback
 (B): Stop audio playback 
@@ -40,7 +60,13 @@ Notes:
  - NTR Mode: DLDI patch the file manually if it isn't detected by the loader. TWL Mode doesn't need it.
  - Be careful to NOT to set the volume too high! Prevent hearing loss!
 
+Authors:
 Many thanks to DSOrganize and it's author(s), since the audio player code was taken from there... except there is no memory issues this time to play audio files at all!!!!
+
+IMA-ADPCM Decoder: Discostew
+
+LZSS decompressor: RocketRobz
+https://github.com/RocketRobz/RocketVideoPlayer
 
 ____Remoteboot____
 Also, it's recommended to use the remoteboot feature. It allows to send the current TGDS Project over wifi removing the necessity

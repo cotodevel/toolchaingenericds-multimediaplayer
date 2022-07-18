@@ -1,3 +1,4 @@
+#if defined(WIN32) || defined(ARM9)
 /*
 
 			Copyright (C) 2017  Coto
@@ -27,8 +28,6 @@ USA
 #include <stdint.h>
 #include "TGDSVideo.h"
 #ifdef ARM9
-#include "fatfslayerTGDS.h"
-#include "posixHandleTGDS.h"
 #include "biosTGDS.h"
 #include "nds_cp15_misc.h"
 #include "dmaTGDS.h"
@@ -37,18 +36,25 @@ USA
 #include "ima_adpcm.h"
 #include "main.h"
 #include "lz77.h"
+#include "posixHandleTGDS.h"
+#include "timerTGDS.h"
 #endif
 #include "lzss9.h"
 #if defined (MSDOS) || defined(WIN32)
-#include "..\..\..\..\ToolchainGenericDSFS\fatfslayerTGDS.h"
-#include "..\..\..\..\ToolchainGenericDSFS\dldiWin32.h"
+#include "../ToolchainGenericDSFS/fatfslayerTGDS.h"
+#include "../utilities.h"
 #include "TGDSTypes.h"
 #endif
 
 u8 decompBuf[256*192*2];
 
 //Format name: TVS (ToolchainGenericDS Videoplayer Stream)
-//Format Version: 1.2
+//Format Version: 1.3
+//Changelog:
+//1.3 Add timestamp and synchronize video to audio track.
+//1.2 Add LZSS compression
+//1.1 add 10 FPS support
+//1.0 First version, plays raw uncompressed videoframes
 #ifdef ARM9
 __attribute__((section(".dtcm")))
 #endif
@@ -62,7 +68,7 @@ struct TGDSVideoFrameContext * TGDSVideoFrameContextReference = NULL;
 #ifdef ARM9
 __attribute__((section(".dtcm")))
 #endif
-bool TGDSVideoPlayback=false;
+bool TGDSVideoPlayback;
 
 #if defined(ARM9) || defined(WIN32)
 #ifdef ARM9
@@ -122,6 +128,7 @@ int parseTGDSVideoFile(struct fd * _VideoDecoderFileHandleFD, char * audioFname)
 	strcpy(tmpName, audioFname);	
 	separateExtension(tmpName, ext);
 	strlwr(ext);
+	TGDSVideoPlayback=false;	
 	if(strcmp(ext,".tvs") == 0){
 		struct TGDSVideoFrameContext * readTGDSVideoFrameContext = (struct TGDSVideoFrameContext *)TGDSARM9Malloc(sizeof(struct TGDSVideoFrameContext));
 		fatfs_seekDirectStructFD(_VideoDecoderFileHandleFD, 0);
@@ -148,7 +155,6 @@ int parseTGDSVideoFile(struct fd * _VideoDecoderFileHandleFD, char * audioFname)
 //returns: physical struct videoFrame * offset from source FILE handle
 #ifdef ARM9
 __attribute__((section(".itcm")))
-#endif
 u32 getVideoFrameOffsetFromIndexInFileHandle(int videoFrameIndexFromFileHandle){
 	//TGDSVideo methods uses same format for ARM9 and WIN32
 	u32 frameOffsetCollectionInFileHandle = ((int)(sizeof(struct TGDSVideoFrameContext) - 4) + (videoFrameIndexFromFileHandle*4));
@@ -159,6 +165,7 @@ u32 getVideoFrameOffsetFromIndexInFileHandle(int videoFrameIndexFromFileHandle){
 	}
 	return -1;
 }
+#endif
 
 #ifdef ARM9
 __attribute__((section(".dtcm")))
@@ -177,43 +184,42 @@ int TGDSVideoRender(){
 	#ifdef ARM9
 	//Any frames loaded? Handle them
 	if( (vblankCount != 1) && ((vblankCount % (frameInterval) ) == 0)){
-		//render one frame proportional to vertical blank interrupts
+		//render one frame proportional to timestamp sync'd to actual TGDS videoframe
 		if(TGDSVideoPlayback == true){
 			UINT nbytes_read;
 			int frameDescSize = sizeof(struct videoFrame);
 			f_lseek(&videoHandleFD.fil, nextVideoFrameOffset);
 			f_read(&videoHandleFD.fil, (u8*)decodedBuf, nextVideoFrameFileSize + frameDescSize, &nbytes_read);
 			struct videoFrame * frameRendered = (struct videoFrame *)decodedBuf;
-			nextVideoFrameOffset = frameRendered->nextVideoFrameOffsetInFile;
-			nextVideoFrameFileSize = frameRendered->nextVideoFrameFileSize;
-			int decompSize = lzssDecompress((u8*)decodedBuf + frameDescSize, (u8*)decompBufUncached);
-			DMA0_SRC = (uint32)(decompBufUncached);
-			DMA0_DEST = (uint32)mainBufferDraw;
-			DMA0_CR = DMAENABLED | DMAINCR_SRC | DMAINCR_DEST | DMA32BIT | (decompSize>>2);
 			
-			if(frameCount < TGDSVideoFrameContextReference->videoFramesTotalCount){
-				frameCount++;
-			}
-			else{
-				DMA0_CR = 0;
-				dmaFillWord(0, 0, (uint32)mainBufferDraw, (uint32)256*192*2);	//clean render buffer
-				vblankCount = frameCount = 1;
-				nextVideoFrameOffset = TGDSVideoFrameContextReference->videoFrameStartFileOffset;
-				nextVideoFrameFileSize = TGDSVideoFrameContextReference->videoFrameStartFileSize;
-				TGDSVideoPlayback = false;
+			if(frameRendered->elapsedTimeStampInMilliseconds < (getTimerCounter()+300)  ){ //0.3s seek time ahead to sync better
+				nextVideoFrameOffset = frameRendered->nextVideoFrameOffsetInFile;
+				nextVideoFrameFileSize = frameRendered->nextVideoFrameFileSize;
+				int decompSize = lzssDecompress((u8*)decodedBuf + frameDescSize, (u8*)decompBufUncached);
+				DMA0_SRC = (uint32)(decompBufUncached);
+				DMA0_DEST = (uint32)mainBufferDraw;
+				DMA0_CR = DMAENABLED | DMAINCR_SRC | DMAINCR_DEST | DMA32BIT | (decompSize>>2);
 				
-				//Exit inmediately to TGDS-LM Caller on videoplayback end
-				TGDSProjectReturnToCaller(callerNDSBinary);
+				if(frameCount < TGDSVideoFrameContextReference->videoFramesTotalCount){
+					frameCount++;
+				}
+				else{
+					DMA0_CR = 0;
+					dmaFillWord(0, 0, (uint32)mainBufferDraw, (uint32)256*192*2);	//clean render buffer
+					vblankCount = frameCount = 1;
+					nextVideoFrameOffset = TGDSVideoFrameContextReference->videoFrameStartFileOffset;
+					nextVideoFrameFileSize = TGDSVideoFrameContextReference->videoFrameStartFileSize;
+					TGDSVideoPlayback = false;
+					
+					//Exit inmediately to TGDS-LM Caller on videoplayback end
+					TGDSProjectReturnToCaller(callerNDSBinary);
+				}
 			}
 		}
-	}
-	if(__dsimode == true){
-		IRQWait(1, IRQ_VBLANK);
-		IRQWait(1, IRQ_VBLANK);
-		swiDelay(8888);
 	}
 	#endif
 	return 0;
 }
 
 //NDS Client implementation End
+#endif
