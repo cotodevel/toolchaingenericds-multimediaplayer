@@ -986,12 +986,11 @@ int main(int argc, char **argv) {
 	printf("     ");
 	
 	int ret=FS_init();
-	if (ret == 0)
-	{
-		printf("FS Init ok.");
-	}
-	else{
-		printf("FS Init error: %d", ret);
+	if (ret != 0){
+		printf("%s: FS Init error: %d >%d", TGDSPROJECTNAME, ret, TGDSPrintfColor_Red);
+		while(1==1){
+			swiDelay(1);
+		}
 	}
 	
 	asm("mcr	p15, 0, r0, c7, c10, 4");
