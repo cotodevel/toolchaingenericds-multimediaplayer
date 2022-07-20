@@ -80,17 +80,19 @@ void closeSoundUser(){
 	//Stubbed. Gets called when closing an audiostream of a custom audio decoder
 }
 
-static inline void menuShow(){
-	clrscr();
-	printf("     ");
-	printf("     ");
-	printf("Current file: %s ", curChosenBrowseFile);
-	printf("ToolchainGenericDS-videoplayer ");
-	printf("(Select): This menu. ");
-	printf("(Start) then (A): Play TVS video sequence. ");
-	printf("Available program memory: %d >%d", TGDSMallocFreeMemory9(), TGDSPrintfColor_Cyan);
-	printf("Note: Press Start again to show the menu. >%d", TGDSPrintfColor_Yellow);
-	printf("Available heap memory: %d >%d", getMaxRam(), TGDSPrintfColor_Cyan);
+void menuShow(){
+	if(getTGDSDebuggingState() == true){
+		clrscr();
+		printf("     ");
+		printf("     ");
+		printf("Current file: %s ", curChosenBrowseFile);
+		printf("ToolchainGenericDS-videoplayer ");
+		printf("(Select): This menu. ");
+		printf("(Start) then (A): Play TVS video sequence. ");
+		printf("Available program memory: %d >%d", TGDSMallocFreeMemory9(), TGDSPrintfColor_Cyan);
+		printf("Note: Press Start again to show the menu. >%d", TGDSPrintfColor_Yellow);
+		printf("Available heap memory: %d >%d", getMaxRam(), TGDSPrintfColor_Cyan);
+	}
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -204,12 +206,11 @@ int main(int argc, char **argv) {
 	}
 
 	int ret=FS_init();
-	if (ret == 0)
-	{
-		printf("FS Init ok.");
-	}
-	else{
-		printf("FS Init error: %d", ret);
+	if (ret != 0){
+		printf("%s: FS Init error: %d >%d", TGDSPROJECTNAME, ret, TGDSPrintfColor_Red);
+		while(1==1){
+			swiDelay(1);
+		}
 	}
 	
 	asm("mcr	p15, 0, r0, c7, c10, 4");
@@ -221,18 +222,19 @@ int main(int argc, char **argv) {
 	menuShow();
 	
 	//ARGV Implementation test
-	if (0 != argc ) {
-		int i;
-		for (i=0; i<argc; i++) {
-			if (argv[i]) {
-				printf("[%d] %s ", i, argv[i]);
+	if(getTGDSDebuggingState() == true){
+		if (0 != argc ) {
+			int i;
+			for (i=0; i<argc; i++) {
+				if (argv[i]) {
+					printf("[%d] %s ", i, argv[i]);
+				}
 			}
+		} 
+		else {
+			printf("No arguments passed!");
 		}
-	} 
-	else {
-		printf("No arguments passed!");
 	}
-	
 	//Discard FIFO errors
 	if(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){ 
 		REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO

@@ -57,6 +57,7 @@ extern void setSnemulDSSpecial0xFFFF0000MPUSettings();
 extern void playTVSFile(char * tvsFile);
 extern void TGDSProjectReturnToCaller(char * NDSPayload);
 extern char callerNDSBinary[256];
+extern void menuShow();
 
 #ifdef __cplusplus
 }
