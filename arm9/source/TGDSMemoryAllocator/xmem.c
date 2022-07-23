@@ -12,7 +12,6 @@
 #include <string.h>
 #include "typedefsTGDS.h"
 #include "xmem.h"
-#include "utilsTGDS.h"
 
 // default use 1.5 MB
 unsigned int XMEMTOTALSIZE = (128*1024);
@@ -68,9 +67,7 @@ void XmemInit(unsigned int mallocLinearMemoryStart, unsigned int mallocLinearMem
 	xmem_blocks = (unsigned char *) malloc(XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT);
 	
 	if ((xmem_table == NULL) || (xmem_blocks == NULL)) {
-		if(getTGDSDebuggingState() == true){
-			printf("XMEM: Could not allocate %d bytes of main ram for XMEM...",XMEM_TABLESIZE+(XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT));
-		}
+		//printf("XMEM: Could not allocate %d bytes of main ram for XMEM...",XMEM_TABLESIZE+(XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT));
 		if (xmem_table) free(xmem_table);
 		if (xmem_blocks) free(xmem_blocks);
 		return;
@@ -78,12 +75,11 @@ void XmemInit(unsigned int mallocLinearMemoryStart, unsigned int mallocLinearMem
 	
 	//free(XT);
 	
-	if(getTGDSDebuggingState() == true){
-		printf("***       XMEM       *** ");
-		printf("TABLE: %8.8X (%d) ",xmem_table,XMEM_TABLESIZE);
-		printf("BLOCK: %8.8X (%d) ",xmem_blocks,XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT);
-		printf("***XMEM INIT COMPLETE*** ");
-	}
+	//printf("***       XMEM       *** ");
+	//printf("TABLE: %8.8X (%d) ",xmem_table,XMEM_TABLESIZE);
+	//printf("BLOCK: %8.8X (%d) ",xmem_blocks,XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT);
+	//printf("***XMEM INIT COMPLETE*** ");
+	
 	xmem_table[0] = XMEM_STARTBLOCK | XMEM_ENDBLOCK | XMEM_USEDBLOCK; // reserved i suppose
 	int i=0;
 	for (i=1;(unsigned)i<XMEM_TABLESIZE;i++) {
@@ -99,9 +95,10 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 void *Xmalloc(const int size) {
-
 	int i, blocks, sblock, fbr;
 	bool found;
+	
+	//printf("XMS");
 	
 	// find size amount of memory to give to 
 	blocks = (size / XMEM_BLOCKSIZE) + 1;
@@ -131,12 +128,12 @@ void *Xmalloc(const int size) {
 	}
 
 	if (!found) {
-		if(getTGDSDebuggingState() == true){
-			// couldnt find enough free blocks!
-			printf("XM: Couldnt Find Mem: %d/%d ",size, XMEM_FreeMem());
-		}
+		// couldnt find enough free blocks!
+		//printf("XM: Couldnt Find Mem: %d/%d ",size, XMEM_FreeMem());
+		
 		return NULL;
 	}
+	//printf("XM: SBLOCK: %d ",sblock);
 
 	// we found enough blocks!
 	// allocate them...
@@ -151,7 +148,9 @@ void *Xmalloc(const int size) {
 		xmem_table[sblock+(blocks-1)] |= XMEM_ENDBLOCK;
 	}
 	
+	//printf("XM: %d %d %8.8X ", size, sblock, ((unsigned int) xmem_blocks + (sblock*XMEM_BLOCKSIZE))); 
 	return (void *) ((unsigned int) xmem_blocks + (sblock*XMEM_BLOCKSIZE));
+
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
