@@ -155,7 +155,6 @@ extern void soundNextTrack(int x, int y);
 //extern int getSNDHTrack();
 //extern int getSNDHTotalTracks();
 //extern void getSNDHMeta(api68_music_info_t * info);
-extern void loadWavToMemory();
 //extern int getSIDTrack();
 //extern int getSIDTotalTracks();
 //extern int getGBSTrack();

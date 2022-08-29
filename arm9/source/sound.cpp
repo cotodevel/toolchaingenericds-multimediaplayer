@@ -169,11 +169,6 @@ int getGBSTrack();
 int getGBSTotalTracks();
 char *gbsMeta(int which);
 
-void loadWavToMemory()
-{
-	memoryLoad = true;
-}
-
 void parseSongTitle()
 {
 	char *tmpLower = (char *)trackMalloc(strlen(tmpMeta) + 1, "tmp buffer for lowercase");
