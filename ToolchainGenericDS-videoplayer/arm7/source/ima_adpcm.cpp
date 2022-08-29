@@ -142,11 +142,9 @@ __attribute__ ((optnone))
 #endif
 int IMA_Adpcm_Stream::stream( s16 *target, int length )	
 {
-	/*
 	if( format == WAV_FORMAT_PCM )
 		return stream_pcm( target, length );
 	else
-	*/
 	return decode_ima( target, length );
 }
 
@@ -336,12 +334,6 @@ __attribute__ ((optnone))
 #endif
 void IMA_Adpcm_Stream::close() 	{
 	pf_lseek(0);
-	//Audio stop here....
-	/*
-	if(closeCb != NULL){
-		closeCb();
-	}
-	*/
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -520,7 +512,6 @@ __attribute__ ((optnone))
 #endif
 int IMA_Adpcm_Player::play(bool loop_audio, bool automatic_updates, int buffer_length, closeSoundHandle closeHandle )		{
 	active = false;
-	stop();
 	autofill = automatic_updates;
 	int result = stream.reset(loop_audio );
 	if( result ){
@@ -559,9 +550,9 @@ int IMA_Adpcm_Player::play(bool loop_audio, bool automatic_updates, int buffer_l
 	IMAADPCMDecode((s16 *)strpcmL0,(s16 *)strpcmR0);
 	
 	strpcmL0 = (s16*)lBufferARM7;	//VRAM_D;
-	strpcmL1 = (s16*)lBufferARM7 + ((ADPCM_SIZE >> 1) );	//strpcmL0 + (size >> 1);
+	strpcmL1 = (s16*)lBufferARM7 + (((ADPCM_SIZE*2) >> 1) );	//strpcmL0 + (size >> 1);
 	strpcmR0 = (s16*)rBufferARM7;	//strpcmL1 + (size >> 1);
-	strpcmR1 = (s16*)rBufferARM7 + ((ADPCM_SIZE >> 1) );	//strpcmR0 + (size >> 1);
+	strpcmR1 = (s16*)rBufferARM7 + (((ADPCM_SIZE*2) >> 1) );	//strpcmR0 + (size >> 1);
 	
 	return 0;
 }
@@ -598,6 +589,8 @@ void IMA_Adpcm_Player::stop()		{
 	stream.close();
 	active=false;
 	setvolume( 0 );
+	//Audio stop here....
+	playerStopARM7();
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -650,13 +643,16 @@ __attribute__ ((optnone))
 #endif
 int IMA_Adpcm_Player::i_stream_request( int length, void * dest, int format )		{
 	if( !paused ) {
-		if( !stream.stream( (s16*)dest, length ))
+		if( stream.stream( (s16*)dest, length ) != 1)
 		{
 			
 		}
 		else{
-			stop();
+			if(!stream.wave_loop){ //is bool loop == disabled?
+				stop();
+			}
 		}
+		
 	} else {
 		s16 *d = (s16*)dest;
 		int i = length * 2;
@@ -687,7 +683,7 @@ __attribute__ ((optnone))
 #endif
 void IMAADPCMDecode(s16 * lBuf, s16 * rBuf)	{
 	s16 * tmpData = (s16 *)&adpcmWorkBuffer[0];
-	player.i_stream_request(ADPCMchunksize, (void*)&tmpData[0], WAV_FORMAT_IMA_ADPCM*2);
+	player.i_stream_request(ADPCMchunksize, (void*)&tmpData[0], WAV_FORMAT_IMA_ADPCM);
 	if(soundData.channels == 2)
 	{
 		uint i=0;
@@ -723,10 +719,10 @@ void setupSoundTGDSVideoPlayerARM7() {
 	
 	//mallocData(sampleLen * 2 * multRate);
     
-	TIMERXDATA(1) = TIMER_FREQ((sndRate * multRate *2));
+	TIMERXDATA(1) = TIMER_FREQ((sndRate));
 	TIMERXCNT(1) = TIMER_DIV_1 | TIMER_ENABLE;
   
-	TIMERXDATA(2) =  (0x10000) - (sampleLen*2);
+	TIMERXDATA(2) =  (0x10000) - (sampleLen);
 	TIMERXCNT(2) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
 	
 	//irqSet(IRQ_TIMER1, TIMER1Handler);
@@ -736,13 +732,12 @@ void setupSoundTGDSVideoPlayerARM7() {
 	{
 		SCHANNEL_CR(ch) = 0;
 		SCHANNEL_TIMER(ch) = SOUND_FREQ((sndRate * multRate));
-		SCHANNEL_LENGTH(ch) = (sampleLen * multRate) >> 1;
+		SCHANNEL_LENGTH(ch) = (sampleLen * multRate)>>1;
 		SCHANNEL_REPEAT_POINT(ch) = 0;
 	}
 
 	//irqSet(IRQ_VBLANK, 0);
 	//irqDisable(IRQ_VBLANK);
-	REG_IE&=~IRQ_VBLANK;
 	REG_IE |= IRQ_TIMER2;
 	
 	lastL = 0;
@@ -758,40 +753,37 @@ __attribute__ ((optnone))
 void timerAudioCallback(){
 	
 	s16 *bufL, *bufR;
-	
-	if(sndCursor == 0){
 		
-		memcpy((void *)strpcmL0 + ((ADPCM_SIZE*1)>>1), (const void *)strpcmL1 + ((ADPCM_SIZE*0)>>1), ADPCM_SIZE>>1); 
-		memcpy((void *)strpcmR0 + ((ADPCM_SIZE*0)>>1), (const void *)strpcmR1 + ((ADPCM_SIZE*1)>>1), ADPCM_SIZE>>1); 
+		if(sndCursor == 1){
+			
+			memcpy((void *)strpcmL1, (const void *)strpcmL0 , ADPCM_SIZE>>1); 
+			memcpy((void *)strpcmR1, (const void *)strpcmR0 , ADPCM_SIZE>>1);
+
+			IMAADPCMDecode((s16 *)strpcmL1,(s16 *)strpcmR1);
+			
+			bufL = strpcmL1;
+			bufR = strpcmR1;
+		}
+		else{
+			
+			memcpy((void *)strpcmL0, (const void *)strpcmL1 , ADPCM_SIZE>>2); 
+			memcpy((void *)strpcmR0, (const void *)strpcmR1 , ADPCM_SIZE>>2); 
+
+			IMAADPCMDecode((s16 *)strpcmL0,(s16 *)strpcmR0);
+			
+			bufL = strpcmL0;
+			bufR = strpcmR0;
+
+		}
 		
-		IMAADPCMDecode((s16 *)strpcmL1,(s16 *)strpcmR1);
 		
-		bufL = strpcmL1;
-		bufR = strpcmR1;
+		// Left channel
+		SCHANNEL_SOURCE((sndCursor << 1)) = (uint32)bufL;
+		SCHANNEL_CR((sndCursor << 1)) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0) | SOUND_16BIT;
 		
+		// Right channel
+		SCHANNEL_SOURCE((sndCursor << 1) + 1) = (uint32)bufR;
+		SCHANNEL_CR((sndCursor << 1) + 1) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0x3FF) | SOUND_16BIT;
 		
-	}
-	else{
-		
-		memcpy((void *)strpcmL1 + ((ADPCM_SIZE*1)>>1), (const void *)strpcmL0 + ((ADPCM_SIZE*0)>>1), ADPCM_SIZE>>1); 
-		memcpy((void *)strpcmR1 + ((ADPCM_SIZE*0)>>1), (const void *)strpcmR0 + ((ADPCM_SIZE*1)>>1), ADPCM_SIZE>>1); 
-		
-		
-		IMAADPCMDecode((s16 *)strpcmL0,(s16 *)strpcmR0);
-		
-		bufL = strpcmL0;
-		bufR = strpcmR0;
-		
-	}
-	
-	
-	// Left channel
-	SCHANNEL_SOURCE((sndCursor << 1)) = (uint32)bufL;
-	SCHANNEL_CR((sndCursor << 1)) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0) | SOUND_16BIT;
-	
-	// Right channel
-	SCHANNEL_SOURCE((sndCursor << 1) + 1) = (uint32)bufR;
-	SCHANNEL_CR((sndCursor << 1) + 1) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0x3FF) | SOUND_16BIT;
-	
-	sndCursor = 1 - sndCursor;
+		sndCursor = 1 - sndCursor;
 }
