@@ -180,7 +180,7 @@ void playTVSFile(char * tvsFile){
 		setBacklight(POWMAN_BACKLIGHT_TOP_BIT);				
 		TGDSVideoPlayback = true;
 		strcpy(curChosenBrowseFile, tvsFile);
-		startTimerCounter(tUnitsMilliseconds); //timer go
+		startTimerCounter(tUnitsMilliseconds, 1); //tUnitsMilliseconds equals 1 millisecond/unit. A single unit (1) is the default value for normal timer count-up scenarios. 
 	}
 	else{
 		TGDSVideoPlayback = false;

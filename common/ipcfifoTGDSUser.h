@@ -67,6 +67,8 @@ typedef sint16 int16;
 #define FIFO_TGDSAUDIOPLAYER_DISABLEIRQ (u32)(0xFFAACC00)
 #define FIFO_TGDSAUDIOPLAYER_ENABLEIRQ (u32)(0xFFAACC01)
 
+//#define ISEMULATOR 1 //defined == TGDS Project does not self reload, undedfined == TGDS Project self reloads
+
 #endif
 
 #ifdef __cplusplus

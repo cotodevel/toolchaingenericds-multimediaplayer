@@ -62,11 +62,13 @@ void handleARM7FSSetup(){
 	argBuffer[0] = 0xc070ffff;
 	
 	if (fresult != FR_OK) { /* File System could not be mounted */
-		//strcpy((char*)0x02000000, "File open ERR!");
+		//strcpy((char*)0x02000000, "File open ERR:");
+		//strcat((char*)0x02000000, filename);
 		swiDelay(4000);
 	}
 	else{
 		//strcpy((char*)0x02000000, "File open OK!");
+		//strcat((char*)0x02000000, filename);
 	}
 	pf_lseek(0);
 	//pf_read((u8*)&videoCtx, sizeof(struct TGDSVideoFrameContext), &br);		/* Load a page data */
@@ -102,9 +104,10 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 int main(int argc, char **argv)  {
+	REG_IE|=(IRQ_VBLANK|IRQ_HBLANK); //X button depends on this
 	while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQWait(0, IRQ_VBLANK | IRQ_VCOUNT | IRQ_IPCSYNC | IRQ_RECVFIFO_NOT_EMPTY);
+		IRQWait(0, IRQ_HBLANK);
 	}
 	return 0;
 }
@@ -120,13 +123,22 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 void playerStopARM7(){
-	player.stop();
-	pf_lseek(0);
-	
+	memset((void *)strpcmL0, 0, 512);
+	memset((void *)strpcmL1, 0, 512);
+	memset((void *)strpcmR0, 0, 512);
+	memset((void *)strpcmR1, 0, 512);
+
 	REG_IE&=~IRQ_TIMER2;
 	
 	TIMERXDATA(1) = 0;
 	TIMERXCNT(1) = 0;
 	TIMERXDATA(2) = 0;
 	TIMERXCNT(2) = 0;
+	for(int ch=0;ch<4;++ch)
+	{
+		SCHANNEL_CR(ch) = 0;
+		SCHANNEL_TIMER(ch) = 0;
+		SCHANNEL_LENGTH(ch) = 0;
+		SCHANNEL_REPEAT_POINT(ch) = 0;
+	}
 }

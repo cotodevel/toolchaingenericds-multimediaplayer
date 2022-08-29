@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "soundTGDS.h"
 
-#define ADPCM_SIZE (int)(2048)		//TGDS IMA-ADPCM buffer size
+#define ADPCM_SIZE (int)(4096)		//TGDS IMA-ADPCM buffer size
 typedef bool (*closeSoundHandle)();	//ret: true = closed sound stream. false = couldn't close sound stream
 
 #define lBufferARM7 (s16*)((int)0x037f8000)	
@@ -74,7 +74,6 @@ private:
 	int		format;
 	int		sampBits;
 	int		sampling_rate;
-	int		wave_loop;
 	int		is_processing;
 	
 	void	open( const void* );
@@ -92,7 +91,7 @@ private:
 	void	capture_frame();
 	void	restore_frame();
 public:
-	
+	int		wave_loop;
 	IMA_Adpcm_Stream();
 	~IMA_Adpcm_Stream();
 	int reset(bool loop);
@@ -118,7 +117,7 @@ class IMA_Adpcm_Player {
 public:
 	IMA_Adpcm_Player();
 	wavFormatChunk headerChunk;
-	int play(bool loop_audio, bool automatic_updates, int buffer_length = ADPCM_SIZE*4, closeSoundHandle = NULL);
+	int play(bool loop_audio, bool automatic_updates, int buffer_length = ADPCM_SIZE*16, closeSoundHandle = NULL);
 	void pause();
 	void resume();
 	void stop();
