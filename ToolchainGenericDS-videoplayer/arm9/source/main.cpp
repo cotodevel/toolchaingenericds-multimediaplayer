@@ -173,9 +173,7 @@ void playTVSFile(char * tvsFile){
 		nextVideoFrameFileSize = TGDSVideoFrameContextReference->videoFrameStartFileSize;			
 		
 		//ARM7 ADPCM playback 
-		char * filen = FS_getFileName(tvsFile);
-		strcat(filen, ".ima");
-		u32 returnStatus = setupDirectVideoFrameRender(&videoHandleFD, (char*)&filen[2]);
+		BgMusic(tvsFile);
 		
 		setBacklight(POWMAN_BACKLIGHT_TOP_BIT);				
 		TGDSVideoPlayback = true;
@@ -242,6 +240,7 @@ int main(int argc, char **argv) {
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
 	/////////////////////////////////////////////////////////Reload TGDS Proj///////////////////////////////////////////////////////////
+	#if !defined(ISEMULATOR)
 	char tmpName[256];
 	char ext[256];	
 	char TGDSProj[256];
@@ -319,7 +318,11 @@ int main(int argc, char **argv) {
 			
 		}
 	}
+	#endif
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if(__dsimode == true){
+		TWLSetTouchscreenTWLMode();
+	}
 	
 	REG_IME = 0;
 	setSnemulDSSpecial0xFFFF0000MPUSettings();

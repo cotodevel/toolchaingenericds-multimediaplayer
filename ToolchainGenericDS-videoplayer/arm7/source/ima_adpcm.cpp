@@ -11,11 +11,6 @@
 #include "ipcfifoTGDSUser.h"
 #include "timerTGDS.h"
 
-#define tell() pf_tell()
-#define seek(x) pf_lseek (x)
-#define skip(x) pf_lseek(x + tell())
-
-IMA_Adpcm_Player player;	//Actual PLAYER Instance. See ima_adpcm.cpp -> [PLAYER: section
 int ADPCMchunksize = 0;
 int ADPCMchannels = 0;
 
@@ -54,7 +49,7 @@ int IMA_Adpcm_Stream::reset(bool loop )
 	}
 	
 	// parse WAV structure
-	while( tell() < size )
+	while( pf_tell(currentFatfsFILEHandle) < size )
 	{
 		u32 code = fget32();
 		u32 csize = fget32();
@@ -78,7 +73,7 @@ int IMA_Adpcm_Stream::reset(bool loop )
 			}
 				
 			sampling_rate = fget32();// sample rate
-			skip( 4 );	// avg bytes/second
+			pf_lseek(4 + pf_tell(currentFatfsFILEHandle), currentFatfsFILEHandle); // avg bytes/second
 			block = fget16();
 			
 			sampBits = fget16();
@@ -89,14 +84,14 @@ int IMA_Adpcm_Stream::reset(bool loop )
 				return IMA_ADPCM_ERROR_UNSUPPORTED;
 			}
 			
-			skip( csize - 0x10 );
+			pf_lseek( (csize - 0x10) + pf_tell(currentFatfsFILEHandle), currentFatfsFILEHandle);
 			break;
 			
 		case 0x61746164:	// data chunk
-			wave_data = tell();
+			wave_data = pf_tell(currentFatfsFILEHandle);
 			loop1 = 0;
-			skip( csize );
-			wave_end = tell();
+			pf_lseek( csize + pf_tell(currentFatfsFILEHandle), currentFatfsFILEHandle);
+			wave_end = pf_tell(currentFatfsFILEHandle);
 			if( format == WAV_FORMAT_PCM )
 				loop2 = csize >> ( sampBits == 16 ? channels : ( channels - 1 ));
 			else
@@ -106,30 +101,30 @@ int IMA_Adpcm_Stream::reset(bool loop )
 		case 0x6C706D73:	// sampler chunk
 		{
 			int s;
-			skip( 28 );
+			pf_lseek( 28 + pf_tell(currentFatfsFILEHandle), currentFatfsFILEHandle);
 			int nl = fget32();
-			skip(4);
+			pf_lseek( 4 + pf_tell(currentFatfsFILEHandle), currentFatfsFILEHandle);
 			s = 36;
 			if( nl && loop) 
 			{
-				skip( 8 );
+				pf_lseek( 8 + pf_tell(currentFatfsFILEHandle), currentFatfsFILEHandle);
 				loop1 = fget32() >> ( 2 - channels );
 				loop2 = fget32() >> ( 2 - channels );
 				s += 8+4+4;
 			}
-			skip( csize - s );
+			pf_lseek( (csize - s) + pf_tell(currentFatfsFILEHandle), currentFatfsFILEHandle);
 		}
 			break;
 		default:
-			skip( csize );
+			pf_lseek( csize + pf_tell(currentFatfsFILEHandle), currentFatfsFILEHandle);
 		}
 	}
 	wave_loop = loop;
 	oddnibble = 0;
 	data.curSamps = 0;
 	position = 0;
-	seek( wave_data );
-	currentblock = tell();
+	pf_lseek (wave_data, currentFatfsFILEHandle);
+	currentblock = pf_tell(currentFatfsFILEHandle);
 	state = state_beginblock;
 	return IMA_ADPCM_OKAY;
 }
@@ -189,7 +184,7 @@ int IMA_Adpcm_Stream::stream_pcm( s16 *target, int length )
 		cpysize = iterations << ( sampBits == 16 ? channels : ( channels - 1 ));
 		
 		UINT nbytes_read;
-		pf_read(target, cpysize, &nbytes_read);			
+		pf_read(target, cpysize, &nbytes_read, currentFatfsFILEHandle);			
 		length -= iterations;
 		position += iterations;
 		currentblock += cpysize;
@@ -200,7 +195,7 @@ int IMA_Adpcm_Stream::stream_pcm( s16 *target, int length )
 
 		
 		if(( position == loop2 ) && wave_loop ) {
-			seek( loop_cblock );
+			pf_lseek (loop_cblock, currentFatfsFILEHandle);
 			currentblock = loop_cblock;
 			position = loop1;
 		}	
@@ -333,7 +328,7 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 void IMA_Adpcm_Stream::close() 	{
-	pf_lseek(0);
+	pf_lseek(0, currentFatfsFILEHandle);
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -360,7 +355,7 @@ __attribute__ ((optnone))
 #endif
 void IMA_Adpcm_Stream::restore_frame()	
 {
-	seek( loop_cblock );
+	pf_lseek (loop_cblock, currentFatfsFILEHandle);
 	getblock();
 	data = loop_data;
 	srcb = loop_src;
@@ -379,7 +374,7 @@ __attribute__ ((optnone))
 int IMA_Adpcm_Stream::fget8() 	{
 	u8 a[1];
 	UINT nbytes_read;
-	pf_read(a, 1, &nbytes_read);
+	pf_read(a, 1, &nbytes_read, currentFatfsFILEHandle);
 	return a[0];
 }
 
@@ -441,10 +436,10 @@ __attribute__ ((optnone))
 #endif
 void IMA_Adpcm_Stream::getblock()	
 {
-	currentblock = tell();
+	currentblock = pf_tell(currentFatfsFILEHandle);
 	blockremain = block << ( 2 - channels );
 	UINT nbytes_read;
-	pf_read(datacache, block, &nbytes_read);
+	pf_read(datacache, block, &nbytes_read, currentFatfsFILEHandle);
 	srcb = datacache;
 }
 
@@ -490,70 +485,69 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-int on_stream_request( int length, void* dest, int format )		{
-	return player.i_stream_request( length, dest, format );
-}
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
 IMA_Adpcm_Player::IMA_Adpcm_Player()		{
 	active=false;
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
+__attribute__((optimize("O3")))
 #endif
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-int IMA_Adpcm_Player::play(bool loop_audio, bool automatic_updates, int buffer_length, closeSoundHandle closeHandle )		{
+int IMA_Adpcm_Player::play(
+	bool loop_audio, 
+	bool automatic_updates, 
+	int buffer_length, 
+	closeSoundHandle closeHandle, 
+	FATFS * inFatfsFILEHandle, 
+	int incomingStreamingMode
+){
+	if(inFatfsFILEHandle == NULL){
+		return -1;
+	}
+	stream.currentFatfsFILEHandle = inFatfsFILEHandle; //first always do NOT move from here
+	currentStreamingMode = incomingStreamingMode;
 	active = false;
 	autofill = automatic_updates;
+	stream.closeCb = closeHandle;
 	int result = stream.reset(loop_audio );
 	if( result ){
-		//strcpy((char*)0x02000000, "reset fail!");
 		return result;
 	}
-	else{
-		//strcpy((char*)0x02000000, "reset OK!"); //so far ok
+	
+	// IMA-ADPCM stream
+	if(currentStreamingMode == FIFO_PLAYSOUNDSTREAM_FILE){
+		int fsize = pf_size(stream.currentFatfsFILEHandle);
+		ADPCMchunksize = buffer_length;
+		soundData.channels = headerChunk.wChannels = ADPCMchannels = stream.get_channels();
+		headerChunk.dwSamplesPerSec = stream.get_sampling_rate();
+		headerChunk.wFormatTag = 1;
+		headerChunk.wBitsPerSample = 16;	//Always signed 16 bit PCM out
+		soundData.len = fsize;
+		soundData.loc = 0;
+		soundData.dataOffset = pf_tell(stream.currentFatfsFILEHandle);
+		multRate = 1;
+		sndRate = headerChunk.dwSamplesPerSec;
+		sampleLen = ADPCMchunksize;
+		soundData.sourceFmt = SRC_WAV;
+		
+		//ARM7 sound code
+		setupSoundTGDSVideoPlayerARM7();
+		IMAADPCMDecode((s16 *)strpcmL0,(s16 *)strpcmR0, this); //call this very IMA_Adpcm_player instance and resolve some audio 
+
+		strpcmL0 = (s16*)lBufferARM7;	//VRAM_D;
+		strpcmL1 = (s16*)lBufferARM7 + (((ADPCM_SIZE*2) >> 1) );	//strpcmL0 + (size >> 1);
+		strpcmR0 = (s16*)rBufferARM7;	//strpcmL1 + (size >> 1);
+		strpcmR1 = (s16*)rBufferARM7 + (((ADPCM_SIZE*2) >> 1) );	//strpcmR0 + (size >> 1);
 	}
-	
-	stream.closeCb = closeHandle;
+	else if(currentStreamingMode == FIFO_PLAYSOUNDEFFECT_FILE){
+		//file handle is opened, and decoding is realtime in small samples, then mixed into the final output audio buffer.
+	}
+
 	paused = false;
-	active=true;
 	setvolume( 4 );
-	// open stream
-	
-	// IMA-ADPCM file
-	int fsize = pf_size();
-	ADPCMchunksize = buffer_length;
-	soundData.channels = headerChunk.wChannels = ADPCMchannels = stream.get_channels();
-	
-	headerChunk.dwSamplesPerSec = stream.get_sampling_rate();
-	headerChunk.wFormatTag = 1;
-	headerChunk.wBitsPerSample = 16;	//Always signed 16 bit PCM out
-	
-	soundData.len = fsize;
-	soundData.loc = 0;
-	soundData.dataOffset = pf_tell();
-	multRate = 1;
-	sndRate = headerChunk.dwSamplesPerSec;
-	sampleLen = ADPCMchunksize;
-	soundData.sourceFmt = SRC_WAV;
-	
-	//ARM7 sound code
-	setupSoundTGDSVideoPlayerARM7();
-	IMAADPCMDecode((s16 *)strpcmL0,(s16 *)strpcmR0);
-	
-	strpcmL0 = (s16*)lBufferARM7;	//VRAM_D;
-	strpcmL1 = (s16*)lBufferARM7 + (((ADPCM_SIZE*2) >> 1) );	//strpcmL0 + (size >> 1);
-	strpcmR0 = (s16*)rBufferARM7;	//strpcmL1 + (size >> 1);
-	strpcmR1 = (s16*)rBufferARM7 + (((ADPCM_SIZE*2) >> 1) );	//strpcmR0 + (size >> 1);
-	
+	active=true;
 	return 0;
 }
 
@@ -653,7 +647,8 @@ int IMA_Adpcm_Player::i_stream_request( int length, void * dest, int format )		{
 			}
 		}
 		
-	} else {
+	} 
+	else {
 		s16 *d = (s16*)dest;
 		int i = length * 2;
 		for( ; i; i-- ) {
@@ -681,9 +676,9 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-void IMAADPCMDecode(s16 * lBuf, s16 * rBuf)	{
+void IMAADPCMDecode(s16 * lBuf, s16 * rBuf, IMA_Adpcm_Player * thisPlayer)	{
 	s16 * tmpData = (s16 *)&adpcmWorkBuffer[0];
-	player.i_stream_request(ADPCMchunksize, (void*)&tmpData[0], WAV_FORMAT_IMA_ADPCM);
+	thisPlayer->i_stream_request(ADPCMchunksize, (void*)&tmpData[0], WAV_FORMAT_IMA_ADPCM);
 	if(soundData.channels == 2)
 	{
 		uint i=0;
@@ -751,39 +746,66 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 void timerAudioCallback(){
-	
 	s16 *bufL, *bufR;
-		
-		if(sndCursor == 1){
-			
-			memcpy((void *)strpcmL1, (const void *)strpcmL0 , ADPCM_SIZE>>1); 
-			memcpy((void *)strpcmR1, (const void *)strpcmR0 , ADPCM_SIZE>>1);
-
-			IMAADPCMDecode((s16 *)strpcmL1,(s16 *)strpcmR1);
-			
-			bufL = strpcmL1;
-			bufR = strpcmR1;
+	if(sndCursor == 1){
+		//Background Music player stream 
+		memcpy((void *)strpcmL1, (const void *)strpcmL0 , ADPCM_SIZE>>1); 
+		memcpy((void *)strpcmR1, (const void *)strpcmR0 , ADPCM_SIZE>>1);
+		IMAADPCMDecode((s16 *)strpcmL1,(s16 *)strpcmR1, &backgroundMusicPlayer);
+		bufL = strpcmL1;
+		bufR = strpcmR1;
+	}
+	else{
+		//Background Music player stream 
+		memcpy((void *)strpcmL0, (const void *)strpcmL1 , ADPCM_SIZE>>2); 
+		memcpy((void *)strpcmR0, (const void *)strpcmR1 , ADPCM_SIZE>>2); 
+		IMAADPCMDecode((s16 *)strpcmL0,(s16 *)strpcmR0, &backgroundMusicPlayer);
+		bufL = strpcmL0;
+		bufR = strpcmR0;
+	}
+	
+	//Sound effect mix
+	if(SoundEffect0Player.active == true){
+		s16 * tmpDat = (s16*)workBufferSoundEffect0;
+		SoundEffect0Player.i_stream_request(ADPCM_SIZE, tmpDat, WAV_FORMAT_IMA_ADPCM);
+		if(SoundEffect0Player.stream.get_channels() == 2){
+			uint i=0;
+			for(i=0;i<(ADPCM_SIZE);++i)
+			{
+				int mixedL=(int)bufL[i] + (int)checkClipping((int)tmpDat[i << 1]);
+				if (mixedL>32767) mixedL=32767;
+				if (mixedL<-32768) mixedL=-32768;
+				bufL[i] = (short)mixedL;
+				
+				int mixedR=(int)bufR[i] + (int)checkClipping((int)tmpDat[(i << 1) | 1]);
+				if (mixedR>32767) mixedR=32767;
+				if (mixedR<-32768) mixedR=-32768;
+				bufR[i] = (short)mixedR;
+			}
 		}
 		else{
-			
-			memcpy((void *)strpcmL0, (const void *)strpcmL1 , ADPCM_SIZE>>2); 
-			memcpy((void *)strpcmR0, (const void *)strpcmR1 , ADPCM_SIZE>>2); 
-
-			IMAADPCMDecode((s16 *)strpcmL0,(s16 *)strpcmR0);
-			
-			bufL = strpcmL0;
-			bufR = strpcmR0;
-
+			uint i=0;
+			for(i=0;i<(ADPCM_SIZE);++i)
+			{
+				int mixedL=(int)bufL[i] + (int)checkClipping((int)tmpDat[i]);
+				if (mixedL>32767) mixedL=32767;
+				if (mixedL<-32768) mixedL=-32768;
+				bufL[i] = (short)mixedL;
+				
+				int mixedR=(int)bufR[i] + (int)checkClipping((int)tmpDat[i]);
+				if (mixedR>32767) mixedR=32767;
+				if (mixedR<-32768) mixedR=-32768;
+				bufR[i] = (short)mixedR;
+			}
 		}
-		
-		
-		// Left channel
-		SCHANNEL_SOURCE((sndCursor << 1)) = (uint32)bufL;
-		SCHANNEL_CR((sndCursor << 1)) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0) | SOUND_16BIT;
-		
-		// Right channel
-		SCHANNEL_SOURCE((sndCursor << 1) + 1) = (uint32)bufR;
-		SCHANNEL_CR((sndCursor << 1) + 1) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0x3FF) | SOUND_16BIT;
-		
-		sndCursor = 1 - sndCursor;
+	}
+
+	// Left channel
+	SCHANNEL_SOURCE((sndCursor << 1)) = (uint32)bufL;
+	SCHANNEL_CR((sndCursor << 1)) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0) | SOUND_16BIT;
+	
+	// Right channel
+	SCHANNEL_SOURCE((sndCursor << 1) + 1) = (uint32)bufR;
+	SCHANNEL_CR((sndCursor << 1) + 1) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0x3FF) | SOUND_16BIT;
+	sndCursor = 1 - sndCursor;
 }

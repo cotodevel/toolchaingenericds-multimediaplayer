@@ -47,7 +47,7 @@ DIR_SRC			=	$(DIRS_ARM7_SRC)	$(DIRS_ARM7_HEADER)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm7.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),-z,defs,--fix-v4bx
+LDFLAGS	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm7_ld.specs	-Wl,--gc-sections,-Map,$(MAPFILE),-z,defs,--fix-v4bx
 LDFLAGS_DSI	:=	-specs=dsi_arm7_ld.specs	-Wl,--gc-sections,-Map,arm7-nonstripped_dsi.map,--fix-v4bx
 LIBRARIES_NTR =	-lutils7	-l$(TARGET_LIBRARY_TGDS_NTR_7)	-lhardware7		-lstdc++	-lcnano7	-lgcc
 LIBRARIES_TWL =	-lutils7i	-l$(TARGET_LIBRARY_TGDS_TWL_7)	-lhardware7i	-lstdc++	-lcnano7	-lgcc
