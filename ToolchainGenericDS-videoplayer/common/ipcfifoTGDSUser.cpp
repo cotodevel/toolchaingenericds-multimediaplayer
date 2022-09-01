@@ -95,33 +95,6 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 //project specific stuff
 
 #ifdef ARM9
-void playSound(u32 * buffer, int bufferSize, u32 flags, int ch){
-	u32 cnt   = flags | SOUND_VOL(127) | SOUND_PAN(64) | (2 << 29) | (0 << 24); //(2=IMA-ADPCM
-	int len = bufferSize;
-	u16 freq = 32000;
-	//writeARM7SoundChannelFromSource(ch, cnt, (u16)freq, (u32)buffer, (u32)len);
-}
-
-bool soundGameOverEmitted = false;
-void gameoverSound(){
-	//ARM7 ADPCM playback 
-	char filename[256];
-	strcpy(filename, "0:/ah.wav");
-	char * filen = FS_getFileName(filename);
-	strcat(filen, ".ima");
-	u32 streamType = FIFO_PLAYSOUNDSTREAM_FILE;
-	playSoundStreamFromFile((char*)&filen[2], false, streamType);
-}
-
-void MunchFoodSound(){
-	//ARM7 ADPCM playback 
-	char filename[256];
-	strcpy(filename, "0:/munch.wav");
-	char * filen = FS_getFileName(filename);
-	strcat(filen, ".ima");
-	u32 streamType = FIFO_PLAYSOUNDEFFECT_FILE;
-	playSoundStreamFromFile((char*)&filen[2], false, streamType);
-}
 
 void BgMusic(char * filename){
 	//ARM7 ADPCM playback 
@@ -131,7 +104,6 @@ void BgMusic(char * filename){
 	playSoundStreamFromFile((char*)&filen[2], true, streamType);
 }
 
-bool bgMusicEnabled = false;
 void BgMusicOff(){
 	SendFIFOWords(FIFO_STOPSOUNDSTREAM_FILE, 0xFF);
 }

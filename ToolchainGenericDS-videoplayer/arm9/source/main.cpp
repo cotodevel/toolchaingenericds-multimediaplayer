@@ -107,7 +107,10 @@ void TGDSProjectReturnToCaller(char * NDSPayload){	//TGDS-Linked Module implemen
 	REG_IME = 0;
 	MPUSet();
 	REG_IME = 1;
-
+	
+	//stop streaming
+	BgMusicOff();
+	
 	char fnameRead[256];
 	memset(fnameRead, 0, sizeof(fnameRead));
 	strcpy(fnameRead, "0:/");
