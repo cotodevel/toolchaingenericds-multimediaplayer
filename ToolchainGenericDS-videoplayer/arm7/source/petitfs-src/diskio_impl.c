@@ -4,7 +4,12 @@
 
 #include "pff.h"
 #include "diskio_petit.h"
+#ifdef ARM7
 #include "dldi.h"
+#endif
+#ifdef WIN32
+#include "../dldi.h"
+#endif
 #include <string.h>
 #include <stdint.h>
 #include <stdarg.h>
@@ -18,10 +23,16 @@
 /*-----------------------------------------------------------------------*/
 /* Initialize Disk Drive                                                 */
 /*-----------------------------------------------------------------------*/
+#ifdef ARM7
 __attribute__ ((optnone))
+#endif
 DSTATUS disk_initialize (void){
-	
+	#ifdef WIN32
+	if(dldi_handler_init() == true){
+	#endif
+	#ifdef ARM7
 	if(1 == 1){
+	#endif
 		return 0;
 	}
 	return FR_DISK_ERR;
@@ -33,7 +44,9 @@ DSTATUS disk_initialize (void){
 /* Read Partial Sector                                                   */
 /*-----------------------------------------------------------------------*/
 unsigned char scratchPadSector[512];
+#ifdef ARM7
 __attribute__ ((optnone))
+#endif
 DRESULT disk_readp (
 	BYTE* buff,		/* Pointer to the destination object */
 	DWORD sector,	/* Sector number (LBA) */

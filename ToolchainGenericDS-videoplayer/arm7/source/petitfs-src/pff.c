@@ -317,9 +317,6 @@
 
 ---------------------------------------------------------------------------*/
 
-FATFS *FatFs;	/* Pointer to the file system object (logical drive) */
-
-
 /* Fill memory */
 void mem_set (void* dst, int val, int cnt) {
 	char *d = (char*)dst;
@@ -340,12 +337,12 @@ int mem_cmp (const void* dst, const void* src, int cnt) {
 
 static
 CLUST get_fat (	/* 1:IO error, Else:Cluster status */
-	CLUST clst	/* Cluster# to get the link information */
+	CLUST clst,	/* Cluster# to get the link information */
+	FATFS *fs
 )
 {
 	BYTE buf[4];
-	FATFS *fs = FatFs;
-
+	
 	if (clst < 2 || clst >= fs->n_fatent)	/* Range check */
 		return 1;
 
@@ -390,12 +387,10 @@ CLUST get_fat (	/* 1:IO error, Else:Cluster status */
 
 static
 DWORD clust2sect (	/* !=0: Sector number, 0: Failed - invalid cluster# */
-	CLUST clst		/* Cluster# to be converted */
+	CLUST clst,		/* Cluster# to be converted */
+	FATFS *fs
 )
 {
-	FATFS *fs = FatFs;
-
-
 	clst -= 2;
 	if (clst >= (fs->n_fatent - 2)) return 0;		/* Invalid cluster# */
 	return (DWORD)clst * fs->csize + fs->database;
@@ -404,10 +399,10 @@ DWORD clust2sect (	/* !=0: Sector number, 0: Failed - invalid cluster# */
 
 static
 CLUST get_clust (
-	BYTE* dir		/* Pointer to directory entry */
+	BYTE* dir,		/* Pointer to directory entry */
+	FATFS *fs
 )
 {
-	FATFS *fs = FatFs;
 	CLUST clst = 0;
 
 
@@ -427,13 +422,12 @@ CLUST get_clust (
 
 static
 FRESULT dir_rewind (
-	DIR *dj			/* Pointer to directory object */
+	DIR *dj,			/* Pointer to directory object */
+	FATFS *fs
 )
 {
 	CLUST clst;
-	FATFS *fs = FatFs;
-
-
+	
 	dj->index = 0;
 	clst = dj->sclust;
 	if (clst == 1 || clst >= fs->n_fatent)	/* Check start cluster range */
@@ -441,7 +435,7 @@ FRESULT dir_rewind (
 	if (_FS_FAT32 && !clst && (_FS_32ONLY || fs->fs_type == FS_FAT32))	/* Replace cluster# 0 with root cluster# if in FAT32 */
 		clst = (CLUST)fs->dirbase;
 	dj->clust = clst;						/* Current cluster */
-	dj->sect = (_FS_32ONLY || clst) ? clust2sect(clst) : fs->dirbase;	/* Current sector */
+	dj->sect = (_FS_32ONLY || clst) ? clust2sect(clst, fs) : fs->dirbase;	/* Current sector */
 
 	return FR_OK;	/* Seek succeeded */
 }
@@ -455,14 +449,13 @@ FRESULT dir_rewind (
 
 static
 FRESULT dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table */
-	DIR *dj			/* Pointer to directory object */
+	DIR *dj,			/* Pointer to directory object */
+	FATFS *fs
 )
 {
 	CLUST clst;
 	WORD i;
-	FATFS *fs = FatFs;
-
-
+	
 	i = dj->index + 1;
 	if (!i || !dj->sect)	/* Report EOT when index has reached 65535 */
 		return FR_NO_FILE;
@@ -476,12 +469,12 @@ FRESULT dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table */
 		}
 		else {					/* Dynamic table */
 			if (((i / 16) & (fs->csize - 1)) == 0) {	/* Cluster changed? */
-				clst = get_fat(dj->clust);		/* Get next cluster */
+				clst = get_fat(dj->clust, fs);		/* Get next cluster */
 				if (clst <= 1) return FR_DISK_ERR;
 				if (clst >= fs->n_fatent)		/* When it reached end of dynamic table */
 					return FR_NO_FILE;			/* Report EOT */
 				dj->clust = clst;				/* Initialize data for new cluster */
-				dj->sect = clust2sect(clst);
+				dj->sect = clust2sect(clst, fs);
 			}
 		}
 	}
@@ -501,14 +494,15 @@ FRESULT dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table */
 static
 FRESULT dir_find (
 	DIR *dj,		/* Pointer to the directory object linked to the file name */
-	BYTE *dir		/* 32-byte working buffer */
+	BYTE *dir,		/* 32-byte working buffer */
+	FATFS *fs
 )
 {
 	FRESULT res;
 	BYTE c;
 
 
-	res = dir_rewind(dj);			/* Rewind directory object */
+	res = dir_rewind(dj, fs);			/* Rewind directory object */
 	if (res != FR_OK) return res;
 
 	do {
@@ -519,7 +513,7 @@ FRESULT dir_find (
 		if (c == 0) { res = FR_NO_FILE; break; }	/* Reached to end of table */
 		if (!(dir[DIR_Attr] & AM_VOL) && !mem_cmp(dir, dj->fn, 11)) /* Is it a valid entry? */
 			break;
-		res = dir_next(dj);					/* Next entry */
+		res = dir_next(dj, fs);					/* Next entry */
 	} while (res == FR_OK);
 
 	return res;
@@ -667,11 +661,14 @@ void get_fileinfo (		/* No return code */
 /*-----------------------------------------------------------------------*/
 /* Follow a file path                                                    */
 /*-----------------------------------------------------------------------*/
+#ifdef ARM7
 __attribute__ ((optnone))
+#endif
 FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 	DIR *dj,			/* Directory object to return last directory and found object */
 	BYTE *dir,			/* 32-byte working buffer */
-	const char *path	/* Full-path string to find a file or directory */
+	const char *path,	/* Full-path string to find a file or directory */
+	FATFS *fs
 )
 {
 	FRESULT res;
@@ -682,20 +679,20 @@ FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 	dj->sclust = 0;						/* Set start directory (always root dir) */
 
 	if ((BYTE)*path < ' ') {			/* Null path means the root directory */
-		res = dir_rewind(dj);
+		res = dir_rewind(dj, fs);
 		dir[0] = 0;
 
 	} else {							/* Follow path */
 		for (;;) {
 			res = create_name(dj, &path);	/* Get a segment */
 			if (res != FR_OK) break;
-			res = dir_find(dj, dir);		/* Find it */
+			res = dir_find(dj, dir, fs);		/* Find it */
 			if (res != FR_OK) break;		/* Could not find the object */
 			if (dj->fn[11]) break;			/* Last segment match. Function completed. */
 			if (!(dir[DIR_Attr] & AM_DIR)) { /* Cannot follow path because it is a file */
 				res = FR_NO_FILE; break;
 			}
-			dj->sclust = get_clust(dir);	/* Follow next */
+			dj->sclust = get_clust(dir, fs);	/* Follow next */
 		}
 	}
 
@@ -746,9 +743,6 @@ FRESULT pf_mount (
 {
 	BYTE fmt, buf[36];
 	DWORD bsect, fsize, tsect, mclst;
-
-
-	FatFs = 0;
 
 	if (disk_initialize() & STA_NOINIT)	/* Check if the drive is ready or not */
 		return FR_NOT_READY;
@@ -804,8 +798,6 @@ FRESULT pf_mount (
 	fs->database = fs->fatbase + fsize + fs->n_rootdir / 16;	/* Data start sector (lba) */
 
 	fs->flag = 0;
-	FatFs = fs;
-
 	return FR_OK;
 }
 
@@ -815,27 +807,28 @@ FRESULT pf_mount (
 /*-----------------------------------------------------------------------*/
 /* Open or Create a File                                                 */
 /*-----------------------------------------------------------------------*/
+#ifdef ARM7
 __attribute__ ((optnone))
+#endif
 FRESULT pf_open (
-	const char *path	/* Pointer to the file name */
+	const char *path,	/* Pointer to the file name */
+	FATFS *fs
 )
 {
 	FRESULT res;
 	DIR dj;
 	BYTE sp[12], dir[32];
-	FATFS *fs = FatFs;
-
-
+	
 	if (!fs) return FR_NOT_ENABLED;		/* Check file system */
 
 	fs->flag = 0;
 	dj.fn = sp;
-	res = follow_path(&dj, dir, path);	/* Follow the file path */
+	res = follow_path(&dj, dir, path, fs);	/* Follow the file path */
 	if (res != FR_OK) return res;		/* Follow failed */
 	if (!dir[0] || (dir[DIR_Attr] & AM_DIR))	/* It is a directory */
 		return FR_NO_FILE;
 
-	fs->org_clust = get_clust(dir);		/* File start cluster */
+	fs->org_clust = get_clust(dir, fs);		/* File start cluster */
 	fs->fsize = LD_DWORD(dir+DIR_FileSize);	/* File size */
 	fs->fptr = 0;						/* File pointer */
 	fs->flag = FA_OPENED;
@@ -850,19 +843,21 @@ FRESULT pf_open (
 /* Read File                                                             */
 /*-----------------------------------------------------------------------*/
 #if _USE_READ
+#ifdef ARM7
 __attribute__ ((optnone)) 
+#endif
 FRESULT pf_read (
 	void* buff,		/* Pointer to the read buffer (NULL:Forward data to the stream)*/
 	UINT btr,		/* Number of bytes to read */
-	UINT* br		/* Pointer to number of bytes read */
+	UINT* br,		/* Pointer to number of bytes read */
+	FATFS *fs
 )
 {
 	DRESULT dr;
 	CLUST clst;
 	DWORD sect, remain;
 	UINT rcnt;
-	BYTE cs, *rbuff = buff;
-	FATFS *fs = FatFs;
+	BYTE cs, *rbuff = (BYTE*)buff;
 
 
 	*br = 0;
@@ -880,11 +875,11 @@ FRESULT pf_read (
 				if (fs->fptr == 0)					/* On the top of the file? */
 					clst = fs->org_clust;
 				else
-					clst = get_fat(fs->curr_clust);
+					clst = get_fat(fs->curr_clust, fs);
 				if (clst <= 1) ABORT(FR_DISK_ERR);
 				fs->curr_clust = clst;				/* Update current cluster */
 			}
-			sect = clust2sect(fs->curr_clust);		/* Get current sector */
+			sect = clust2sect(fs->curr_clust, fs);		/* Get current sector */
 			if (!sect) ABORT(FR_DISK_ERR);
 			fs->dsect = sect + cs;
 		}
@@ -970,14 +965,12 @@ FRESULT pf_write (
 #endif
 
 /* Returns: Current File size */
-DWORD pf_size(){
-	FATFS *fs = FatFs;
+DWORD pf_size(FATFS *fs){
 	return fs->fsize;
 }
 
 /* Returns: Current File pointer */
-DWORD pf_tell (){
-	FATFS *fs = FatFs;
+DWORD pf_tell (FATFS *fs){
 	return fs->fptr;
 }
 
@@ -988,13 +981,12 @@ DWORD pf_tell (){
 #if _USE_LSEEK
 
 FRESULT pf_lseek (
-	DWORD ofs		/* File pointer from top of file */
+	DWORD ofs,		/* File pointer from top of file */
+	FATFS *fs
 )
 {
 	CLUST clst;
 	DWORD bcs, sect, ifptr;
-	FATFS *fs = FatFs;
-
 
 	if (!fs) return FR_NOT_ENABLED;		/* Check file system */
 	if (!(fs->flag & FA_OPENED))		/* Check if opened */
@@ -1015,14 +1007,14 @@ FRESULT pf_lseek (
 			fs->curr_clust = clst;
 		}
 		while (ofs > bcs) {				/* Cluster following loop */
-			clst = get_fat(clst);		/* Follow cluster chain */
+			clst = get_fat(clst, fs);		/* Follow cluster chain */
 			if (clst <= 1 || clst >= fs->n_fatent) ABORT(FR_DISK_ERR);
 			fs->curr_clust = clst;
 			fs->fptr += bcs;
 			ofs -= bcs;
 		}
 		fs->fptr += ofs;
-		sect = clust2sect(clst);		/* Current sector */
+		sect = clust2sect(clst, fs);		/* Current sector */
 		if (!sect) ABORT(FR_DISK_ERR);
 		fs->dsect = sect + (fs->fptr / 512 & (fs->csize - 1));
 	}
@@ -1040,13 +1032,13 @@ FRESULT pf_lseek (
 
 FRESULT pf_opendir (
 	DIR *dj,			/* Pointer to directory object to create */
-	const char *path	/* Pointer to the directory path */
+	const char *path,	/* Pointer to the directory path */
+	FATFS *fs
 )
 {
 	FRESULT res;
 	BYTE sp[12], dir[32];
-	FATFS *fs = FatFs;
-
+	 
 
 	if (!fs) {				/* Check file system */
 		res = FR_NOT_ENABLED;
@@ -1056,12 +1048,12 @@ FRESULT pf_opendir (
 		if (res == FR_OK) {						/* Follow completed */
 			if (dir[0]) {						/* It is not the root dir */
 				if (dir[DIR_Attr] & AM_DIR)		/* The object is a directory */
-					dj->sclust = get_clust(dir);
+					dj->sclust = get_clust(dir, fs);
 				else							/* The object is not a directory */
 					res = FR_NO_FILE;
 			}
 			if (res == FR_OK)
-				res = dir_rewind(dj);			/* Rewind dir */
+				res = dir_rewind(dj, fs);			/* Rewind dir */
 		}
 	}
 
@@ -1077,25 +1069,24 @@ FRESULT pf_opendir (
 
 FRESULT pf_readdir (
 	DIR *dj,			/* Pointer to the open directory object */
-	FILINFO *fno		/* Pointer to file information to return */
+	FILINFO *fno,		/* Pointer to file information to return */
+	FATFS *fs
 )
 {
 	FRESULT res;
 	BYTE sp[12], dir[32];
-	FATFS *fs = FatFs;
-
-
+	
 	if (!fs) {				/* Check file system */
 		res = FR_NOT_ENABLED;
 	} else {
 		dj->fn = sp;
 		if (!fno) {
-			res = dir_rewind(dj);
+			res = dir_rewind(dj, fs);
 		} else {
-			res = dir_read(dj, dir);	/* Get current directory item */
+			res = dir_read(dj, dir, fs);	/* Get current directory item */
 			if (res == FR_NO_FILE) res = FR_OK;
 			if (res == FR_OK) {				/* A valid entry is found */
-				get_fileinfo(dj, dir, fno);	/* Get the object information */
+				get_fileinfo(dj, dir, fno, fs);	/* Get the object information */
 				res = dir_next(dj);			/* Increment read index for next */
 				if (res == FR_NO_FILE) res = FR_OK;
 			}

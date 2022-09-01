@@ -120,9 +120,6 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 int parseTGDSVideoFile(struct fd * _VideoDecoderFileHandleFD, char * audioFname){
-	#ifdef ARM9
-	enableFastMode();
-	#endif
 	char tmpName[MAX_TGDSFILENAME_LENGTH+1];
 	char ext[MAX_TGDSFILENAME_LENGTH+1];
 	strcpy(tmpName, audioFname);	

@@ -39,7 +39,8 @@ USA
 #include "main.h"
 #include "wifi_arm7.h"
 #include "spifwTGDS.h"
-#include "biosTGDS.h"
+#include "pff.h"
+#include "ima_adpcm.h"
 
 #endif
 
@@ -49,6 +50,8 @@ USA
 #include "main.h"
 #include "wifi_arm9.h"
 #include "dswnifi_lib.h"
+#include "soundTGDS.h"
+#include "biosTGDS.h"
 #endif
 
 #ifdef ARM9
@@ -66,30 +69,13 @@ __attribute__((section(".itcm")))
 void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 	switch (cmd1) {
 		#ifdef ARM7
-		case(FIFO_TGDSVIDEOPLAYER_STOPSOUND):{
-			playerStopARM7();
+		case(FIFO_STOPSOUNDSTREAM_FILE):{
+			backgroundMusicPlayer.stop();
 		}
 		break;
 		
-		case(FIFO_DIRECTVIDEOFRAME_SETUP):{
-			handleARM7FSSetup();
-		}
-		break;
-		
-		case(FIFO_DIRECTVIDEOFRAME_RENDER):{
-			handleARM7FSRender();
-		}
-		break;
-		
-		case(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ):{
-			REG_DISPSTAT = (DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
-			REG_IE = REG_IE | (IRQ_VBLANK|IRQ_VCOUNT);
-		}
-		break;
-		
-		case(FIFO_TGDSAUDIOPLAYER_DISABLEIRQ):{
-			REG_DISPSTAT = 0;
-			REG_IE = REG_IE & ~(IRQ_VBLANK|IRQ_VCOUNT);
+		case(FIFO_PLAYSOUNDSTREAM_FILE):{
+			playSoundStreamARM7();
 		}
 		break;
 		#endif
@@ -109,6 +95,47 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 //project specific stuff
 
 #ifdef ARM9
+void playSound(u32 * buffer, int bufferSize, u32 flags, int ch){
+	u32 cnt   = flags | SOUND_VOL(127) | SOUND_PAN(64) | (2 << 29) | (0 << 24); //(2=IMA-ADPCM
+	int len = bufferSize;
+	u16 freq = 32000;
+	//writeARM7SoundChannelFromSource(ch, cnt, (u16)freq, (u32)buffer, (u32)len);
+}
+
+bool soundGameOverEmitted = false;
+void gameoverSound(){
+	//ARM7 ADPCM playback 
+	char filename[256];
+	strcpy(filename, "0:/ah.wav");
+	char * filen = FS_getFileName(filename);
+	strcat(filen, ".ima");
+	u32 streamType = FIFO_PLAYSOUNDSTREAM_FILE;
+	playSoundStreamFromFile((char*)&filen[2], false, streamType);
+}
+
+void MunchFoodSound(){
+	//ARM7 ADPCM playback 
+	char filename[256];
+	strcpy(filename, "0:/munch.wav");
+	char * filen = FS_getFileName(filename);
+	strcat(filen, ".ima");
+	u32 streamType = FIFO_PLAYSOUNDEFFECT_FILE;
+	playSoundStreamFromFile((char*)&filen[2], false, streamType);
+}
+
+void BgMusic(char * filename){
+	//ARM7 ADPCM playback 
+	char * filen = FS_getFileName(filename);
+	strcat(filen, ".ima");
+	u32 streamType = FIFO_PLAYSOUNDSTREAM_FILE;
+	playSoundStreamFromFile((char*)&filen[2], true, streamType);
+}
+
+bool bgMusicEnabled = false;
+void BgMusicOff(){
+	SendFIFOWords(FIFO_STOPSOUNDSTREAM_FILE, 0xFF);
+}
+
 
 void updateStreamCustomDecoder(u32 srcFrmt){
 
@@ -118,9 +145,6 @@ void freeSoundCustomDecoder(u32 srcFrmt){
 
 }
 
-#endif
-
-#ifdef ARM9
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -128,60 +152,20 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-u32 setupDirectVideoFrameRender(struct fd * videoStructFD, char * videoStructFDFilename){
+u32 playSoundStreamFromFile(char * videoStructFDFilename, bool loop, u32 streamType){
 	struct sIPCSharedTGDSSpecific* sharedIPC = getsIPCSharedTGDSSpecific();
 	char * filename = (char*)&sharedIPC->filename[0];
 	strcpy(filename, videoStructFDFilename);
 	
 	uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
 	fifomsg[33] = (uint32)0xFFFFCCAA;
-	SendFIFOWords(FIFO_DIRECTVIDEOFRAME_SETUP, 0xFF);
+	fifomsg[34] = (uint32)loop;
+	fifomsg[35] = (uint32)streamType;
+	SendFIFOWords(FIFO_PLAYSOUNDSTREAM_FILE, 0xFF);
 	while(fifomsg[33] == (uint32)0xFFFFCCAA){
 		swiDelay(1);
 	}
 	return fifomsg[33];
-}
-
-#ifdef ARM9
-__attribute__((section(".itcm")))
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-struct videoFrame * readVideoFrameByDirectARM7(int fileOffset, int bufferSize){
-	return (struct videoFrame *)0;
-}
-#endif
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-void enableFastMode(){
-	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_DISABLEIRQ, 0xFF);
-	
-	REG_DISPSTAT = DISP_VBLANK_IRQ;
-	REG_IE = REG_IE & ~(IRQ_VCOUNT);
-}
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-void disableFastMode(){
-	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ, 0xFF);
-	
-	REG_DISPSTAT = (DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
-	REG_IE = REG_IE | (IRQ_VCOUNT);
 }
 
 #endif

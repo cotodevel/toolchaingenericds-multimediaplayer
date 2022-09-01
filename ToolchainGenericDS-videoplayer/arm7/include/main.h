@@ -25,25 +25,30 @@ USA
 #include "dsregs.h"
 #include "pff.h"
 #include "soundTGDS.h"
-
+#include "ima_adpcm.h"
 #endif
 
 
 #ifdef __cplusplus
 extern "C" {
+extern IMA_Adpcm_Player backgroundMusicPlayer;	//Sound stream Background music Instance
+extern IMA_Adpcm_Player SoundEffect0Player;	//Sound stream Background music Instance
+
 #endif
 
 extern int main(int argc, char **argv);
-extern FATFS Fatfs;					// Petit-FatFs work area 
 extern struct TGDSVideoFrameContext videoCtx;
 extern struct soundPlayerContext soundData;
 extern char fname[256];
 
-extern void handleARM7FSSetup();
+extern void playSoundStreamARM7();
 extern void handleARM7FSRender();
 
 extern bool stopSoundStreamUser();
 extern void playerStopARM7();
+
+extern FATFS FatfsFILEBgMusic; //Sound stream handle
+extern FATFS FatfsFILESoundSample0; //Sound effect handle #0
 
 #ifdef __cplusplus
 }

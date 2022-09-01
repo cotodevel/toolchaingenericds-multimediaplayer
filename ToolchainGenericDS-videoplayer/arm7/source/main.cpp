@@ -24,15 +24,18 @@ USA
 #include "spifwTGDS.h"
 #include "wifi_arm7.h"
 #include "pff.h"
-#include "TGDSVideo.h"
 #include "ipcfifoTGDSUser.h"
 #include "ima_adpcm.h"
 #include "soundTGDS.h"
 #include "biosTGDS.h"
 #include "timerTGDS.h"
 
-FATFS Fatfs;					// Petit-FatFs work area 
-struct TGDSVideoFrameContext videoCtx;
+IMA_Adpcm_Player backgroundMusicPlayer;	//Actual PLAYER Instance. See ima_adpcm.cpp -> [PLAYER: section
+IMA_Adpcm_Player SoundEffect0Player;
+
+FATFS FatfsFILEBgMusic; //Sound stream handle
+FATFS FatfsFILESoundSample0; //Sound effect handle #0
+
 struct soundPlayerContext soundData;
 char fname[256];
 
@@ -42,45 +45,57 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-void handleARM7FSSetup(){
+void playSoundStreamARM7(){
 	uint32 * fifomsg = (uint32 *)NDS_CACHED_SCRATCHPAD;			
-	memset(&videoCtx, 0, sizeof(struct TGDSVideoFrameContext));
-	UINT br;	/* Bytes read */
+	UINT br;
 	uint8_t fresult;
-	
-	fresult = pf_mount(&Fatfs);	/* Initialize file system */
-	if (fresult != FR_OK) { /* File System could not be mounted */
-		fifomsg[33] = 0xAABBCCDD;
-	}
+	bool loop = fifomsg[34];
+	FATFS * currentFH;
+	u32 streamType = (u32)fifomsg[35];
 	struct sIPCSharedTGDSSpecific* sharedIPC = getsIPCSharedTGDSSpecific();
 	char * filename = (char*)&sharedIPC->filename[0];
 	strcpy((char*)fname, filename);
-	fresult = pf_open(fname);
+	
+	if(streamType == FIFO_PLAYSOUNDSTREAM_FILE){
+		currentFH = &FatfsFILEBgMusic;
+	}
+	else if(streamType == FIFO_PLAYSOUNDEFFECT_FILE){
+		currentFH = &FatfsFILESoundSample0;
+	}
+	fresult = pf_mount(currentFH);
+	if (fresult != FR_OK) { 
+		fifomsg[33] = 0xAABBCCDD;
+	}
+	fresult = pf_open(fname, currentFH);
+	if(streamType == FIFO_PLAYSOUNDEFFECT_FILE){
+		if (fresult != FR_OK) { 
+			//strcpy((char*)0x02000000, "soundeffect failed to open:");
+			//strcat((char*)0x02000000, filename);
+		}
+		else{
+			//strcpy((char*)0x02000000, "soundeffect open OK:"); //ok so far
+			//strcat((char*)0x02000000, filename);
+		}
+	}
+	pf_lseek(0, currentFH);
 	
 	int argBuffer[MAXPRINT7ARGVCOUNT];
 	memset((unsigned char *)&argBuffer[0], 0, sizeof(argBuffer));
 	argBuffer[0] = 0xc070ffff;
 	
-	if (fresult != FR_OK) { /* File System could not be mounted */
-		//strcpy((char*)0x02000000, "File open ERR:");
-		//strcat((char*)0x02000000, filename);
-		swiDelay(4000);
-	}
-	else{
-		//strcpy((char*)0x02000000, "File open OK!");
-		//strcat((char*)0x02000000, filename);
-	}
-	pf_lseek(0);
-	//pf_read((u8*)&videoCtx, sizeof(struct TGDSVideoFrameContext), &br);		/* Load a page data */
-	
-	
 	//decode audio here
-	bool loop_audio = false;
+	bool loop_audio = loop;
 	bool automatic_updates = false;
-	if(player.play(loop_audio, automatic_updates, ADPCM_SIZE, stopSoundStreamUser) == 0){
-		//ADPCM Playback!
+	if(streamType == FIFO_PLAYSOUNDSTREAM_FILE){
+		if(backgroundMusicPlayer.play(loop_audio, automatic_updates, ADPCM_SIZE, stopSoundStreamUser, currentFH, streamType) == 0){
+			//ADPCM Playback!
+		}
 	}
-	
+	else if(streamType == FIFO_PLAYSOUNDEFFECT_FILE){
+		if(SoundEffect0Player.play(loop_audio, automatic_updates, ADPCM_SIZE, stopSoundStreamUser, currentFH, streamType) == 0){
+			//ADPCM Sample Playback!
+		}
+	}
 	fifomsg[33] = (u32)fresult;
 }
 
@@ -123,10 +138,10 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 void playerStopARM7(){
-	memset((void *)strpcmL0, 0, 512);
-	memset((void *)strpcmL1, 0, 512);
-	memset((void *)strpcmR0, 0, 512);
-	memset((void *)strpcmR1, 0, 512);
+	memset((void *)strpcmL0, 0, 2048);
+	memset((void *)strpcmL1, 0, 2048);
+	memset((void *)strpcmR0, 0, 2048);
+	memset((void *)strpcmR1, 0, 2048);
 
 	REG_IE&=~IRQ_TIMER2;
 	

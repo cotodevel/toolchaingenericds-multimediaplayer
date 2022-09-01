@@ -97,14 +97,14 @@ typedef enum {
 /* Petit FatFs module application interface                     */
 
 FRESULT pf_mount (FATFS* fs);								/* Mount/Unmount a logical drive */
-FRESULT pf_open (const char* path);							/* Open a file */
-FRESULT pf_read (void* buff, UINT btr, UINT* br);			/* Read data from the open file */
+FRESULT pf_open (const char* path, FATFS* fs);							/* Open a file */
+FRESULT pf_read (void* buff, UINT btr, UINT* br, FATFS* fs);			/* Read data from the open file */
 FRESULT pf_write (const void* buff, UINT btw, UINT* bw);	/* Write data to the open file */
-FRESULT pf_lseek (DWORD ofs);								/* Move file pointer of the open file */
-FRESULT pf_opendir (DIR* dj, const char* path);				/* Open a directory */
-FRESULT pf_readdir (DIR* dj, FILINFO* fno);					/* Read a directory item from the open directory */
-DWORD pf_tell ();											/* Returns: Current File pointer */
-DWORD pf_size();											/* Returns: Current File size */
+FRESULT pf_lseek (DWORD ofs, FATFS* fs);								/* Move file pointer of the open file */
+FRESULT pf_opendir (DIR* dj, const char* path, FATFS *fs);				/* Open a directory */
+FRESULT pf_readdir (DIR* dj, FILINFO* fno, FATFS *fs);					/* Read a directory item from the open directory */
+DWORD pf_tell (FATFS *fs);											/* Returns: Current File pointer */
+DWORD pf_size(FATFS *fs);											/* Returns: Current File size */
 
 
 /*--------------------------------------------------------------*/
@@ -151,14 +151,14 @@ DWORD pf_size();											/* Returns: Current File size */
 #define	ST_DWORD(ptr,val)	*(BYTE*)(ptr)=(BYTE)(val); *((BYTE*)(ptr)+1)=(BYTE)((WORD)(val)>>8); *((BYTE*)(ptr)+2)=(BYTE)((DWORD)(val)>>16); *((BYTE*)(ptr)+3)=(BYTE)((DWORD)(val)>>24)
 #endif
 
-extern FATFS *FatFs;
 extern void mem_set (void* dst, int val, int cnt);
 extern int mem_cmp (const void* dst, const void* src, int cnt);
 
 extern FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 	DIR *dj,			/* Directory object to return last directory and found object */
 	BYTE *dir,			/* 32-byte working buffer */
-	const char *path	/* Full-path string to find a file or directory */
+	const char *path,	/* Full-path string to find a file or directory */
+	FATFS *fs
 );
 
 #ifdef __cplusplus

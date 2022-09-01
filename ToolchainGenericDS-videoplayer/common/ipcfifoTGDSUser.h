@@ -49,12 +49,14 @@ struct sIPCSharedTGDSSpecific {
 
 #endif
 
-#define FIFO_DIRECTVIDEOFRAME_SETUP (u32)(0xFFFFABCB)
-#define FIFO_DIRECTVIDEOFRAME_RENDER (u32)(0xFFFFABCC)
-#define FIFO_TGDSAUDIOPLAYER_DISABLEIRQ (u32)(0xFFAACC00)
-#define FIFO_TGDSAUDIOPLAYER_ENABLEIRQ (u32)(0xFFAACC01)
+#define FIFO_PLAYSOUNDSTREAM_FILE (u32)(0xFFFFABCB)
+#define FIFO_STOPSOUNDSTREAM_FILE (u32)(0xFFFFABCC)
 
-#define FIFO_TGDSVIDEOPLAYER_STOPSOUND (u32)(0xFFAACC02)
+#define FIFO_PLAYSOUNDEFFECT_FILE (u32)(0xFFFFABCD)
+
+#define workBufferSoundEffect0 (s16*)((int)0x06000000 + (96*1024) - (4096*4))
+
+//#define ISEMULATOR 1 //defined == TGDS Project does not self reload, undedfined == TGDS Project self reloads
 
 #endif
 
@@ -66,15 +68,19 @@ extern "C" {
 extern void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 extern struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific();
+extern void playSound(u32 * buffer, int bufferSize, u32 flags, int ch);
+
+extern bool soundGameOverEmitted;
+extern void gameoverSound();
+
+extern void MunchFoodSound();
+
+extern void BgMusic(char * filename);
+extern void BgMusicOff();
+extern bool bgMusicEnabled;
 
 #ifdef ARM9
-extern u32 setupDirectVideoFrameRender(struct fd * videoStructFD, char * videoStructFDFilename);
-extern struct videoFrame * readVideoFrameByDirectARM7(int fileOffset, int bufferSize);
-#endif
-
-#ifdef ARM9
-extern void enableFastMode();
-extern void disableFastMode();
+extern u32 playSoundStreamFromFile(char * videoStructFDFilename, bool loop, u32 streamType);
 #endif
 
 #ifdef __cplusplus

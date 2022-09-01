@@ -4,6 +4,7 @@
 #include "typedefsTGDS.h"
 #include <stdio.h>
 #include "soundTGDS.h"
+#include "petitfs-src/pff.h"
 
 #define ADPCM_SIZE (int)(4096)		//TGDS IMA-ADPCM buffer size
 typedef bool (*closeSoundHandle)();	//ret: true = closed sound stream. false = couldn't close sound stream
@@ -53,7 +54,7 @@ private:
 	IMA_Adpcm_Data		data;
 	IMA_Adpcm_Data		loop_data;
 	
-	u8		datacache[8192];	//Highest IMA-ADPCM block is 512 bytes but we add some overhead just in case
+	u8		datacache[4096];	//Highest IMA-ADPCM block is 512 bytes but we add some overhead just in case
 	u8*		loop_src;
 	int		loop_cblock;
 	int		loop_state;
@@ -91,6 +92,7 @@ private:
 	void	capture_frame();
 	void	restore_frame();
 public:
+	FATFS * currentFatfsFILEHandle;
 	int		wave_loop;
 	IMA_Adpcm_Stream();
 	~IMA_Adpcm_Stream();
@@ -110,14 +112,15 @@ public:
 //**********************************************************************************************
 
 class IMA_Adpcm_Player {
-	IMA_Adpcm_Stream stream;
 	bool autofill;
 	bool paused;
-	bool active;
+	int currentStreamingMode;
 public:
+	IMA_Adpcm_Stream stream;
+	bool active;
 	IMA_Adpcm_Player();
 	wavFormatChunk headerChunk;
-	int play(bool loop_audio, bool automatic_updates, int buffer_length = ADPCM_SIZE*16, closeSoundHandle = NULL);
+	int play(bool loop_audio, bool automatic_updates, int buffer_length = ADPCM_SIZE*16, closeSoundHandle = NULL, FATFS * inFatfsFILEHandle = NULL, int incomingStreamingMode = 0);
 	void pause();
 	void resume();
 	void stop();
@@ -135,9 +138,7 @@ public:
 
 #ifdef __cplusplus
 extern "C" {
-extern int on_stream_request( int length, void* dest, int format );
-extern IMA_Adpcm_Player player;	//Actual PLAYER Instance. See ima_adpcm.cpp -> [PLAYER: section
-
+extern void IMAADPCMDecode(s16 * lBuf, s16 * rBuf, IMA_Adpcm_Player * thisPlayer);
 #endif
 
 extern int ADPCMchunksize;
@@ -148,8 +149,6 @@ extern void swapData();
 
 extern bool player_loop;
 extern void soundPauseStart();
-
-extern void IMAADPCMDecode(s16 * lBuf, s16 * rBuf);
 extern void timerAudioCallback();
 extern void setupSoundTGDSVideoPlayerARM7();
 extern u8 adpcmWorkBuffer[ADPCM_SIZE*4];
