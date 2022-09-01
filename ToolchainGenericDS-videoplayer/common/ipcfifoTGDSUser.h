@@ -68,16 +68,9 @@ extern "C" {
 extern void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 extern struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific();
-extern void playSound(u32 * buffer, int bufferSize, u32 flags, int ch);
-
-extern bool soundGameOverEmitted;
-extern void gameoverSound();
-
-extern void MunchFoodSound();
 
 extern void BgMusic(char * filename);
 extern void BgMusicOff();
-extern bool bgMusicEnabled;
 
 #ifdef ARM9
 extern u32 playSoundStreamFromFile(char * videoStructFDFilename, bool loop, u32 streamType);
