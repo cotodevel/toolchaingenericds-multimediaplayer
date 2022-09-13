@@ -38,6 +38,7 @@ USA
 #include "fatfslayerTGDS.h"
 #include "loader.h"
 #include "spitscTGDS.h"
+#include "ipcfifoTGDSUser.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * playListRead = NULL;			//Menu Directory Iterator
