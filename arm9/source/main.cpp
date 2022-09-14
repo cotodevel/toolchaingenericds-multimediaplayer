@@ -39,6 +39,7 @@ USA
 #include "loader.h"
 #include "spitscTGDS.h"
 #include "ipcfifoTGDSUser.h"
+#include "InterruptsARMCores_h.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * playListRead = NULL;			//Menu Directory Iterator
@@ -1105,7 +1106,6 @@ int main(int argc, char **argv) {
 	menuShow();
 
 	while (1){	
-
 		handleInput();
 		
 		//Audio playback here....
@@ -1124,7 +1124,7 @@ int main(int argc, char **argv) {
 		updateStream();
 		updateStream();
 		updateStream();
-		
+		HaltUntilIRQ(); //Save power until next Vblank
 	}
 	
 	return 0;
