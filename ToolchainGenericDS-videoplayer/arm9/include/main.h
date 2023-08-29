@@ -26,8 +26,6 @@ USA
 #include "fatfslayerTGDS.h"
 #include "utilsTGDS.h"
 
-#define TGDSPROJECTNAME ((char*) "ToolchainGenericDS-videoplayer")
-
 #endif
 
 
