@@ -29,6 +29,7 @@ USA
 #include "soundTGDS.h"
 #include "biosTGDS.h"
 #include "timerTGDS.h"
+#include "InterruptsARMCores_h.h"
 
 IMA_Adpcm_Player backgroundMusicPlayer;	//Actual PLAYER Instance. See ima_adpcm.cpp -> [PLAYER: section
 IMA_Adpcm_Player SoundEffect0Player;
@@ -119,10 +120,10 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 int main(int argc, char **argv)  {
-	REG_IE|=(IRQ_VBLANK|IRQ_HBLANK); //X button depends on this
+	REG_IE|=(IRQ_VBLANK); //X button depends on this
 	while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQWait(0, IRQ_HBLANK);
+		HaltUntilIRQ(); //Save power until next Vblank
 	}
 	return 0;
 }

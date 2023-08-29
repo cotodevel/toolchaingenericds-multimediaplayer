@@ -9,9 +9,6 @@
 #define ADPCM_SIZE (int)(4096)		//TGDS IMA-ADPCM buffer size
 typedef bool (*closeSoundHandle)();	//ret: true = closed sound stream. false = couldn't close sound stream
 
-#define lBufferARM7 (s16*)((int)0x037f8000)	
-#define rBufferARM7 (s16*)((int)lBufferARM7 + (ADPCM_SIZE*4))
-
 enum
 {
 	state_beginblock,
@@ -54,7 +51,7 @@ private:
 	IMA_Adpcm_Data		data;
 	IMA_Adpcm_Data		loop_data;
 	
-	u8		datacache[4096];	//Highest IMA-ADPCM block is 512 bytes but we add some overhead just in case
+	u8		datacache[ADPCM_SIZE];	//Highest IMA-ADPCM block is 512 bytes but we add some overhead just in case
 	u8*		loop_src;
 	int		loop_cblock;
 	int		loop_state;
@@ -120,7 +117,7 @@ public:
 	bool active;
 	IMA_Adpcm_Player();
 	wavFormatChunk headerChunk;
-	int play(bool loop_audio, bool automatic_updates, int buffer_length = ADPCM_SIZE*16, closeSoundHandle = NULL, FATFS * inFatfsFILEHandle = NULL, int incomingStreamingMode = 0);
+	int play(bool loop_audio, bool automatic_updates, int buffer_length = ADPCM_SIZE / 8, closeSoundHandle = NULL, FATFS * inFatfsFILEHandle = NULL, int incomingStreamingMode = 0);
 	void pause();
 	void resume();
 	void stop();
@@ -141,7 +138,6 @@ extern "C" {
 extern void IMAADPCMDecode(s16 * lBuf, s16 * rBuf, IMA_Adpcm_Player * thisPlayer);
 #endif
 
-extern int ADPCMchunksize;
 extern int ADPCMchannels;
 
 extern void SendArm7Command(u32 command, u32 data);

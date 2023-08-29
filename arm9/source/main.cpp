@@ -40,6 +40,7 @@ USA
 #include "spitscTGDS.h"
 #include "ipcfifoTGDSUser.h"
 #include "InterruptsARMCores_h.h"
+#include "tgds_intro_m4a.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * playListRead = NULL;			//Menu Directory Iterator
@@ -741,31 +742,34 @@ void handleInput(){
 		if(curFileIndex >= getCurrentDirectoryCount(activePlayListRead)){
 			curFileIndex = 0;
 		}
-		strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, activePlayListRead)->fd_namefullPath);
-		
-		//Let decoder close context so we can start again
-		closeSound();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		pendingPlay = true;		
+		struct FileClass * Inst = getFileClassFromList(curFileIndex, activePlayListRead);
+		if(Inst != NULL){
+			strcpy(curChosenBrowseFile, (const char *)Inst->fd_namefullPath);
+			
+			//Let decoder close context so we can start again
+			closeSound();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			pendingPlay = true;
+		}
 	}
 }
 
@@ -956,6 +960,52 @@ void menuShow(){
 	printf("Current Volume: %d", (int)getVolume());
 }
 
+void playIntro(){
+	char * introFilename = "0:/tgds_intro.m4a";
+	FILE * fh = fopen(introFilename, "w+");
+	int written = fwrite((u8*)&tgds_intro_m4a[0], 1, tgds_intro_m4a_size, fh);
+	fclose(fh);
+	
+	if(written == tgds_intro_m4a_size){
+		//Create TGDS Dir API context
+		cleanFileList(playListRead);
+		cleanFileList(activePlayListRead);
+		
+		readDirectoryIntoFileClass("/", activePlayListRead);
+		readDirectoryIntoFileClass("/", playListRead);
+		curFileIndex = -1;
+		strcpy(curChosenBrowseFile, (const char *)introFilename);
+		
+		//Let decoder close context so we can start again
+		closeSound();
+
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		updateStream();	
+		updateStream();
+		updateStream();
+		updateStream();
+		
+		pendingPlay = true;
+	}
+	else{
+		printf("couldn't play the intro.");
+	}
+}
+
 __attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -1104,7 +1154,8 @@ int main(int argc, char **argv) {
 	REG_IE = (REG_IE | IRQ_VBLANK);
 	keypadLocked=false;
 	menuShow();
-
+	playIntro();
+	
 	while (1){	
 		handleInput();
 		

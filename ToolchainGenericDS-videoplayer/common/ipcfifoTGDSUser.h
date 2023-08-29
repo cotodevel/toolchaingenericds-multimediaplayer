@@ -56,8 +56,6 @@ struct sIPCSharedTGDSSpecific {
 
 #define workBufferSoundEffect0 (s16*)((int)0x06000000 + (96*1024) - (4096*4))
 
-//#define ISEMULATOR 1 //defined == TGDS Project does not self reload, undedfined == TGDS Project self reloads
-
 #endif
 
 #ifdef __cplusplus
@@ -69,6 +67,8 @@ extern void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 extern struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific();
 
+extern void gameoverSound();
+extern void MunchFoodSound();
 extern void BgMusic(char * filename);
 extern void BgMusicOff();
 
