@@ -31,8 +31,6 @@ struct rgbMandel{
 	int b;
 };
 
-#define TGDSPROJECTNAME (char*)"ToolchainGenericDS-multimediaplayer"
-
 #endif
 
 
@@ -58,6 +56,7 @@ extern void handleInput();
 extern void setPixel(int row, int col, u16 color);
 extern struct rgbMandel mandelbrot(float real, float imag);
 extern bool keypadLocked;
+extern void playIntro();
 
 #ifdef __cplusplus
 }
