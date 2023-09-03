@@ -314,7 +314,7 @@ void Blip_Synth_::treble_eq( blip_eq_t const& eq )
 	
 	//double const base_unit = 44800.0 - 128 * 18; // allows treble up to +0 dB
 	//double const base_unit = 37888.0; // allows treble to +5 dB
-	double const base_unit = 32768.0; // necessary for blip_unscaled to work
+	double const base_unit = 30000.0; // necessary for blip_unscaled to work
 	double rescale = base_unit / 2 / total;
 	kernel_unit = (long) base_unit;
 	

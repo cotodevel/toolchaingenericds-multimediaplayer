@@ -152,14 +152,18 @@ extern int getSoundLength();
 extern int getSourceFmt();
 extern void soundPrevTrack(int x, int y);
 extern void soundNextTrack(int x, int y);
-//extern int getSNDHTrack();
-//extern int getSNDHTotalTracks();
-//extern void getSNDHMeta(api68_music_info_t * info);
-//extern int getSIDTrack();
-//extern int getSIDTotalTracks();
-//extern int getGBSTrack();
-//extern int getGBSTotalTracks();
-//extern char *gbsMeta(int which);
+extern int getSNDHTrack();
+extern int getSNDHTotalTracks();
+extern void getSNDHMeta(api68_music_info_t * info);
+extern int getSIDTrack();
+extern int getSIDTotalTracks();
+extern int getGBSTrack();
+extern int getGBSTotalTracks();
+extern char *gbsMeta(int which);
+
+extern int getNSFTrack();
+extern int getNSFTotalTracks();
+extern char *getNSFMeta(int which);
 
 // wifi
 extern int getCurrentStatus();

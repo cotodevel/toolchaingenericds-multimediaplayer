@@ -58,7 +58,7 @@ public:
 	void ignore_silence( bool disable = true );
 	
 	// Info for current track
-	using Gme_File::track_info;
+	Gme_File::track_info;
 	blargg_err_t track_info( track_info_t* out ) const;
 	
 // Sound customization
