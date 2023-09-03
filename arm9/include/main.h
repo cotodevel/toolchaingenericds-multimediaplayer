@@ -58,6 +58,10 @@ extern struct rgbMandel mandelbrot(float real, float imag);
 extern bool keypadLocked;
 extern void playIntro();
 
+extern bool pendingPlay;
+extern int curFileIndex;
+extern int lastRand;
+
 #ifdef __cplusplus
 }
 #endif

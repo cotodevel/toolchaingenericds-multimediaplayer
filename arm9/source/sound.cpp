@@ -2339,6 +2339,9 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 bool loadSound(char *fName){
+	if(!(FAT_FileExists(fName) == FT_FILE)){
+		return false;
+	}
 	enableFastMode();
 	int srcFormat = playSoundStream(fName, _FileHandleVideo, _FileHandleAudio);
 	if((srcFormat != SRC_WAV) || (srcFormat != SRC_WAVADPCM)){		
@@ -2436,6 +2439,49 @@ void soundPrevTrack(int x, int y)
 			gbsTrack--;
 		}
 		break;
+		default:{
+			curFileIndex--;
+			if(curFileIndex <= 1){
+				curFileIndex = 1;
+			}
+			struct FileClass * curList = getFileClassFromList(curFileIndex, activePlayListRead);
+			if(curList != NULL){
+				strcpy(curChosenBrowseFile, (const char *)curList->fd_namefullPath);		
+				
+				//Let decoder close context so we can start again
+				closeSound();
+				
+				updateStream();	
+				updateStream();
+				updateStream();
+				updateStream();
+				
+				updateStream();	
+				updateStream();
+				updateStream();
+				updateStream();
+				
+				updateStream();	
+				updateStream();
+				updateStream();
+				updateStream();
+				
+				updateStream();	
+				updateStream();
+				updateStream();
+				updateStream();
+
+				if(FAT_FileExists(curChosenBrowseFile) == FT_FILE){
+					pendingPlay = true;
+				}
+				else{
+					pendingPlay = false;
+				}
+			}
+			else{
+				pendingPlay = false;
+			}
+		}break;
 	}	
 }
 
@@ -2493,6 +2539,51 @@ void soundNextTrack(int x, int y)
 			gbsTrack++;
 		}
 		break;
+
+		default:{
+			int lstSize = getCurrentDirectoryCount(activePlayListRead);
+			curFileIndex++;
+			if(curFileIndex >= lstSize){
+				curFileIndex = lstSize;
+			}
+			struct FileClass * curList = getFileClassFromList(curFileIndex, activePlayListRead);
+			if(curList != NULL){
+				strcpy(curChosenBrowseFile, (const char *)curList->fd_namefullPath);		
+				
+				//Let decoder close context so we can start again
+				closeSound();
+				
+				updateStream();	
+				updateStream();
+				updateStream();
+				updateStream();
+				
+				updateStream();	
+				updateStream();
+				updateStream();
+				updateStream();
+				
+				updateStream();	
+				updateStream();
+				updateStream();
+				updateStream();
+				
+				updateStream();	
+				updateStream();
+				updateStream();
+				updateStream();
+
+				if(FAT_FileExists(curChosenBrowseFile) == FT_FILE){
+					pendingPlay = true;
+				}
+				else{
+					pendingPlay = false;
+				}
+			}
+			else{
+				pendingPlay = false;
+			}
+		}break;
 	}
 }
 
