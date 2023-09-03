@@ -41,7 +41,7 @@ public:
 	
 public:
 	// deprecated
-	using Music_Emu::load;
+	Music_Emu::load;
 	blargg_err_t load( header_t const& h, Data_Reader& in ) // use Remaining_Reader
 			{ return load_remaining_( &h, sizeof h, in ); }
 
