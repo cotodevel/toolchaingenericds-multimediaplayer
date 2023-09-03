@@ -249,9 +249,9 @@ struct rgbMandel mandelbrot(float real, float imag) {
 
 bool keypadLocked=false;
 static bool drawMandelbrt = false;
-static bool pendingPlay = false;
-static int curFileIndex = 0;
-static int lastRand = 0;
+bool pendingPlay = false;
+int curFileIndex = 0;
+int lastRand = 0;
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -550,37 +550,7 @@ void handleInput(){
 		}
 		
 		if (keysDown() & KEY_L){
-			curFileIndex--;
-			if(curFileIndex <= 1){
-				curFileIndex = 1;
-			}
-			strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, activePlayListRead)->fd_namefullPath);		
-			
-			//Let decoder close context so we can start again
-			closeSound();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			
-			
-			pendingPlay = true;
+			soundPrevTrack(0, 0);
 			scanKeys();
 			while(keysHeld() & KEY_L){
 				scanKeys();
@@ -589,37 +559,7 @@ void handleInput(){
 		}
 		
 		if (keysDown() & KEY_R){
-			int lstSize = getCurrentDirectoryCount(activePlayListRead);
-			curFileIndex++;
-			if(curFileIndex >= lstSize){
-				curFileIndex = lstSize;
-			}
-			strcpy(curChosenBrowseFile, (const char *)getFileClassFromList(curFileIndex, activePlayListRead)->fd_namefullPath);		
-			
-			//Let decoder close context so we can start again
-			closeSound();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			
-			pendingPlay = true;
+			soundNextTrack(0, 0);
 			scanKeys();
 			while(keysHeld() & KEY_R){
 				scanKeys();
@@ -707,9 +647,30 @@ void handleInput(){
 		}
 		
 		if (keysDown() & KEY_B){
-			//Audio stop here....
+			//Audio stop here
 			closeSound();
 			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			
+			updateStream();	
+			updateStream();
+			updateStream();
+			updateStream();
+			pendingPlay = false;
+
 			menuShow();
 			
 			scanKeys();
@@ -955,7 +916,16 @@ void menuShow(){
 		printf("Playback: Stopped.");
 	}
 	else{
-		printf("Playing: %s", curChosenBrowseFile);
+		
+		if(soundData.sourceFmt == SRC_GBS){
+			printf("Playing: %s[%d/%d]", gbsMeta(0), getGBSTrack(), getGBSTotalTracks());
+		}
+		else if(soundData.sourceFmt == SRC_NSF){
+			printf("Playing: %s[%d/%d]", getNSFMeta(0), getNSFTrack(), getNSFTotalTracks());
+		}
+		else{
+			printf("Playing: %s", curChosenBrowseFile);
+		}
 	}
 	printf("Current Volume: %d", (int)getVolume());
 }
@@ -1160,7 +1130,7 @@ int main(int argc, char **argv) {
 		handleInput();
 		
 		//Audio playback here....
-		updateStream();	
+		updateStream();
 		updateStream();
 		updateStream();
 		updateStream();
