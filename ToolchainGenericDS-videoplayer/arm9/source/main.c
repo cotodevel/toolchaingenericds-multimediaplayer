@@ -43,7 +43,6 @@ USA
 #include "cartHeader.h"
 #include "InterruptsARMCores_h.h"
 #include "typedefsTGDS.h"
-#include "VideoGL.h"
 #include "videoTGDS.h"
 #include "math.h"
 #include "imagepcx.h"
