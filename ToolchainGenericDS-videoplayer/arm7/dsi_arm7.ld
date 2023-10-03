@@ -31,12 +31,12 @@ _iwram_start =	__iwram_start;
 _iwram_end = __iwram_top;
 
 /* ARM ABI says stacks are full decreasing */
-sp_SVC	= _iwram_end - 0x200; /* reset, swi exception*/
-sp_IRQ	= sp_SVC - 0x200;	/*irq exception*/
-sp_FIQ	= sp_IRQ - 0x200;	/* fiq exception */
-sp_ABT	= sp_FIQ - 0x200;	/* prefetch / data aborts exception */
-sp_UND	= sp_ABT - 0x200;	/* undefined exception */
-sp_USR	= sp_UND - 0x200;	/* usr / sys stacks */
+sp_SVC	= 0x03810000 - 0x100; /* reset, swi exception*/
+sp_IRQ	= sp_SVC - 0x100;	/*irq exception*/
+sp_FIQ	= sp_IRQ - 0x100;	/* fiq exception */
+sp_ABT	= sp_FIQ - 0x100;	/* prefetch / data aborts exception */
+sp_UND	= sp_ABT - 0x100;	/* undefined exception */
+sp_USR	= sp_UND - 0x100;	/* usr / sys stacks */
 sp_SYS = sp_USR;
 /* ARM7 Specific */
 _arm7_irqcheckbits = 0x0380FFF8;	/* __irq_flags */
@@ -176,18 +176,15 @@ SECTIONS
 		. = ALIGN(4);
 		*(.dynbss)
 		*(.gnu.linkonce.b*)
-		*(.bss*)
 		*(COMMON)
-		*(.twl_bss)
-		*.twl.*(.dynbss)
-		*.twl.*(.gnu.linkonce.b*)
-		*.twl.*(.bss*)
 		*.twl.*(COMMON)
+		*(.bss*)
+		*(.twl_bss)
 		. = ALIGN(4);
 		__data_end = ABSOLUTE(.) ;
 	} >iwram AT>ewram
 
-	.bss ALIGN(4) (NOLOAD) :
+	.bss ALIGN(4) :
 	{
 		__bss_start = ABSOLUTE(.);
 		__bss_start__ = ABSOLUTE(.);
@@ -196,7 +193,7 @@ SECTIONS
 		__end__ = ABSOLUTE(.);
 	} >iwram
 	
-	/* stubbed for ARM7i binaries crt0 in NTR mode, but actually used in TWL mode */
+	/* stubbed for ARM7i binaries */
 	__arm7i_lma__ = __end__ + 4;
 	__arm7i_start__ = __arm7i_lma__ + 4;
 	__arm7i_end__ = __arm7i_start__ + 4;
