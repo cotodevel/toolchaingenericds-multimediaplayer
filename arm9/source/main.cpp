@@ -41,6 +41,7 @@ USA
 #include "ipcfifoTGDSUser.h"
 #include "InterruptsARMCores_h.h"
 #include "tgds_intro_m4a.h"
+#include "dswnifi_lib.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * playListRead = NULL;			//Menu Directory Iterator
@@ -1000,6 +1001,10 @@ int main(int argc, char **argv) {
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
+	project_specific_console = false;	//set default console or custom console: custom console
+	GUI_init(project_specific_console);
+	GUI_clear();
+	
 	//argv destroyed here because of xmalloc init, thus restore them
 	for(i = 0; i < argc; i++){
 		argv[i] = argvs[i];
@@ -1016,6 +1021,7 @@ int main(int argc, char **argv) {
 		}
 	}
 	
+	switch_dswnifi_mode(dswifi_idlemode);
 	asm("mcr	p15, 0, r0, c7, c10, 4");
 	flush_icache_all();
 	flush_dcache_all();
@@ -1025,89 +1031,94 @@ int main(int argc, char **argv) {
 	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
 	
 	/////////////////////////////////////////////////////////Reload TGDS Proj///////////////////////////////////////////////////////////
-	#if !defined(ISEMULATOR)
 	char tmpName[256];
-	char ext[256];	
-	char TGDSProj[256];
-	char curChosenBrowseFile[256];
-	strcpy(TGDSProj,"0:/");
-	strcat(TGDSProj, "ToolchainGenericDS-multiboot");
+	char ext[256];
 	if(__dsimode == true){
-		strcat(TGDSProj, ".srl");
-	}
-	else{
-		strcat(TGDSProj, ".nds");
-	}
-	//Force ARM7 reload once 
-	if( 
-		(argc < 3) 
-		&& 
-		(strncmp(argv[1], TGDSProj, strlen(TGDSProj)) != 0) 	
-	){
-		REG_IME = 0;
-		MPUSet();
-		REG_IME = 1;
-		char startPath[MAX_TGDSFILENAME_LENGTH+1];
-		strcpy(startPath,"/");
-		strcpy(curChosenBrowseFile, TGDSProj);
-		
-		char thisTGDSProject[MAX_TGDSFILENAME_LENGTH+1];
-		strcpy(thisTGDSProject, "0:/");
-		strcat(thisTGDSProject, TGDSPROJECTNAME);
+		char TGDSProj[256];
+		char curChosenBrowseFile[256];
+		strcpy(TGDSProj,"0:/");
+		strcat(TGDSProj, "ToolchainGenericDS-multiboot");
 		if(__dsimode == true){
-			strcat(thisTGDSProject, ".srl");
+			strcat(TGDSProj, ".srl");
 		}
 		else{
-			strcat(thisTGDSProject, ".nds");
+			strcat(TGDSProj, ".nds");
 		}
-		
-		//Boot .NDS file! (homebrew only)
-		strcpy(tmpName, curChosenBrowseFile);
-		separateExtension(tmpName, ext);
-		strlwr(ext);
-		
-		//pass incoming launcher's ARGV0
-		char arg0[256];
-		int newArgc = 3;
-		if (argc > 2) {
-			printf(" ---- test");
-			printf(" ---- test");
-			printf(" ---- test");
-			printf(" ---- test");
-			printf(" ---- test");
-			printf(" ---- test");
-			printf(" ---- test");
-			printf(" ---- test");
+		//Force ARM7 reload once 
+		if( 
+			(argc < 3) 
+			&& 
+			(strncmp(argv[1], TGDSProj, strlen(TGDSProj)) != 0) 	
+		){
+			REG_IME = 0;
+			MPUSet();
+			REG_IME = 1;
+			char startPath[MAX_TGDSFILENAME_LENGTH+1];
+			strcpy(startPath,"/");
+			strcpy(curChosenBrowseFile, TGDSProj);
 			
-			//arg 0: original NDS caller
-			//arg 1: this NDS binary
-			//arg 2: this NDS binary's ARG0: filepath
-			strcpy(arg0, (const char *)argv[2]);
-			newArgc++;
-		}
-		//or else stub out an incoming arg0 for relaunched TGDS binary
-		else {
-			strcpy(arg0, (const char *)"0:/incomingCommand.bin");
-			newArgc++;
-		}
-		//debug end
-		
-		char thisArgv[4][MAX_TGDSFILENAME_LENGTH];
-		memset(thisArgv, 0, sizeof(thisArgv));
-		strcpy(&thisArgv[0][0], thisTGDSProject);	//Arg0:	This Binary loaded
-		strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	Chainload caller: TGDS-MB
-		strcpy(&thisArgv[2][0], thisTGDSProject);	//Arg2:	NDS Binary reloaded through ChainLoad
-		strcpy(&thisArgv[3][0], (char*)&arg0[0]);//Arg3: NDS Binary reloaded through ChainLoad's ARG0
-		addARGV(newArgc, (char*)&thisArgv);				
-		if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+			char thisTGDSProject[MAX_TGDSFILENAME_LENGTH+1];
+			strcpy(thisTGDSProject, "0:/");
+			strcat(thisTGDSProject, TGDSPROJECTNAME);
+			if(__dsimode == true){
+				strcat(thisTGDSProject, ".srl");
+			}
+			else{
+				strcat(thisTGDSProject, ".nds");
+			}
 			
+			//Boot .NDS file! (homebrew only)
+			strcpy(tmpName, curChosenBrowseFile);
+			separateExtension(tmpName, ext);
+			strlwr(ext);
+			
+			//pass incoming launcher's ARGV0
+			char arg0[256];
+			int newArgc = 3;
+			if (argc > 2) {
+				printf(" ---- test");
+				printf(" ---- test");
+				printf(" ---- test");
+				printf(" ---- test");
+				printf(" ---- test");
+				printf(" ---- test");
+				printf(" ---- test");
+				printf(" ---- test");
+				
+				//arg 0: original NDS caller
+				//arg 1: this NDS binary
+				//arg 2: this NDS binary's ARG0: filepath
+				strcpy(arg0, (const char *)argv[2]);
+				newArgc++;
+			}
+			//or else stub out an incoming arg0 for relaunched TGDS binary
+			else {
+				strcpy(arg0, (const char *)"0:/incomingCommand.bin");
+				newArgc++;
+			}
+			//debug end
+			
+			char thisArgv[4][MAX_TGDSFILENAME_LENGTH];
+			memset(thisArgv, 0, sizeof(thisArgv));
+			strcpy(&thisArgv[0][0], thisTGDSProject);	//Arg0:	This Binary loaded
+			strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	Chainload caller: TGDS-MB
+			strcpy(&thisArgv[2][0], thisTGDSProject);	//Arg2:	NDS Binary reloaded through ChainLoad
+			strcpy(&thisArgv[3][0], (char*)&arg0[0]);//Arg3: NDS Binary reloaded through ChainLoad's ARG0
+			addARGV(newArgc, (char*)&thisArgv);				
+			if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+				
+			}
 		}
 	}
-	#endif
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	REG_IME = 0;
+	MPUSet();
+	//TGDS-Projects -> legacy NTR TSC compatibility
 	if(__dsimode == true){
 		TWLSetTouchscreenTWLMode();
 	}
+	REG_IME = 1;
 	
 	//Init TGDS FS Directory Iterator Context(s). Mandatory to init them like this!! Otherwise several functions won't work correctly.
 	playListRead = initFileList();
