@@ -94,6 +94,10 @@ void menuShow(){
 	}
 }
 
+
+static char thisTGDSProject[MAX_TGDSFILENAME_LENGTH];
+static char thisArgv2[3][MAX_TGDSFILENAME_LENGTH];
+
 __attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("Os")))
@@ -103,12 +107,14 @@ __attribute__((optimize("Os")))
 __attribute__ ((optnone))
 #endif
 void TGDSProjectReturnToCaller(char * NDSPayload){	//TGDS-Linked Module implementation
+	//stop streaming
+	BgMusicOff();
+	
+	swiDelay(10000); //wait a little
+	
 	REG_IME = 0;
 	MPUSet();
 	REG_IME = 1;
-	
-	//stop streaming
-	BgMusicOff();
 	
 	char fnameRead[256];
 	memset(fnameRead, 0, sizeof(fnameRead));
@@ -123,8 +129,6 @@ void TGDSProjectReturnToCaller(char * NDSPayload){	//TGDS-Linked Module implemen
 	}
 	
 	setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
-	char thisArgv[4][MAX_TGDSFILENAME_LENGTH];
-	memset(thisArgv, 0, sizeof(thisArgv));
 	
 	clrscr();
 	printf("--");
@@ -132,9 +136,7 @@ void TGDSProjectReturnToCaller(char * NDSPayload){	//TGDS-Linked Module implemen
 	printf("--");
 	printf("trying to go back:");
 	printf("%s", fnameRead);
-	//while(1==1){}
 	
-	char thisTGDSProject[MAX_TGDSFILENAME_LENGTH+1];
 	strcpy(thisTGDSProject, "0:/");
 	strcat(thisTGDSProject, "ToolchainGenericDS-multiboot");
 	if(__dsimode == true){
@@ -144,14 +146,12 @@ void TGDSProjectReturnToCaller(char * NDSPayload){	//TGDS-Linked Module implemen
 		strcat(thisTGDSProject, ".nds");
 	}
 	
-	strcpy(&thisArgv[0][0], thisTGDSProject);	//Arg0:	This Binary loaded
-	strcpy(&thisArgv[1][0], fnameRead);	//Arg1:	Chainload caller: TGDS-MB
-	strcpy(&thisArgv[2][0], thisTGDSProject);	//Arg2:	NDS Binary reloaded through ChainLoad
-	strcpy(&thisArgv[3][0], (char*)"0:/stub.bin");//Arg3: NDS Binary reloaded through ChainLoad's ARG0
-	addARGV(4, (char*)&thisArgv);		
-	
-	
-	if(TGDSMultibootRunNDSPayload(thisTGDSProject) == false){  //Should fail it returns false. 
+	memset(thisArgv2, 0, sizeof(thisArgv2));
+	strcpy(&thisArgv2[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+	strcpy(&thisArgv2[1][0], fnameRead);	//Arg1:	NDS Binary reloaded
+	strcpy(&thisArgv2[2][0], (char*)"0:/stub.bin");	//Arg2: NDS Binary ARG0
+	addARGV(3, (char*)&thisArgv2);
+	if(TGDSMultibootRunNDSPayload(fnameRead) == false){  //Should fail it returns false. 
 		printf("boot failed");
 	}
 	

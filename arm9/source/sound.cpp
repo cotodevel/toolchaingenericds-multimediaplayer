@@ -1701,7 +1701,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 		soundData.loc = 0;
 		sCursor = 0;
 		
-		startSound9();
+		startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);
 		
 		return true;		
 	}
@@ -1783,7 +1783,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 		bytesLeftBuf = NULL;
 		
 		mp3Decode();	//process header frame
-		startSound9();
+		startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);
 		return true;
 	}
 	
@@ -1828,7 +1828,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 		soundData.len = flength(fp);
 		soundData.loc = 0;
     	
-		startSound9();
+		startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);
 		
 		return true;
 	}
@@ -1907,7 +1907,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 		soundData.len = flength(fp);
 		soundData.loc = 0;
 		
-		startSound9();
+		startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);
 		
 		return true;
 	}
@@ -2046,7 +2046,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 		aacLength = aacFrameInfo.outputSamps / soundData.channels;
 		soundData.loc = 0;
 		
-		startSound9();
+		startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);
 		
 		return true;
 	}
@@ -2090,7 +2090,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 		bytesLeftBuf = NULL;
     	
 		decodeFlacFrame();
-		startSound9();
+		startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);
 		
 		return true;
 	}
@@ -2138,7 +2138,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 		sidfile[SID_META_LOC + 95] = 0;
 		
 		sidDecode();
-		startSound9();		
+		startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);		
 		
 		return true;
 	}	
@@ -2197,7 +2197,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 		
 		StopFade();
 		nsfDecode();
-		startSound9();	
+		startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);	
 		
 		return true;
 	}
@@ -2230,7 +2230,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 		mallocData(SPC_OUT_SIZE);
 		
 		spcDecode();
-		startSound9();
+		startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);
 		
 		return true;
 	}
@@ -2286,7 +2286,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 		
 		sndhDecode();
 		
-		startSound9();
+		startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);
 		
 		return true;
 	}
@@ -2323,7 +2323,7 @@ bool initSoundStreamUser(char * fName, char * ext){
 		
 		gbsDecode();
 		
-		startSound9();
+		startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);
 		
 		return true;
 	}
@@ -2343,7 +2343,7 @@ bool loadSound(char *fName){
 		return false;
 	}
 	enableFastMode();
-	int srcFormat = playSoundStream(fName, _FileHandleVideo, _FileHandleAudio);
+	int srcFormat = playSoundStream(fName, _FileHandleVideo, _FileHandleAudio, TGDS_ARM7_AUDIOBUFFER_STREAM);
 	if((srcFormat != SRC_WAV) || (srcFormat != SRC_WAVADPCM)){		
 		char tmpName[256];
 		char ext[256];
@@ -2849,7 +2849,7 @@ void startStreamAudio()
 				bufCursor = 0;
 				streamOpened = true;
 				
-				startSound9();
+				startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);
 			}
 			
 			break;
@@ -2882,7 +2882,7 @@ void startStreamAudio()
 			bufCursor = 0;
 			streamOpened = true;
 			
-			startSound9();
+			startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);
 			break;
 		}
 		case SRC_STREAM_AAC:
@@ -2949,7 +2949,7 @@ void startStreamAudio()
 			
 			aacLength = aacFrameInfo.outputSamps / soundData.channels;
 			
-			startSound9();
+			startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);
 			streamOpened = true;
 			
 			break;

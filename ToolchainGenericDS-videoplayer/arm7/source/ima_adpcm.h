@@ -6,7 +6,7 @@
 #include "soundTGDS.h"
 #include "petitfs-src/pff.h"
 
-#define ADPCM_SIZE (int)(4096)		//TGDS IMA-ADPCM buffer size
+#define ADPCM_SIZE (int)(2560)		//TGDS IMA-ADPCM buffer size
 typedef bool (*closeSoundHandle)();	//ret: true = closed sound stream. false = couldn't close sound stream
 
 enum
