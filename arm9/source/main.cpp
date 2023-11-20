@@ -1033,7 +1033,8 @@ int main(int argc, char **argv) {
 	/////////////////////////////////////////////////////////Reload TGDS Proj///////////////////////////////////////////////////////////
 	char tmpName[256];
 	char ext[256];
-	if(__dsimode == true){
+	//if(__dsimode == true)
+	if(0 == 1){
 		char TGDSProj[256];
 		char curChosenBrowseFile[256];
 		strcpy(TGDSProj,"0:/");
@@ -1136,6 +1137,7 @@ int main(int argc, char **argv) {
 	keypadLocked=false;
 	menuShow();
 	playIntro();
+	enableFastMode();
 	
 	while (1){	
 		handleInput();

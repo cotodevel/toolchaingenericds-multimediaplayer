@@ -1745,7 +1745,8 @@ bool initSoundStreamUser(char * fName, char * ext){
 				mad_stream_finish(&Stream);
 				
 				fclose(fp);
-				
+				//printf("MP3 failed 1");
+				//while(1==1){}
 				return false;
 			}
 		}
@@ -2352,8 +2353,7 @@ bool loadSound(char *fName){
 		strlwr(ext);
 		bool ret = initSoundStreamUser(fName, ext);
 		if(ret == false){
-			//Invalid sound stream? disable fast mode
-			disableFastMode();
+			
 		}
 		return ret;
 	}
@@ -2383,7 +2383,6 @@ void closeSoundUser(){
 	if(isWIFIConnected()){
 		disconnectWifi();
 	}
-	disableFastMode();
 }
 
 void soundPrevTrack(int x, int y)
