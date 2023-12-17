@@ -101,9 +101,7 @@ export DIRS_ARM9_SRC = data/	\
 			source/interrupts/	\
 			source/gui/	\
 			source/TGDSMemoryAllocator/	\
-			../common/	\
-			../common/templateCode/source/	\
-			../common/templateCode/data/arm9/	
+			../common/	
 			
 export DIRS_ARM9_HEADER = data/	\
 			build/	\
@@ -133,8 +131,6 @@ export DIRS_ARM9_HEADER = data/	\
 			source/emulated/gbs/	\
 			source/tremor/	\
 			../common/	\
-			../common/templateCode/source/	\
-			../common/templateCode/data/arm9/	\
 			../$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/include/
 
 # Build Target(s)	(both processors here)
