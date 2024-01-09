@@ -42,10 +42,11 @@ int main(int argc, char **argv) {
 	
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-    
+	REG_IE &= ~(IRQ_VCOUNT); //cause sound clicks
+	
 	while (1) {
-		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQWait(0, IRQ_VBLANK | IRQ_TIMER1); //Both happen when sound stream is enabled or disabled
+		handleARM7SVC();
+		IRQWait(1, IRQ_TIMER1 | IRQ_SCREENLID);
 	}
    
 	return 0;

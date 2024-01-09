@@ -489,7 +489,7 @@ IMA_Adpcm_Player::IMA_Adpcm_Player()		{
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O3")))
+__attribute__((optimize("Os")))
 #endif
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
@@ -579,8 +579,6 @@ void IMA_Adpcm_Player::stop()		{
 	stream.close();
 	active=false;
 	setvolume( 0 );
-	//Audio stop here....
-	playerStopARM7();
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
