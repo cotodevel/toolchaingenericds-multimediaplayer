@@ -46,7 +46,6 @@ USA
 #include "videoTGDS.h"
 #include "math.h"
 #include "imagepcx.h"
-#include "Texture_Cube.h"
 #include "loader.h"
 #include "dswnifi_lib.h"
 #include "gui_console_connector.h"
