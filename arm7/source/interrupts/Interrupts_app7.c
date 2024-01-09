@@ -50,7 +50,7 @@ void Timer0handlerUser(){
 __attribute__((section(".itcm")))
 #endif
 void Timer1handlerUser(){
-	
+	handleARM7SVC();
 }
 
 #ifdef ARM9
@@ -76,7 +76,7 @@ void HblankUser(){
 __attribute__((section(".itcm")))
 #endif
 void VblankUser(){
-	
+	handleARM7SVC();
 }
 
 #ifdef ARM9
