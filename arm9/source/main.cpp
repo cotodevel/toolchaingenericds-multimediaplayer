@@ -581,6 +581,7 @@ void handleInput(){
 				//handle TVS files only when pressing Start
 				char tmpName[256];
 				char ext[256];
+				char bootldr[256];
 				strcpy(tmpName, curChosenBrowseFile);
 				separateExtension(tmpName, ext);
 				strlwr(ext);
@@ -592,28 +593,24 @@ void handleInput(){
 					char startPath[MAX_TGDSFILENAME_LENGTH+1];
 					strcpy(startPath,"/");
 					if(__dsimode == true){
-						strcpy(curChosenBrowseFile, "0:/ToolchainGenericDS-videoplayer.srl");
+						strcpy(bootldr, "0:/ToolchainGenericDS-videoplayer.srl");
 					}
 					else{
-						strcpy(curChosenBrowseFile, "0:/ToolchainGenericDS-videoplayer.nds");
+						strcpy(bootldr, "0:/ToolchainGenericDS-videoplayer.nds");
 					}
 					//Send args
-					printf("[Booting %s]", curChosenBrowseFile);
-					printf("Want to send argument?");
-					printf("(A) Yes: (Start) Choose arg.");
-					printf("(B) No. ");
-					
 					int argcCount = 0;
 					argcCount++;
 					printf("[Booting... Please wait] >%d", TGDSPrintfColor_Red);
 					
-					char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+					char thisArgv[4][MAX_TGDSFILENAME_LENGTH];
 					memset(thisArgv, 0, sizeof(thisArgv));
 					strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
-					strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	NDS Binary reloaded
-					strcpy(&thisArgv[2][0], tmpName);					//Arg2: NDS Binary ARG0
-					addARGV(3, (char*)&thisArgv);				
-					if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+					strcpy(&thisArgv[1][0], bootldr);	//Arg1:	NDS Binary reloaded
+					strcpy(&thisArgv[2][0], "0:/stub.bin");			//bugged arg slot
+					strcpy(&thisArgv[3][0], curChosenBrowseFile);			//Arg2: NDS Binary ARG0
+					addARGV(4, (char*)&thisArgv);				
+					if(TGDSMultibootRunNDSPayload(bootldr) == false){ //should never reach here, nor even return true. Should fail it returns false
 						printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
 						printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
 						printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
@@ -998,7 +995,7 @@ int main(int argc, char **argv) {
 	}
 
 	bool isCustomTGDSMalloc = true;
-	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
+	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
 	project_specific_console = false;	//set default console or custom console: custom console

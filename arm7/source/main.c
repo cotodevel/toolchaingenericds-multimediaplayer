@@ -23,8 +23,6 @@ USA
 #include "main.h"
 #include "InterruptsARMCores_h.h"
 #include "interrupts.h"
-
-#include "ipcfifoTGDSUser.h"
 #include "usrsettingsTGDS.h"
 #include "timerTGDS.h"
 #include "spiTGDS.h"
@@ -33,14 +31,22 @@ USA
 #include "utilsTGDS.h"
 #include "biosTGDS.h"
 
-//---------------------------------------------------------------------------------
+#include "ipcfifoTGDSUser.h"
+#include "dldi.h"
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Os")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int main(int argc, char **argv) {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.6 Standard ARM7 Init code start	*/
-	//wait for VRAM Block to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
-	while (!(*((vuint8*)0x04000240) & 0x2));
-	
+	//while(!(*(u8*)0x04000240 & 2) ){} //wait for VRAM_D block, //can't here
+	ARM7InitDLDI(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, TGDSDLDI_ARM7_ADDRESS);
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
+	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
 	REG_IE &= ~(IRQ_VCOUNT); //cause sound clicks
 	

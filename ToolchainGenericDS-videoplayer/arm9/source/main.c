@@ -183,6 +183,9 @@ void playTVSFile(char * tvsFile){
 	}
 	else{
 		TGDSVideoPlayback = false;
+		clrscr();
+		printf("--");
+		printf("--");
 		printf("Not a .TVS File: %s", (char*)tvsFile);
 		printf("Press (B) to exit.");
 		
@@ -219,7 +222,7 @@ int main(int argc, char **argv) {
 	}
 
 	bool isCustomTGDSMalloc = true;
-	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
+	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
 	//argv destroyed here because of xmalloc init, thus restore them
@@ -333,7 +336,6 @@ int main(int argc, char **argv) {
 	strcpy(globalPath, "/");
 	menuShow();
 	
-	//ARGV Implementation test
 	if(getTGDSDebuggingState() == true){
 		if (0 != argc ) {
 			int i;
@@ -347,6 +349,7 @@ int main(int argc, char **argv) {
 			printf("No arguments passed!");
 		}
 	}
+	
 	//Discard FIFO errors
 	if(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){ 
 		REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
@@ -357,7 +360,7 @@ int main(int argc, char **argv) {
 		strcpy(callerNDSBinary, (char *)argv[0]);
 	}
 	if(argc > 2){
-		playTVSFile((char *)argv[2]);
+		playTVSFile((char *)argv[3]);
 	}
 	else{
 		TGDSVideoPlayback = false;
