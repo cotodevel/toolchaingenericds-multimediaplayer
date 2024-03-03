@@ -35,7 +35,7 @@ USA
 #include "dldi.h"
 
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("Os")))
+__attribute__((optimize("O0")))
 #endif
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
@@ -43,7 +43,9 @@ __attribute__ ((optnone))
 int main(int argc, char **argv) {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.6 Standard ARM7 Init code start	*/
-	//while(!(*(u8*)0x04000240 & 2) ){} //wait for VRAM_D block, //can't here
+	if(__dsimode == false){
+		while(!(*(u8*)0x04000240 & 2) ){} //wait for VRAM_D block, //can't here
+	}
 	ARM7InitDLDI(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, TGDSDLDI_ARM7_ADDRESS);
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
 	
