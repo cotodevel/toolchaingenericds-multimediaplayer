@@ -2353,7 +2353,12 @@ bool loadSound(char *fName){
 		strlwr(ext);
 		bool ret = initSoundStreamUser(fName, ext);
 		if(ret == false){
-			
+			//Invalid sound stream? disable fast mode
+			disableFastMode();
+		}
+		else{
+			//Otherwise enable
+			enableFastMode();
 		}
 		return ret;
 	}
@@ -2383,6 +2388,7 @@ void closeSoundUser(){
 	if(isWIFIConnected()){
 		disconnectWifi();
 	}
+	disableFastMode();
 }
 
 void soundPrevTrack(int x, int y)

@@ -48,9 +48,6 @@ extern void menuShow();
 extern struct FileClassList * playListRead;			//Internal playlist required by active playlist
 extern struct FileClassList * activePlayListRead;	//active playlist, actual playlist
 
-extern char args[8][MAX_TGDSFILENAME_LENGTH];
-extern char *argvs[8];
-
 extern bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileIndex);
 extern void handleInput();
 extern void setPixel(int row, int col, u16 color);
