@@ -34,6 +34,10 @@ USA
 #include "ipcfifoTGDSUser.h"
 #include "dldi.h"
 
+//TGDS-MB v3 bootloader
+void bootfile(){
+}
+
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
