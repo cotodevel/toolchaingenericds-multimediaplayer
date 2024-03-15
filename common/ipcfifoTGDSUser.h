@@ -70,6 +70,8 @@ typedef sint16 int16;
 
 #define ISEMULATOR 1 //defined == TGDS Project does not self reload, undedfined == TGDS Project self reloads
 
+#define ARM7_PAYLOAD ((u32)0x023E8000)
+
 #endif
 
 #ifdef __cplusplus

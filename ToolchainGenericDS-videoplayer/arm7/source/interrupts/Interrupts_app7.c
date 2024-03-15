@@ -112,3 +112,7 @@ __attribute__((section(".itcm")))
 void screenLidHasClosedhandlerUser(){
 	TurnOffScreens();
 }
+
+//TGDS-MB v3 bootloader
+void bootfile(){
+}
