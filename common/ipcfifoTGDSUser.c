@@ -36,12 +36,9 @@ USA
 
 #ifdef ARM7
 #include <string.h>
-
 #include "main.h"
 #include "spifwTGDS.h"
-#include "click_raw.h"
 #include "wifi_arm7.h"
-
 #endif
 
 #ifdef ARM9
@@ -128,7 +125,9 @@ void setupLibUtils(){
 		(SoundStreamSetupSoundARM7LibUtils_fn)&setupSound,	//ARM7: void setupSound()
 		(initMallocARM7LibUtils_fn)&initARM7Malloc, //ARM7: void initARM7Malloc(u32 ARM7MallocStartaddress, u32 ARM7MallocSize);
 		(wifiDeinitARM7ARM9LibUtils_fn)&DeInitWIFI,  //ARM7 & ARM9: DeInitWIFI()
-		(MicInterruptARM7LibUtils_fn)&micInterrupt //ARM7: micInterrupt()
+		(MicInterruptARM7LibUtils_fn)&micInterrupt, //ARM7: micInterrupt()
+		(DeInitWIFIARM7LibUtils_fn)&DeInitWIFI, //ARM7: DeInitWIFI()
+		(wifiAddressHandlerARM7LibUtils_fn)&wifiAddressHandler	//ARM7: void wifiAddressHandler( void * address, void * userdata )
 	);
 	#endif
 }
