@@ -31,7 +31,6 @@ USA
 #include "dmaTGDS.h"
 #include "TGDSLogoLZSSCompressed.h"
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
-#include "../build/click_raw.h"
 #include "utilsTGDS.h"
 #include "nds_cp15_misc.h"
 #include "mikmod_internals.h"
@@ -42,6 +41,10 @@ USA
 #include "InterruptsARMCores_h.h"
 #include "tgds_intro_m4a.h"
 #include "dswnifi_lib.h"
+
+//ARM7 VRAM core
+#include "arm7vram.h"
+#include "arm7vram_twl.h"
 
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * playListRead = NULL;			//Menu Directory Iterator
@@ -981,6 +984,20 @@ __attribute__ ((optnone))
 int main(int argc, char **argv) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
+	//Save Stage 1: IWRAM ARM7 payload: NTR/TWL (0x03800000)
+	memcpy((void *)TGDS_MB_V3_ARM7_STAGE1_ADDR, (const void *)0x02380000, (int)(96*1024));	//
+	coherent_user_range_by_size((uint32)TGDS_MB_V3_ARM7_STAGE1_ADDR, (int)(96*1024)); //		also for TWL binaries 
+	
+	//Execute Stage 2: VRAM ARM7 payload: NTR/TWL (0x06000000)
+	u32 * payload = NULL;
+	if(__dsimode == false){
+		payload = (u32*)&arm7vram[0];	
+	}
+	else{
+		payload = (u32*)&arm7vram_twl[0];
+	}
+	executeARM7Payload((u32)0x02380000, 96*1024, payload);
+	
 	bool project_specific_console = false;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
 	GUI_clear();

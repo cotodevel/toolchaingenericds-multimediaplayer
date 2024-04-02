@@ -23,8 +23,9 @@ USA
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
-#include "ipcfifoTGDSUser.h"
-
+#include "pff.h"
+#include "soundTGDS.h"
+#include "exceptionTGDS.h"
 #endif
 
 
@@ -33,6 +34,13 @@ extern "C" {
 #endif
 
 extern int main(int argc, char **argv);
+extern FATFS fileHandle;					// Petit-FatFs work area 
+extern char fname[256];
+extern u8 NDSHeaderStruct[4096];
+extern char debugBuf7[256];
+extern bool stopSoundStreamUser();
+extern void bootfile();
+extern int isNTROrTWLBinaryTGDSMB7(FATFS * currentFH);
 
 #ifdef __cplusplus
 }
