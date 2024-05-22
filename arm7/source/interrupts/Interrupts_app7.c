@@ -1,30 +1,13 @@
-/*
-
-			Copyright (C) 2017  Coto
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
-USA
-
-*/
-
-#include "ipcfifoTGDSUser.h"
+#include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
-
+#include "ipcfifoTGDSUser.h"
 #include "InterruptsARMCores_h.h"
-#include "interrupts.h"
+#include "spcdefs.h"
+#include "apu.h"
+#include "dsp.h"
 #include "main.h"
+#include "biosTGDS.h"
 
 //User Handler Definitions
 
@@ -44,35 +27,59 @@ void IpcSynchandlerUser(uint8 ipcByte){
 __attribute__((section(".itcm")))
 #endif
 void Timer0handlerUser(){
-
 }
+
+static int timerTick=0;
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void Timer1handlerUser(){
-
+	
 }
+
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void Timer2handlerUser(){
-	
+	if(SPCExecute == true){
+		soundCursor = MIXBUFSIZE - soundCursor;
+		// Left channel
+		int channel = soundCursor == 0 ? 0 : 1;
+		SCHANNEL_TIMER(channel) = SOUND_FREQ(MIXRATE);
+		SCHANNEL_SOURCE(channel) = (uint32)&(playBuffer[MIXBUFSIZE - soundCursor]);
+		SCHANNEL_LENGTH(channel) = (MIXBUFSIZE * 2) >> 2;
+		SCHANNEL_REPEAT_POINT(channel) = 0;
+		SCHANNEL_CR(channel) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0) | SOUND_16BIT;
+
+		// Right channel
+		channel = soundCursor == 0 ? 2 : 3;
+		SCHANNEL_TIMER(channel) = SOUND_FREQ(MIXRATE);
+		SCHANNEL_SOURCE(channel) = (uint32)&(playBuffer[(MIXBUFSIZE - soundCursor) + (MIXBUFSIZE * 2)]);
+		SCHANNEL_LENGTH(channel) = (MIXBUFSIZE * 2) >> 2;
+		SCHANNEL_REPEAT_POINT(channel) = 0;
+		SCHANNEL_CR(channel) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0x7F) | SOUND_16BIT;
+
+		DspMixSamplesStereo(MIXBUFSIZE, &playBuffer[soundCursor]);
+		const int cyclesToExecute = spcCyclesPerSec / (MIXRATE / MIXBUFSIZE);
+		ApuExecute(cyclesToExecute * 21);
+		ApuUpdateTimers(cyclesToExecute);
+	}
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void Timer3handlerUser(){
-
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void HblankUser(){
-
+	
+	
 }
 
 #ifdef ARM9
@@ -80,14 +87,13 @@ __attribute__((section(".itcm")))
 #endif
 void VblankUser(){
 	
-
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void VcounterUser(){
-
+	handleARM7SVC();	/* Do not remove, handles TGDS services */
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
@@ -95,7 +101,7 @@ void VcounterUser(){
 __attribute__((section(".itcm")))
 #endif
 void screenLidHasOpenedhandlerUser(){
-	TurnOnScreens();
+	
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
@@ -103,5 +109,5 @@ void screenLidHasOpenedhandlerUser(){
 __attribute__((section(".itcm")))
 #endif
 void screenLidHasClosedhandlerUser(){
-	TurnOffScreens();
+	
 }

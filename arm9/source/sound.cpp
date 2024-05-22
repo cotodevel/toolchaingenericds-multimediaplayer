@@ -158,7 +158,6 @@ void decodeFlacFrame();
 void seekFlac();
 void sidDecode();
 void nsfDecode();
-void spcDecode();
 void sndhDecode();
 void gbsDecode();
 void mp3Decode();
@@ -497,14 +496,6 @@ void updateStreamCustomDecoder(u32 srcFrmt){
 			//checkKeys();
 		}
 		break;
-		case SRC_SPC:{
-			swapAndSend(ARM7COMMAND_SOUND_COPY);
-			
-			//checkKeys();			
-			spcDecode();
-			//checkKeys();
-		}
-		break;
 		case SRC_SNDH:{
 			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 	
 			TGDSIPC->soundIPC.channels = 2;
@@ -721,8 +712,6 @@ void freeSoundCustomDecoder(u32 srcFrmt){
 				trackFree(spcfile);
 			
 			spcfile = NULL;
-			
-			spcFree();
 			
 			break;
 		case SRC_SNDH:		
@@ -945,17 +934,6 @@ void nsfDecode()
     GetSamples(&tBuffer[3*NSF_OUT_SIZE/4],NSF_OUT_SIZE/4);
 	
 	inTrack = false;
-}
-
-void spcDecode()
-{
-	spcPlay(lBuffer, rBuffer);
-	//checkKeys();
-	spcPlay(lBuffer + (SPC_OUT_SIZE >> 2), rBuffer + (SPC_OUT_SIZE >> 2));
-	//checkKeys();
-	spcPlay(lBuffer + (SPC_OUT_SIZE >> 1), rBuffer + (SPC_OUT_SIZE >> 1));
-	//checkKeys();
-	spcPlay(lBuffer + ((SPC_OUT_SIZE >> 2) * 3), rBuffer + ((SPC_OUT_SIZE >> 2) * 3));
 }
 
 void sndhDecode()
@@ -1654,6 +1632,8 @@ void clearLoop()
 	module->wrap = 0;
 }
 
+static u32 lastSNDState = SRC_NONE;
+
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -1665,6 +1645,9 @@ bool initSoundStreamUser(char * fName, char * ext){
 	
 	updateRequested = true;
 	cutOff = false;
+	
+	//ARM7RunFromVRAM();
+	
 	if(strcmp(ext, ".it") == 0  || strcmp(ext, ".mod") == 0 || strcmp(ext, ".s3m") == 0 || strcmp(ext, ".xm") == 0)
 	{
 		// tracker file!
@@ -2205,34 +2188,27 @@ bool initSoundStreamUser(char * fName, char * ext){
 	
 	if(strcmp(ext, ".spc") == 0)
 	{
-		// SNES audio file
 		
-		internalCodecType = soundData.sourceFmt = SRC_SPC;
-		soundData.bufLoc = 0;
+		// SNES audio file
+		lastSNDState = internalCodecType = soundData.sourceFmt = SRC_SPC;
+		
+		struct sIPCSharedTGDSSpecific* sharedIPC = getsIPCSharedTGDSSpecific();
 		
 		FILE *df = fopen(fName,"r");
 		spcLength = flength(df);
-		
 		spcfile = (uint8_t *)trackMalloc(spcLength, "spc file temporary");
+		
+		fseek(df, 0, SEEK_SET);
 		fread(spcfile, 1, spcLength, df);
 		fclose(df);
 		
-		if(!spcInit(spcfile, spcLength))
-		{
-			trackFree(spcfile);
-			return false;
-		}
+		coherent_user_range_by_size((u32)spcfile, spcLength);
 		
-		soundData.channels = 2;
-		setSoundInterpolation(2);
-		setSoundFrequency(SPC_FREQ);	
-		setSoundLength(SPC_OUT_SIZE);
+		//SPC Memory Setup: ARM7 TGDS 96K = 0x037f8000 ~ 0x03810000. TGDS Sound Streaming code: Disabled
+		WRAM_CR = WRAM_0KARM9_32KARM7;
 		
-		mallocData(SPC_OUT_SIZE);
-		
-		spcDecode();
-		startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);
-		
+		sharedIPC->rawSpcShared = (u8*)spcfile;
+		SendFIFOWords(POCKETSPC_ARM7COMMAND_LOAD_SPC, 0xFF);
 		return true;
 	}
 	
@@ -2389,6 +2365,7 @@ void closeSoundUser(){
 		disconnectWifi();
 	}
 	disableFastMode();
+	SendFIFOWords(POCKETSPC_ARM7COMMAND_STOP_SPC, 0xFF);
 }
 
 void soundPrevTrack(int x, int y)
