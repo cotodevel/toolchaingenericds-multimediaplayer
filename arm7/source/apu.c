@@ -9,6 +9,7 @@
 #include "apu.h"
 #include "ipcfifoTGDSUser.h"
 //#include "sprintf.h"
+
 void unimpl(uint8 opcode, uint16 startPC) {
 //    SendArm9Command(0x80000000 + opcode);
     while(1){}
@@ -21,8 +22,6 @@ void debugTmp(uint32 b1, uint32 b2, uint32 b3) {
 ////////////////////////////////////////////////////////////////////////////
 // Definitions
 ////////////////////////////////////////////////////////////////////////////
-
-
 
 uint8 iplRom[64] ALIGNED =
 {
@@ -38,6 +37,8 @@ uint8 *APU_MEM_ZEROPAGEREAD;
 uint8 *APU_MEM_ZEROPAGEWRITE;
 uint8 APU_EXTRA_MEM[64] ALIGNED;
 uint8 apuSleeping ALIGNED;
+const int brrHashLength = 0x2000 + (0x40000 / 4);
+extern u32 *brrHash;
 
 uint32 APU_STATE[16];
 
@@ -89,7 +90,10 @@ void ApuReset() {
 
     int i = 0;
 	apuSleeping = 0;
-
+	
+	brrHash = (u32*)APU_BRR_HASH_BUFFER;
+    memset(brrHash, 0, brrHashLength);
+	
     // 64k of arm7 iwram
     APU_MEM = APU_RAM_ADDRESS;
     APU_MEM_ZEROPAGEREAD = (uint8*)&MemZeroPageReadTable;

@@ -80,6 +80,8 @@ typedef sint16 int16;
 
 #define APU_RAM_ADDRESS     ((volatile unsigned char*) ((int)TGDS_ARM7_AUDIOBUFFER_STREAM) + (8*1024) )	//64K APU WORK RAM
 
+#define APU_BRR_HASH_BUFFER	(volatile u32*)((int)0x023B8000)	//270K ~ worth of Hashed Samples from the APU core to remove stuttering : 0x02400000 - 0x48000 = 0x023B8000
+
 #define FIFO_TGDSAUDIOPLAYER_DISABLEIRQ (u32)(0xFFAACC00)
 #define FIFO_TGDSAUDIOPLAYER_ENABLEIRQ (u32)(0xFFAACC01)
 
