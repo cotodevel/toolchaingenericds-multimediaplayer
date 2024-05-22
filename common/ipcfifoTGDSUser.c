@@ -33,22 +33,37 @@ USA
 #include "InterruptsARMCores_h.h"
 #include "libutilsShared.h"
 #include "microphoneShared.h"
+#include "loader.h"
 
 #ifdef ARM7
 #include <string.h>
 #include "main.h"
 #include "spifwTGDS.h"
 #include "wifi_arm7.h"
+
+#ifdef ARM7SPCCUSTOMCORE
+#include "apu.h"
+#include "dsp.h"
+#include "spcdefs.h"
+#endif
+
 #endif
 
 #ifdef ARM9
-
 #include <stdbool.h>
 #include "main.h"
 #include "sound.h"
 #include "wifi_arm9.h"
 #include "dswnifi_lib.h"
 #endif
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
+	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (struct sIPCSharedTGDSSpecific*)(TGDSIPCUserStartAddress);
+	return sIPCSharedTGDSSpecificInst;
+}
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
@@ -63,6 +78,32 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 	switch (cmd1) {
 		//NDS7: 
 		#ifdef ARM7
+		case(FIFO_SEND_TGDS_CMD):{
+			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
+			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
+			uint32 FIFO_SEND_TGDS_CMD_in = (uint32)getValueSafe(&fifomsg[7]);
+			switch(FIFO_SEND_TGDS_CMD_in){
+				//ARM7 TGDS-Multiboot loader 
+				case(FIFO_ARM7_RELOAD):{	//TGDS-MB v3 VRAM Loader's tgds_multiboot_payload.bin: void executeARM7Payload(u32 arm7entryaddress, int arm7BootCodeSize);
+					u32 arm7EntryAddressPhys = getValueSafe(&fifomsg[0]);
+					int arm7BootCodeSize = getValueSafe(&fifomsg[1]);
+					u32 arm7entryaddress = getValueSafe(&fifomsg[2]);
+					if(arm7EntryAddressPhys != ((u32)0) ){
+						memcpy((void *)arm7entryaddress,(const void *)arm7EntryAddressPhys, arm7BootCodeSize);
+					}
+					setValueSafe((u32*)0x02FFFE34, (u32)arm7entryaddress);
+					swiSoftReset();	// Jump to boot loader
+				}
+				break;
+	
+				case(BOOT_FILE_TGDSMB):{	//TGDS-MB v3 VRAM Loader's tgds_multiboot_payload.bin: arm9 bootloader: char * homebrewToBoot
+					bootfile();
+				}break;
+			}			
+			setValueSafe(&fifomsg[7], (u32)0);
+		}break;
+		
+		
 		case(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ):{
 			REG_DISPSTAT = (DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
 			REG_IE = REG_IE | (IRQ_VBLANK|IRQ_VCOUNT);
@@ -74,6 +115,22 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 			REG_IE = REG_IE & ~(IRQ_VBLANK|IRQ_VCOUNT);
 		}
 		break;
+		
+		//pocketspc 0.9
+		#ifdef ARM7SPCCUSTOMCORE
+		case POCKETSPC_ARM7COMMAND_STOP_SPC:{
+			StopSoundSPC();
+		}break;
+		case POCKETSPC_ARM7COMMAND_LOAD_SPC:{
+			REG_DISPSTAT = 0;
+			REG_IE = REG_IE & ~(IRQ_VBLANK|IRQ_VCOUNT|IRQ_HBLANK);
+			
+			struct sIPCSharedTGDSSpecific* sharedIPC = getsIPCSharedTGDSSpecific();
+			LoadSpc(sharedIPC->rawSpcShared);
+			SetupSoundSPC();
+		}break;	
+		#endif
+		
 		#endif
 		
 		//NDS9: 
@@ -86,17 +143,8 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 __attribute__((section(".itcm")))
 #endif
 void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
-}
 
-#ifdef ARM9
-void enableFastMode(){
-	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_DISABLEIRQ, 0xFF);
 }
-
-void disableFastMode(){
-	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ, 0xFF);
-}
-#endif
 
 //Libutils setup: TGDS project uses Soundstream, WIFI, ARM7 malloc, etc.
 void setupLibUtils(){
@@ -114,20 +162,54 @@ void setupLibUtils(){
 	);
 	#endif
 	
-	//Stage 1
-	#ifdef ARM7
+	//Stage 1: ARM7 Stage1 & SPC core
+	#if defined(ARM7) 
 	initializeLibUtils7(
-		(HandleFifoNotEmptyWeakRefLibUtils_fn)&libUtilsFIFONotEmpty, //ARM7 & ARM9
-		(wifiUpdateVBLANKARM7LibUtils_fn)&Wifi_Update, //ARM7
-		(wifiInterruptARM7LibUtils_fn)&Wifi_Interrupt,  //ARM7
+		NULL, //ARM7 & ARM9
+		NULL, //ARM7
+		NULL,  //ARM7
 		(SoundStreamTimerHandlerARM7LibUtils_fn)&TIMER1Handler, //ARM7: void TIMER1Handler()
 		(SoundStreamStopSoundARM7LibUtils_fn)&stopSound, 	//ARM7: void stopSound()
 		(SoundStreamSetupSoundARM7LibUtils_fn)&setupSound,	//ARM7: void setupSound()
-		(initMallocARM7LibUtils_fn)&initARM7Malloc, //ARM7: void initARM7Malloc(u32 ARM7MallocStartaddress, u32 ARM7MallocSize);
-		(wifiDeinitARM7ARM9LibUtils_fn)&DeInitWIFI,  //ARM7 & ARM9: DeInitWIFI()
-		(MicInterruptARM7LibUtils_fn)&micInterrupt, //ARM7: micInterrupt()
-		(DeInitWIFIARM7LibUtils_fn)&DeInitWIFI, //ARM7: DeInitWIFI()
-		(wifiAddressHandlerARM7LibUtils_fn)&wifiAddressHandler	//ARM7: void wifiAddressHandler( void * address, void * userdata )
+		NULL, //ARM7: void initARM7Malloc(u32 ARM7MallocStartaddress, u32 ARM7MallocSize);
+		NULL,  //ARM7 & ARM9: DeInitWIFI()
+		NULL, //ARM7: micInterrupt()
+		NULL, //ARM7: DeInitWIFI()
+		NULL//ARM7: void wifiAddressHandler( void * address, void * userdata )
 	);
 	#endif
+}
+
+
+
+//project specific stuff
+
+#ifdef ARM9
+void enableFastMode(){
+	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_DISABLEIRQ, 0xFF);
+}
+
+void disableFastMode(){
+	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ, 0xFF);
+}
+#endif
+
+uint32 ADDRPORT_SPC_TO_SNES=0;
+uint32 ADDRPORT_SNES_TO_SPC=0;
+uint32 ADDR_APU_PROGRAM_COUNTER=0;
+uint32 ADDR_SNEMUL_CMD=0;				//APU_ADDR_CMD	//0x027FFFE8
+uint32 ADDR_SNEMUL_ANS=0;				//APU_ADDR_ANS	//0x027fffec
+uint32 ADDR_SNEMUL_BLK=0;				//APU_ADDR_BLK	//0x027fffe8
+
+//APU Ports from SnemulDS properly binded with Assembly APU Core
+void update_spc_ports(){
+	struct sIPCSharedTGDSSpecific* sharedIPC = getsIPCSharedTGDSSpecific();
+	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)&sharedIPC->PORT_SPC_TO_SNES[0];
+	ADDRPORT_SNES_TO_SPC	=	(uint32)(uint8*)&sharedIPC->PORT_SNES_TO_SPC[0]; 
+	ADDR_APU_PROGRAM_COUNTER=	(uint32)(volatile uint32*)&sharedIPC->APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC
+	
+	ADDR_SNEMUL_CMD	=	(uint32)(volatile uint32*)&sharedIPC->APU_ADDR_CMD;	//0x027FFFE8	// SNEMUL_CMD
+	ADDR_SNEMUL_ANS	=	(uint32)(volatile uint32*)&sharedIPC->APU_ADDR_ANS;	//0x027fffec	// SNEMUL_ANS
+	ADDR_SNEMUL_BLK	=	(uint32)(volatile uint32*)&sharedIPC->APU_ADDR_BLK;	//0x027fffe8	// SNEMUL_BLK
+	sharedIPC->APU_ADDR_BLKP = (uint8 *)ADDR_SNEMUL_BLK;
 }

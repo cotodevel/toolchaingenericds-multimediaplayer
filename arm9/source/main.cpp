@@ -42,10 +42,6 @@ USA
 #include "tgds_intro_m4a.h"
 #include "dswnifi_lib.h"
 
-//ARM7 VRAM core
-#include "arm7vram.h"
-#include "arm7vram_twl.h"
-
 //TGDS Dir API: Directory Iterator(s)
 struct FileClassList * playListRead = NULL;			//Menu Directory Iterator
 struct FileClassList * activePlayListRead = NULL;				//Playlist Directory Iterator
@@ -988,15 +984,8 @@ int main(int argc, char **argv) {
 	memcpy((void *)TGDS_MB_V3_ARM7_STAGE1_ADDR, (const void *)0x02380000, (int)(96*1024));	//
 	coherent_user_range_by_size((uint32)TGDS_MB_V3_ARM7_STAGE1_ADDR, (int)(96*1024)); //		also for TWL binaries 
 	
-	//Execute Stage 2: VRAM ARM7 payload: NTR/TWL (0x06000000)
-	u32 * payload = NULL;
-	if(__dsimode == false){
-		payload = (u32*)&arm7vram[0];	
-	}
-	else{
-		payload = (u32*)&arm7vram_twl[0];
-	}
-	executeARM7Payload((u32)0x02380000, 96*1024, payload);
+	//ARM7FromVRAM = false;
+	//ARM7RunFromVRAM();
 	
 	bool project_specific_console = false;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
@@ -1021,7 +1010,7 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	switch_dswnifi_mode(dswifi_idlemode);
+	//switch_dswnifi_mode(dswifi_idlemode);
 	asm("mcr	p15, 0, r0, c7, c10, 4");
 	flush_icache_all();
 	flush_dcache_all();
