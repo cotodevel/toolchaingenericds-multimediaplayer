@@ -626,7 +626,7 @@ noSampleUpdate:
 */
 
 branchLocation:
-    b mixEchoDisabled
+    b mixEchoEnabled
 
 mixEchoEnabled:
     @ Echo mixing
