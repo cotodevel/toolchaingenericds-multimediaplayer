@@ -28,9 +28,9 @@
 #define ITER_LEFT r9
 #define CONST_F r10
 
-.GLOBAL fixAlignment
-fixAlignment:
-.fill 1024
+.GLOBAL brrHash
+brrHash:
+.word 0
 
 .GLOBAL DecodeSampleBlockAsm
 DecodeSampleBlockAsm:
@@ -46,7 +46,38 @@ DecodeSampleBlockAsm:
 */
     @ Save the channel pointer
     mov r14, r2
-
+	
+	@ Hash the block, and skip the decode if we can
+    ldmia r0, {r4-r7}
+    ldr r8, =0x050C5D1F @ (2166136261 * 16777619)
+    ldr r9, =16777619
+    eor r8, r8, r4
+    mul r8, r9, r8
+    eor r8, r8, r5
+    mul r8, r9, r8
+    eor r8, r8, r6
+    @ r8 is the hashed value
+    ldr r4, brrHash
+    @ Compute the actual brr location minus the apu ram base
+    ldr r6, =APU_MEM
+    ldr r6, [r6]
+    sub r6, r0, r6
+    @ Compute the address of the cached samples in brrHash
+    add r3, r4, #0x8000
+    mov r6, r6, lsr #3
+    add r3, r3, r6, lsl #5
+    @ Load the previous hash value
+    ldr r5, [r4, r6, lsl #2]
+    str r8, [r4, r6, lsl #2]
+    cmp r5, r8
+    bne doDecode
+    @ Load the cached samples
+    ldmia r3, {r4-r11}
+    stmia r1!, {r4-r11}
+    ldrsh PREV0, [r1, #-2]
+    ldrsh PREV1, [r1, #-4]
+    b doneDecodeCached
+	
 doDecode:
     stmfd sp!, {r3}
 
@@ -595,7 +626,7 @@ noSampleUpdate:
 */
 
 branchLocation:
-    b mixEchoDisabled
+    b mixEchoEnabled
 
 mixEchoEnabled:
     @ Echo mixing

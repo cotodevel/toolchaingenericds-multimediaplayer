@@ -1646,8 +1646,6 @@ bool initSoundStreamUser(char * fName, char * ext){
 	updateRequested = true;
 	cutOff = false;
 	
-	//ARM7RunFromVRAM();
-	
 	if(strcmp(ext, ".it") == 0  || strcmp(ext, ".mod") == 0 || strcmp(ext, ".s3m") == 0 || strcmp(ext, ".xm") == 0)
 	{
 		// tracker file!
