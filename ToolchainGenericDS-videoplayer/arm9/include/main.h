@@ -33,23 +33,13 @@ USA
 extern "C" {
 #endif
 
-extern int main(int argc, char ** argv);
 //TGDS Dir API: Directory Iterator(s)
 extern struct FileClassList * menuIteratorfileClassListCtx;			//Menu Directory Iterator
-extern char curChosenBrowseFile[256+1];
-extern char globalPath[MAX_TGDSFILENAME_LENGTH+1];
+
+extern int main(int argc, char ** argv);
+extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
+extern char globalPath[MAX_TGDSFILENAME_LENGTH];
 extern int internalCodecType;//Internal because WAV raw decompressed buffers are used if Uncompressed WAV or ADPCM
-
-extern char args[8][MAX_TGDSFILENAME_LENGTH];
-extern char *argvs[8];
-extern void leaveTGDSLM(u32 returnAddress);
-
-extern int textureID;
-extern float rotateX;
-extern float rotateY;
-extern float camDist;
-extern char args[8][MAX_TGDSFILENAME_LENGTH];
-extern char *argvs[8];
 extern void setSnemulDSSpecial0xFFFF0000MPUSettings();
 extern void playTVSFile(char * tvsFile);
 extern void TGDSProjectReturnToCaller(char * NDSPayload);
