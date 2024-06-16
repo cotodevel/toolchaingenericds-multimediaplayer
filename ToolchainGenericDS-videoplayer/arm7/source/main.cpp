@@ -24,12 +24,14 @@ USA
 #include "spifwTGDS.h"
 #include "wifi_arm7.h"
 #include "pff.h"
-#include "ipcfifoTGDSUser.h"
 #include "ima_adpcm.h"
 #include "soundTGDS.h"
 #include "biosTGDS.h"
 #include "timerTGDS.h"
 #include "InterruptsARMCores_h.h"
+
+#include "ipcfifoTGDSUser.h"
+#include "dldi.h"
 
 IMA_Adpcm_Player backgroundMusicPlayer;	//Actual PLAYER Instance. See ima_adpcm.cpp -> [PLAYER: section
 IMA_Adpcm_Player SoundEffect0Player;
@@ -120,6 +122,11 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 int main(int argc, char **argv)  {
+	/*			TGDS 1.6 Standard ARM7 Init code start	*/
+	//while(!(*(u8*)0x04000240 & 2) ){} //wait for VRAM_D block, //can't here
+	ARM7InitDLDI(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, TGDSDLDI_ARM7_ADDRESS);
+	/*			TGDS 1.6 Standard ARM7 Init code end	*/
+	
 	REG_IE|=(IRQ_VBLANK); //X button depends on this
 	while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */

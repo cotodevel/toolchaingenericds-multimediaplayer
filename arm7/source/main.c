@@ -1,53 +1,128 @@
-/*
-			Copyright (C) 2017  Coto
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
-USA
-*/
-
-#include "typedefsTGDS.h"
-#include "dsregs.h"
-#include "dsregs_asm.h"
- 
+#include <string.h>
+#include "spcdefs.h"
+#include "apu.h"
+#include "dsp.h"
 #include "main.h"
 #include "InterruptsARMCores_h.h"
 #include "interrupts.h"
-
-#include "ipcfifoTGDSUser.h"
 #include "usrsettingsTGDS.h"
 #include "timerTGDS.h"
-#include "spiTGDS.h"
-#include "spifwTGDS.h"
 #include "powerTGDS.h"
-#include "utilsTGDS.h"
-#include "biosTGDS.h"
+#include "dldi.h"
+#include "ipcfifoTGDSUser.h"
+
+bool SPCExecute=false;
+
+//TGDS-MB v3 bootloader
+void bootfile(){
+}
+
+// Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
+uint16 playBuffer[MIXBUFSIZE * 2 * 2];
+volatile int soundCursor;
+bool paused = false;
+
+void SetupSoundSPC() {
+    soundCursor = 0;
+
+	SoundPowerON(127);		//volume
+	
+	TIMERXDATA(1) = TIMER_FREQ(MIXRATE);
+    TIMERXCNT(1) = TIMER_DIV_1 | TIMER_ENABLE;
+    TIMERXDATA(2) = 0x10000 - MIXBUFSIZE;
+    TIMERXCNT(2) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
+	irqEnable(IRQ_TIMER2);
+	irqDisable(IRQ_TIMER1);
+	
+    // Timing stuff
+    //TIMER2_DATA = 0;
+    //TIMER2_CR = TIMER_DIV_64 | TIMER_ENABLE;
+
+    //TIMER3_DATA = 0;
+    //TIMER3_CR = TIMER_CASCADE | TIMER_ENABLE;
+
+//    *((vu32*)0x04000510) = (uint32)capBuf;
+//    *((vu16*)0x04000514) = (MIXBUFSIZE * 2) >> 1;
+//    *((vu16*)0x04000508) = 0x83;
+	SPCExecute=true;
+}
+
+void StopSoundSPC() {
+    powerOFF(POWER_SOUND);
+    REG_SOUNDCNT = 0;
+    TIMERXCNT(1) = 0;
+    TIMERXCNT(2) = 0;
+	irqDisable(IRQ_TIMER2);
+	SPCExecute=false;
+}
+
+void LoadSpc(const uint8 *spc) {
+    int i=0;
+    ApuReset();
+    DspReset();
+
+// 0 - A, 1 - X, 2 - Y, 3 - RAMBASE, 4 - DP, 5 - PC (Adjusted into rambase)
+// 6 - Cycles (bit 0 - C, bit 1 - v, bit 2 - h, bits 3+ cycles left)
+// 7 - Optable
+// 8 - NZ
+
+    APU_STATE[0] = spc[0x27]<<24; // A
+    APU_STATE[1] = spc[0x28]<<24; // X
+    APU_STATE[2] = spc[0x29]<<24; // Y
+    SetStateFromRawPSW(APU_STATE, spc[0x2A]);
+    APU_SP = 0x100 | spc[0x2B]; // SP
+    APU_STATE[5] = APU_STATE[3] + (spc[0x25] | (spc[0x26] << 8)); // PC
+    for (i=0; i<=0xffff; i++) APU_MEM[i] = spc[0x100 + i];
+    for (i=0; i<=0x7f; i++) {
+        DSP_MEM[i] = spc[0x10100 + i];
+    }
+    for (i=0; i<=0x3f; i++) APU_EXTRA_MEM[i] = spc[0x101c0 + i];
+
+    ApuPrepareStateAfterReload();
+    DspPrepareStateAfterReload();
+}
 
 //---------------------------------------------------------------------------------
-int main(int argc, char **argv) {
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+int main(int _argc, char **_argv) {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.6 Standard ARM7 Init code start	*/
-	//wait for VRAM Block to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
-	while (!(*((vuint8*)0x04000240) & 0x2));
-	
+	while(!(*(u8*)0x04000240 & 2) ){} //wait for VRAM_D block
+	ARM7InitDLDI(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, TGDSDLDI_ARM7_ADDRESS);
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
-	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-	REG_IE &= ~(IRQ_VCOUNT); //cause sound clicks
 	
-	while (1) {
-		handleARM7SVC();
-		IRQWait(1, IRQ_TIMER1 | IRQ_SCREENLID);
+	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
+	REG_IE &= ~(IRQ_VCOUNT|IRQ_VBLANK); //cause sound clicks
+	
+	update_spc_ports();
+	int i = 0; 
+    for (i = 0; i < MIXBUFSIZE * 4; i++) {
+        playBuffer[i] = 0;
+    }
+	
+	SendFIFOWords(0xFF, 0xFF);
+
+	while(1){
+		handleARM7SVC();	/* Do not remove, handles TGDS services */
+		HaltUntilIRQ(); //Save power until next irq
 	}
-   
+
 	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+//Custom Button Mapping Handler implementation: IRQ Driven
+void CustomInputMappingHandler(uint32 readKeys){
+	
+}
+
+//Project specific: ARM7 Setup for TGDS sound stream
+void initSoundStreamUser(u32 srcFmt){
+	//SPCExecute=false;
 }

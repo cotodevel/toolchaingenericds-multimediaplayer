@@ -31,7 +31,6 @@ USA
 #include "dmaTGDS.h"
 #include "TGDSLogoLZSSCompressed.h"
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
-#include "../build/click_raw.h"
 #include "utilsTGDS.h"
 #include "nds_cp15_misc.h"
 #include "mikmod_internals.h"
@@ -496,9 +495,6 @@ static inline int getRand(int size){
 	return getRand(size);
 }
 
-char args[8][MAX_TGDSFILENAME_LENGTH];
-char *argvs[8];
-
 void handleInput(){
 	if(pendingPlay == true){
 		soundLoaded = loadSound((char*)curChosenBrowseFile);
@@ -581,6 +577,7 @@ void handleInput(){
 				//handle TVS files only when pressing Start
 				char tmpName[256];
 				char ext[256];
+				char bootldr[256];
 				strcpy(tmpName, curChosenBrowseFile);
 				separateExtension(tmpName, ext);
 				strlwr(ext);
@@ -592,28 +589,24 @@ void handleInput(){
 					char startPath[MAX_TGDSFILENAME_LENGTH+1];
 					strcpy(startPath,"/");
 					if(__dsimode == true){
-						strcpy(curChosenBrowseFile, "0:/ToolchainGenericDS-videoplayer.srl");
+						strcpy(bootldr, "0:/ToolchainGenericDS-videoplayer.srl");
 					}
 					else{
-						strcpy(curChosenBrowseFile, "0:/ToolchainGenericDS-videoplayer.nds");
+						strcpy(bootldr, "0:/ToolchainGenericDS-videoplayer.nds");
 					}
 					//Send args
-					printf("[Booting %s]", curChosenBrowseFile);
-					printf("Want to send argument?");
-					printf("(A) Yes: (Start) Choose arg.");
-					printf("(B) No. ");
-					
 					int argcCount = 0;
 					argcCount++;
 					printf("[Booting... Please wait] >%d", TGDSPrintfColor_Red);
 					
-					char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+					char thisArgv[4][MAX_TGDSFILENAME_LENGTH];
 					memset(thisArgv, 0, sizeof(thisArgv));
 					strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
-					strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	NDS Binary reloaded
-					strcpy(&thisArgv[2][0], tmpName);					//Arg2: NDS Binary ARG0
-					addARGV(3, (char*)&thisArgv);				
-					if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+					strcpy(&thisArgv[1][0], bootldr);	//Arg1:	NDS Binary reloaded
+					strcpy(&thisArgv[2][0], "0:/stub.bin");			//bugged arg slot
+					strcpy(&thisArgv[3][0], curChosenBrowseFile);			//Arg2: NDS Binary ARG0
+					addARGV(4, (char*)&thisArgv);				
+					if(TGDSMultibootRunNDSPayload(bootldr) == false){ //should never reach here, nor even return true. Should fail it returns false
 						printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
 						printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
 						printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
@@ -987,29 +980,22 @@ __attribute__ ((optnone))
 int main(int argc, char **argv) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
+	//Save Stage 1: IWRAM ARM7 payload: NTR/TWL (0x03800000)
+	memcpy((void *)TGDS_MB_V3_ARM7_STAGE1_ADDR, (const void *)0x02380000, (int)(96*1024));	//
+	coherent_user_range_by_size((uint32)TGDS_MB_V3_ARM7_STAGE1_ADDR, (int)(96*1024)); //		also for TWL binaries 
+	
 	bool project_specific_console = false;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
 	GUI_clear();
 	
-	//xmalloc init removes args, so save them
-	int i = 0;
-	for(i = 0; i < argc; i++){
-		argvs[i] = argv[i];
-	}
-
 	bool isCustomTGDSMalloc = true;
-	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
+	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
 	project_specific_console = false;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
 	GUI_clear();
 	
-	//argv destroyed here because of xmalloc init, thus restore them
-	for(i = 0; i < argc; i++){
-		argv[i] = argvs[i];
-	}
-
 	printf("     ");
 	printf("     ");
 	
@@ -1021,7 +1007,7 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	switch_dswnifi_mode(dswifi_idlemode);
+	//switch_dswnifi_mode(dswifi_idlemode);
 	asm("mcr	p15, 0, r0, c7, c10, 4");
 	flush_icache_all();
 	flush_dcache_all();
@@ -1047,7 +1033,7 @@ int main(int argc, char **argv) {
 		}
 		//Force ARM7 reload once 
 		if( 
-			(argc < 3) 
+			(argc < 2) 
 			&& 
 			(strncmp(argv[1], TGDSProj, strlen(TGDSProj)) != 0) 	
 		){
@@ -1075,36 +1061,20 @@ int main(int argc, char **argv) {
 			
 			//pass incoming launcher's ARGV0
 			char arg0[256];
-			int newArgc = 3;
+			int newArgc = 2;
 			if (argc > 2) {
-				printf(" ---- test");
-				printf(" ---- test");
-				printf(" ---- test");
-				printf(" ---- test");
-				printf(" ---- test");
-				printf(" ---- test");
-				printf(" ---- test");
-				printf(" ---- test");
-				
-				//arg 0: original NDS caller
-				//arg 1: this NDS binary
-				//arg 2: this NDS binary's ARG0: filepath
+				//Arg0:	Chainload caller: TGDS-MB
+				//Arg1:	This NDS Binary reloaded through ChainLoad
+				//Arg2: This NDS Binary reloaded through ChainLoad's Argument0
 				strcpy(arg0, (const char *)argv[2]);
 				newArgc++;
 			}
-			//or else stub out an incoming arg0 for relaunched TGDS binary
-			else {
-				strcpy(arg0, (const char *)"0:/incomingCommand.bin");
-				newArgc++;
-			}
-			//debug end
 			
-			char thisArgv[4][MAX_TGDSFILENAME_LENGTH];
+			char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
 			memset(thisArgv, 0, sizeof(thisArgv));
-			strcpy(&thisArgv[0][0], thisTGDSProject);	//Arg0:	This Binary loaded
-			strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	Chainload caller: TGDS-MB
-			strcpy(&thisArgv[2][0], thisTGDSProject);	//Arg2:	NDS Binary reloaded through ChainLoad
-			strcpy(&thisArgv[3][0], (char*)&arg0[0]);//Arg3: NDS Binary reloaded through ChainLoad's ARG0
+			strcpy(&thisArgv[0][0], curChosenBrowseFile);	//Arg0:	Chainload caller: TGDS-MB
+			strcpy(&thisArgv[1][0], thisTGDSProject);	//Arg1:	NDS Binary reloaded through ChainLoad
+			strcpy(&thisArgv[2][0], (char*)arg0);	//Arg2: NDS Binary reloaded through ChainLoad's ARG0
 			addARGV(newArgc, (char*)&thisArgv);				
 			if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
 				
@@ -1158,7 +1128,7 @@ int main(int argc, char **argv) {
 		updateStream();
 		updateStream();
 		updateStream();
-		HaltUntilIRQ(); //Save power until next Vblank
+		HaltUntilIRQ(); //Save power until next irq
 	}
 	
 	return 0;
