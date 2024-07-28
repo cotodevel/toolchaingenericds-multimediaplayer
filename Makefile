@@ -163,8 +163,8 @@ compile	:
 	$(MAKE)	-R	-C	$(DIR_ARM7)/
 	$(MAKE)	-R	-C	$(CURDIR)/common/templateCode/arm7bootldr/
 	
-	-mv $(DIR_ARM7)/arm7vram.bin	$(DIR_ARM9)/data/arm7vram.bin
-	-mv $(DIR_ARM7)/arm7vram_twl.bin	$(DIR_ARM9)/data/arm7vram_twl.bin
+	-cp $(CURDIR)/common/templateCode/data/arm9/arm7bootldr.bin	ToolchainGenericDS-videoplayer/$(DIR_ARM9)/data/arm7bootldr.bin
+	-cp $(CURDIR)/common/templateCode/data/arm9/arm7bootldr_twl.bin	ToolchainGenericDS-videoplayer/$(DIR_ARM9)/data/arm7bootldr_twl.bin
 	
 ifeq ($(SOURCE_MAKEFILE9),default)
 	cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC9_NOFPIC)	$(CURDIR)/$(DIR_ARM9)
@@ -201,8 +201,8 @@ endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/Makefile
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
 	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl	$(CURDIR)/common/templateCode/
-	-@rm -rf $(DIR_ARM9)/data/arm7vram.bin	$(DIR_ARM9)/data/arm7vram_twl.bin
-
+	-@rm -rf ToolchainGenericDS-videoplayer/$(DIR_ARM9)/data/arm7bootldr.bin	ToolchainGenericDS-videoplayer/$(DIR_ARM9)/data/arm7bootldr_twl.bin
+	
 rebase:
 	git reset --hard HEAD
 	git clean -f -d
