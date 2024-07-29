@@ -59,6 +59,19 @@ USA
 #include "interrupts.h"
 #include "timerTGDS.h"
 
+//ARM7 VRAM core
+#include "arm7bootldr.h"
+#include "arm7bootldr_twl.h"
+
+u32 * getTGDSMBV3ARM7Bootloader(){
+	if(__dsimode == false){
+		return (u32*)&arm7bootldr[0];	
+	}
+	else{
+		return (u32*)&arm7bootldr_twl[0];
+	}
+}
+
 struct FileClassList * menuIteratorfileClassListCtx = NULL;
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
 char globalPath[MAX_TGDSFILENAME_LENGTH];
@@ -149,8 +162,8 @@ void TGDSProjectReturnToCaller(char * NDSPayload){	//TGDS-Linked Module implemen
 	strcpy(&thisArgv2[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
 	strcpy(&thisArgv2[1][0], fnameRead);	//Arg1:	NDS Binary reloaded
 	strcpy(&thisArgv2[2][0], (char*)"0:/stub.bin");	//Arg2: NDS Binary ARG0
-	addARGV(3, (char*)&thisArgv2);
-	if(TGDSMultibootRunNDSPayload(fnameRead) == false){  //Should fail it returns false. 
+	u32 * payload = getTGDSMBV3ARM7Bootloader();
+	if(TGDSMultibootRunNDSPayload(fnameRead, (u8*)payload, 3, (char*)&thisArgv2) == false){  //Should fail it returns false. 
 		printf("boot failed");
 	}
 	
@@ -211,6 +224,10 @@ __attribute__ ((optnone))
 #endif
 int main(int argc, char **argv) {
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
+	//Save Stage 1: IWRAM ARM7 payload: NTR/TWL (0x03800000)
+	memcpy((void *)TGDS_MB_V3_ARM7_STAGE1_ADDR, (const void *)0x02380000, (int)(96*1024));	//
+	coherent_user_range_by_size((uint32)TGDS_MB_V3_ARM7_STAGE1_ADDR, (int)(96*1024)); //		also for TWL binaries 
+	
 	bool isTGDSCustomConsole = true;	//set default console or custom console: default console
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
@@ -301,8 +318,8 @@ int main(int argc, char **argv) {
 			strcpy(&thisArgv[0][0], curChosenBrowseFile);	//Arg0:	Chainload caller: TGDS-MB
 			strcpy(&thisArgv[1][0], thisTGDSProject);	//Arg1:	NDS Binary reloaded through ChainLoad
 			strcpy(&thisArgv[2][0], (char*)arg0);	//Arg2: NDS Binary reloaded through ChainLoad's ARG0
-			addARGV(newArgc, (char*)&thisArgv);				
-			if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+			u32 * payload = getTGDSMBV3ARM7Bootloader();
+			if(TGDSMultibootRunNDSPayload(curChosenBrowseFile, (u8*)payload, newArgc, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
 				
 			}
 		}
