@@ -35,7 +35,7 @@ extern "C" {
 
 //TGDS Dir API: Directory Iterator(s)
 extern struct FileClassList * menuIteratorfileClassListCtx;			//Menu Directory Iterator
-
+extern u32 * getTGDSMBV3ARM7Bootloader();
 extern int main(int argc, char ** argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
 extern char globalPath[MAX_TGDSFILENAME_LENGTH];
