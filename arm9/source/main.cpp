@@ -284,25 +284,13 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 	
 	//Use TGDS Dir API context
 	int pressed = 0;
-	struct FileClass filStub;
-	{
-		filStub.type = FT_FILE;
-		strcpy(filStub.fd_namefullPath, "");
-		filStub.isIterable = true;
-		filStub.d_ino = -1;
-		filStub.parentFileClassList = playListRead;
-	}
-	char curPath[MAX_TGDSFILENAME_LENGTH+1];
-	strcpy(curPath, Path);
-	
-	int j = 1;
+	int j = 0;
 	int startFromIndex = 1;
 	*curFileIndex = startFromIndex;
 	
 	//Generate an active playlist
 	readDirectoryIntoFileClass(Path, playListRead);
 	cleanFileList(activePlayListRead);
-	pushEntryToFileClassList(true, filStub.fd_namefullPath, filStub.type, -1, activePlayListRead); //first stub item pushed because printf hides it
 	int itemsFound = buildFileClassByExtensionFromList(playListRead, activePlayListRead, (char**)ARM7_PAYLOAD, (char*)"/ima/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs");
 	activePlayListRead->FileDirCount--; //skipping the first item pushed before
 	
@@ -313,8 +301,6 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 	//actual file lister
 	clrscr();
 	
-	j = 1;
-	pressed = 0 ;
 	int lastVal = 0;
 	bool reloadDirA = false;
 	bool reloadDirB = false;
@@ -322,11 +308,12 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 	
 	#define itemsShown (int)(15)
 	int curjoffset = 0;
-	int itemRead=1;
+	int itemRead=0;
+	int printYoffset = 1;
 	
 	while(1){
-		int fileClassListSize = getCurrentDirectoryCount(playListRead) + 1;	//+1 the stub
-		int itemsToLoad = (fileClassListSize - curjoffset);
+		int fileClassListSize = getCurrentDirectoryCount(activePlayListRead) + 1;
+		int itemsToLoad = (fileClassListSize - curjoffset); 
 		
 		//check if remaining items are enough
 		if(itemsToLoad > itemsShown){
@@ -334,11 +321,15 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 		}
 		
 		while(itemRead < itemsToLoad ){		
-			if(getFileClassFromList(itemRead+curjoffset, playListRead)->type == FT_DIR){
-				printfCoords(0, itemRead, "--- %s >%d",getFileClassFromList(itemRead+curjoffset, playListRead)->fd_namefullPath, TGDSPrintfColor_Yellow);
+			if(getFileClassFromList(itemRead+curjoffset, activePlayListRead)->type == FT_DIR){
+				printfCoords(0, itemRead + printYoffset, "--- %s >%d",getFileClassFromList(itemRead+curjoffset, activePlayListRead)->fd_namefullPath, TGDSPrintfColor_Yellow);
+			}
+			else if(getFileClassFromList(itemRead+curjoffset, activePlayListRead)->type == FT_FILE){
+				printfCoords(0, itemRead + printYoffset, "--- %s",getFileClassFromList(itemRead+curjoffset, activePlayListRead)->fd_namefullPath);
 			}
 			else{
-				printfCoords(0, itemRead, "--- %s",getFileClassFromList(itemRead+curjoffset, playListRead)->fd_namefullPath);
+				//itemRead--;
+				//itemsToLoad--;
 			}
 			itemRead++;
 		}
@@ -360,16 +351,15 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 			//list only the remaining items
 			clrscr();
 			
-			curjoffset = (curjoffset + itemsToLoad - 1);
-			itemRead = 1;
-			j = 1;
+			curjoffset = (curjoffset + itemsToLoad - 1 - printYoffset);
+			itemRead = 0;
+			j = 0;
 			
 			scanKeys();
 			pressed = keysDown();
 			while(pressed&KEY_DOWN){
 				scanKeys();
 				pressed = keysDown();
-				
 			}
 		}
 		
@@ -379,9 +369,9 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 			//list only the remaining items
 			clrscr();
 			
-			curjoffset = (curjoffset - itemsToLoad - 1);
-			itemRead = 1;
-			j = 1;
+			curjoffset = (curjoffset - itemsToLoad - 1 - printYoffset);
+			itemRead = 0;
+			j = 0;
 			
 			scanKeys();
 			pressed = keysDown();
@@ -398,9 +388,9 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 			//list only the remaining items
 			clrscr();
 			
-			curjoffset = (curjoffset + itemsToLoad - 1);
-			itemRead = 1;
-			j = 1;
+			curjoffset = (curjoffset + itemsToLoad - 1 - printYoffset);
+			itemRead = 0;
+			j = 0;
 			
 			scanKeys();
 			pressed = keysDown();
@@ -411,12 +401,11 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 			}
 		}
 		
-		else if (pressed&KEY_UP && (j > 1)) {
+		else if (pressed&KEY_UP && (j >= 1)) {
 			j--;
 			while(pressed&KEY_UP){
 				scanKeys();
 				pressed = keysDown();
-				
 			}
 		}
 		
@@ -426,8 +415,8 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 			clrscr();
 			
 			curjoffset--;
-			itemRead = 1;
-			j = 1;
+			itemRead = 0;
+			j = 0;
 			
 			scanKeys();
 			pressed = keysDown();
@@ -439,15 +428,15 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 		}
 		
 		//reload DIR (forward)
-		else if( (pressed&KEY_A) && (getFileClassFromList(j+curjoffset, playListRead)->type == FT_DIR) ){
-			struct FileClass * fileClassChosen = getFileClassFromList(j+curjoffset, playListRead);
+		else if( (pressed&KEY_A) && (getFileClassFromList(j+curjoffset, activePlayListRead)->type == FT_DIR) ){
+			struct FileClass * fileClassChosen = getFileClassFromList(j+curjoffset, activePlayListRead);
 			newDir = fileClassChosen->fd_namefullPath;
 			reloadDirA = true;
 			break;
 		}
 		
 		//file chosen
-		else if( (pressed&KEY_A) && (getFileClassFromList(j+curjoffset, playListRead)->type == FT_FILE) ){
+		else if( (pressed&KEY_A) && (getFileClassFromList(j+curjoffset, activePlayListRead)->type == FT_FILE) ){
 			break;
 		}
 		
@@ -458,17 +447,28 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 		}
 		
 		// Show cursor
-		printfCoords(0, j, "*");
+		printfCoords(0, j + printYoffset, "*");
 		if(lastVal != j){
-			printfCoords(0, lastVal, " ");	//clean old
+			
+			//clean old
+			if(getFileClassFromList(j+curjoffset, activePlayListRead)->type == FT_FILE){
+				printfCoords(0, lastVal, "---");	
+			}
+			else if(getFileClassFromList(j+curjoffset, activePlayListRead)->type == FT_DIR){
+				printfCoords(0, lastVal, "--->%d", TGDSPrintfColor_Yellow);
+			}
+			else if(getFileClassFromList(j+curjoffset, activePlayListRead)->type == FT_NONE){
+				printfCoords(0, lastVal, "   ");
+			}
+			
 		}
-		lastVal = j;
+		lastVal = j + printYoffset;
 	}
 	
 	//enter a dir
 	if(reloadDirA == true){
 		//Free TGDS Dir API context
-		//freeFileList(playListRead);	//can't because we keep the playListRead handle across folders
+		//freeFileList(activePlayListRead);	//can't because we keep the activePlayListRead handle across folders
 		
 		enterDir((char*)newDir, Path);
 		return true;
@@ -477,28 +477,28 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 	//leave a dir
 	if(reloadDirB == true){
 		//Free TGDS Dir API context
-		//freeFileList(playListRead);	//can't because we keep the playListRead handle across folders
+		//freeFileList(activePlayListRead);	//can't because we keep the activePlayListRead handle across folders
 		
 		//rewind to preceding dir in TGDSCurrentWorkingDirectory
 		leaveDir(Path);
 		return true;
 	}
 	
-	strcpy((char*)outBuf, getFileClassFromList(j+curjoffset, playListRead)->fd_namefullPath);
+	strcpy((char*)outBuf, getFileClassFromList(j+curjoffset, activePlayListRead)->fd_namefullPath);
 	clrscr();
 	printf("                                   ");
-	if(getFileClassFromList(j+curjoffset, playListRead)->type == FT_DIR){
+	if(getFileClassFromList(j+curjoffset, activePlayListRead)->type == FT_DIR){
 		//printf("you chose Dir:%s",outBuf);
 	}
-	else{
+	else if(getFileClassFromList(j+curjoffset, activePlayListRead)->type == FT_FILE){
 		*curFileIndex = (j+curjoffset);	//Update Current index in the playlist
 		*pendingPlay = true;
 	}
 	
 	//Free TGDS Dir API context
-	//freeFileList(playListRead);
+	//freeFileList(activePlayListRead);
 	return false;
-}		
+}
 
 static inline int getRand(int size){
 	int res = (( (rand() + (REG_VCOUNT&(256-1))) ) % size);
