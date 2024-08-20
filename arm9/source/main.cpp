@@ -291,7 +291,7 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 	//Generate an active playlist
 	readDirectoryIntoFileClass(Path, playListRead);
 	cleanFileList(activePlayListRead);
-	int itemsFound = buildFileClassByExtensionFromList(playListRead, activePlayListRead, (char**)ARM7_PAYLOAD, (char*)"/ima/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs");
+	int itemsFound = buildFileClassByExtensionFromList(playListRead, activePlayListRead, (char**)ARM7_PAYLOAD, (char*)"/ima/tvs/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs");
 	activePlayListRead->FileDirCount--; //skipping the first item pushed before
 	
 	//Sort list alphabetically
