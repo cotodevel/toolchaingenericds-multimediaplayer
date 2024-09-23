@@ -900,6 +900,7 @@ void menuShow(){
 	clrscr();
 	printf("                              ");
 	printf("%s >%d", TGDSPROJECTNAME, TGDSPrintfColor_Yellow);
+	printf("Free Mem : %d KB ", ( (int)TGDSARM9MallocFreeMemory()/1024) );
 	printf("Formats: ");
 	printf("IMA-ADPCM (Intel)/WAV/MP3/AAC/Ogg >%d", TGDSPrintfColor_Yellow);
 	printf("/FLAC/NSF/SPC/GBS/.TVS VideoStream >%d", TGDSPrintfColor_Yellow);
@@ -1001,7 +1002,7 @@ int main(int argc, char **argv) {
 	GUI_init(project_specific_console);
 	GUI_clear();
 	
-	bool isCustomTGDSMalloc = true;
+	bool isCustomTGDSMalloc = false; //default newlib-nds's malloc
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
