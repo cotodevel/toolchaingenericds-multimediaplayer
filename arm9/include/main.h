@@ -59,6 +59,8 @@ extern void playIntro();
 extern bool pendingPlay;
 extern int curFileIndex;
 extern int lastRand;
+extern void handleTurnOnTurnOffScreenTimeout();
+extern bool bottomScreenIsLit;
 
 #ifdef __cplusplus
 }
