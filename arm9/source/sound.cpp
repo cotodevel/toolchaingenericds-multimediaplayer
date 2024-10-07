@@ -2421,8 +2421,8 @@ void soundPrevTrack(int x, int y)
 		break;
 		default:{
 			curFileIndex--;
-			if(curFileIndex <= 1){
-				curFileIndex = 1;
+			if(curFileIndex < 0){
+				curFileIndex = 0;
 			}
 			struct FileClass * curList = getFileClassFromList(curFileIndex, activePlayListRead);
 			if(curList != NULL){

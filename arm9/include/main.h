@@ -61,6 +61,7 @@ extern int curFileIndex;
 extern int lastRand;
 extern void handleTurnOnTurnOffScreenTimeout();
 extern bool bottomScreenIsLit;
+extern int playbackMode;
 
 #ifdef __cplusplus
 }
