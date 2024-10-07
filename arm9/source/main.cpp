@@ -744,11 +744,31 @@ void handleInput(){
 		}
 		*/
 
+		if (keysDown() & KEY_SELECT){
+			bottomScreenIsLit = true; //input event triggered
+			//0 = playlist / 1 = repeat
+			if(playbackMode == 1){
+				playbackMode = 0;
+			}
+			else{
+				playbackMode = 1;
+			}
+			menuShow();
+			scanKeys();
+			while(keysDown() & KEY_SELECT){
+				scanKeys();
+			}
+		}
+
 	}
 
 	//Audio track ended? Play next audio file
 	if((pendingPlay == false) && (cutOff == true)){ 
-		curFileIndex++;
+		
+		if(playbackMode == 0){
+			curFileIndex++;
+		}
+
 		if(curFileIndex >= getCurrentDirectoryCount(activePlayListRead)){
 			curFileIndex = 0;
 		}
@@ -938,6 +958,8 @@ void drawMandel(double factor){
 	}
 }
 
+int playbackMode = 0; //0 = playlist / 1 = repeat
+
 void menuShow(){
 	clrscr();
 	printf("                              ");
@@ -961,7 +983,7 @@ void menuShow(){
 	//printf("(X): Mandelbrot demo ");
 	printf("(D-PAD: Down): Volume - ");
 	printf("(D-PAD: Up): Volume + ");
-	printf("(Select): this menu");
+	printf("(Select): Playback Mode");
 	if(soundLoaded == false){
 		printf("Playback: Stopped.");
 	}
@@ -978,6 +1000,16 @@ void menuShow(){
 		}
 	}
 	printf("Current Volume: %d", (int)getVolume());
+
+	if(playbackMode == 0){
+		printf("Playback mode: Playlist");
+	}
+	else if(playbackMode == 1){
+		printf("Playback mode: Repeat ");
+	}
+	else{
+		printf("Unhandled Playback mode");
+	}
 }
 
 void playIntro(){
