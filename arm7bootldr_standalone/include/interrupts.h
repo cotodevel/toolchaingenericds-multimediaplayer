@@ -18,29 +18,28 @@ USA
 
 */
 
+#ifndef __interrupts7_h__
+#define __interrupts7_h__
 
-//DSWNIFI Library revision: 1.2
-#ifndef __dswnifi_h__
-#define __dswnifi_h__
+#include "typedefsTGDS.h"
+#include "dsregs.h"
 
 #endif
-
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
-//Example Sender Code
-//Send This DS Time to External DS through UDP NIFI or Local NIFI:
-//volatile uint8 somebuf[128];
-//sprintf((char*)somebuf,"DSTime:%d:%d:%d",getTime()->tm_hour,getTime()->tm_min,getTime()->tm_sec);
-//if(!FrameSenderUser){
-//				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	
-//}
-
-extern void ONDSWIFI_UDPNifiInvalidIP(char * targetIP);
-extern void ONDSWIFI_UDPNifiRemoteServerConnected(char * targetIP);
-extern void ONDSWIFI_UDPNifiExternalDSConnected(char * externalDSIP);
+extern void IpcSynchandlerUser(uint8 ipcByte);
+extern void Timer0handlerUser();
+extern void Timer1handlerUser();
+extern void Timer2handlerUser();
+extern void Timer3handlerUser();
+extern void HblankUser();
+extern void VblankUser();
+extern void VcounterUser();
+extern void screenLidHasOpenedhandlerUser();
+extern void screenLidHasClosedhandlerUser();
 
 #ifdef __cplusplus
 }

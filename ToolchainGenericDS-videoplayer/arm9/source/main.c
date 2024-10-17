@@ -36,7 +36,6 @@ USA
 #include "nds_cp15_misc.h"
 #include "fatfslayerTGDS.h"
 #include "utilsTGDS.h"
-#include "click_raw.h"
 #include "ima_adpcm.h"
 #include "libndsFIFO.h"
 #include "xenofunzip.h"
@@ -59,16 +58,29 @@ USA
 #include "interrupts.h"
 #include "timerTGDS.h"
 
-//ARM7 VRAM core
+//TGDS-MB ARM7 Bootldr
 #include "arm7bootldr.h"
 #include "arm7bootldr_twl.h"
 
-u32 * getTGDSMBV3ARM7Bootloader(){
+//ARM7 VRAM core
+#include "arm7vram.h"
+#include "arm7vram_twl.h"
+
+u32 * getTGDSMBV3ARM7Bootloader(){	//Required by ToolchainGenericDS-multiboot v3
 	if(__dsimode == false){
 		return (u32*)&arm7bootldr[0];	
 	}
 	else{
 		return (u32*)&arm7bootldr_twl[0];
+	}
+}
+
+u32 * getTGDSARM7VRAMCore(){	//TGDS Project specific ARM7 VRAM Core
+	if(__dsimode == false){
+		return (u32*)&arm7vram[0];	
+	}
+	else{
+		return (u32*)&arm7vram_twl[0];
 	}
 }
 
@@ -110,9 +122,11 @@ void menuShow(){
 static char thisTGDSProject[MAX_TGDSFILENAME_LENGTH];
 static char thisArgv2[3][MAX_TGDSFILENAME_LENGTH];
 
+char fnameRead[256];
+
 __attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("Os")))
+__attribute__((optimize("O0")))
 #endif
 
 #if (!defined(__GNUC__) && defined(__clang__))
@@ -128,7 +142,6 @@ void TGDSProjectReturnToCaller(char * NDSPayload){	//TGDS-Linked Module implemen
 	MPUSet();
 	REG_IME = 1;
 	
-	char fnameRead[256];
 	memset(fnameRead, 0, sizeof(fnameRead));
 	strcpy(fnameRead, "0:/");
 	strcat(fnameRead, NDSPayload);
@@ -158,12 +171,23 @@ void TGDSProjectReturnToCaller(char * NDSPayload){	//TGDS-Linked Module implemen
 		strcat(thisTGDSProject, ".nds");
 	}
 	
+	//October 14 2024: TGDS-mb v3 chainload example working. If you call TGDS-videoplayer from TGDS-multiboot v3, it'll chainload into "fnameRead" from Arg1, and pass "0:/stub.bin" from Arg2
+	/*
 	memset(thisArgv2, 0, sizeof(thisArgv2));
 	strcpy(&thisArgv2[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
 	strcpy(&thisArgv2[1][0], fnameRead);	//Arg1:	NDS Binary reloaded
 	strcpy(&thisArgv2[2][0], (char*)"0:/stub.bin");	//Arg2: NDS Binary ARG0
-	u32 * payload = getTGDSMBV3ARM7Bootloader();
+	u32 * payload = getTGDSARM7VRAMCore();
 	if(TGDSMultibootRunNDSPayload(fnameRead, (u8*)payload, 3, (char*)&thisArgv2) == false){  //Should fail it returns false. 
+		printf("boot failed");
+	}
+	*/
+
+	memset(thisArgv2, 0, sizeof(thisArgv2));
+	strcpy(&thisArgv2[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+	strcpy(&thisArgv2[1][0], fnameRead);	//Arg1:	NDS Binary reloaded
+	u32 * payload = getTGDSARM7VRAMCore();
+	if(TGDSMultibootRunNDSPayload(fnameRead, (u8*)payload, 2, (char*)&thisArgv2) == false){  //Should fail it returns false. 
 		printf("boot failed");
 	}
 	
@@ -189,13 +213,29 @@ void playTVSFile(char * tvsFile){
 		//ARM7 ADPCM playback 
 		BgMusic(tvsFile);
 		
-		setBacklight(POWMAN_BACKLIGHT_TOP_BIT);				
+		if(GUI.GBAMacroMode == false){
+			setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
+		}
+		else{
+			setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+		}
+
 		TGDSVideoPlayback = true;
 		strcpy(curChosenBrowseFile, tvsFile);
 		startTimerCounter(tUnitsMilliseconds, 1); //tUnitsMilliseconds equals 1 millisecond/unit. A single unit (1) is the default value for normal timer count-up scenarios. 
+
+		clrscr();
+		printf("--");
+		printf("--");
+		printf(".TVS Playing OK: %s", (char*)tvsFile);
 	}
 	else{
 		TGDSVideoPlayback = false;
+
+		GUI.GBAMacroMode = false;	//GUI console at bottom screen. Handle error
+		TGDSLCDSwap();
+		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+		
 		clrscr();
 		printf("--");
 		printf("--");
@@ -214,7 +254,6 @@ void playTVSFile(char * tvsFile){
 	}
 }
 
-__attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("Os")))
 #endif
@@ -228,24 +267,17 @@ int main(int argc, char **argv) {
 	memcpy((void *)TGDS_MB_V3_ARM7_STAGE1_ADDR, (const void *)0x02380000, (int)(96*1024));	//
 	coherent_user_range_by_size((uint32)TGDS_MB_V3_ARM7_STAGE1_ADDR, (int)(96*1024)); //		also for TWL binaries 
 	
-	bool isTGDSCustomConsole = true;	//set default console or custom console: default console
+	//Execute Stage 2: VRAM ARM7 payload: NTR/TWL (0x06000000)
+	u32 * payload = getTGDSARM7VRAMCore();
+	executeARM7Payload((u32)0x02380000, 96*1024, payload);
+	
+	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
-	
-	//xmalloc init removes args, so save them
-	int i = 0;
-	for(i = 0; i < argc; i++){
-		argvs[i] = argv[i];
-	}
 
 	bool isCustomTGDSMalloc = true;
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
-	
-	//argv destroyed here because of xmalloc init, thus restore them
-	for(i = 0; i < argc; i++){
-		argv[i] = argvs[i];
-	}
 
 	int ret=FS_init();
 	if (ret != 0){
@@ -260,71 +292,6 @@ int main(int argc, char **argv) {
 	flush_dcache_all();
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
-	/////////////////////////////////////////////////////////Reload TGDS Proj///////////////////////////////////////////////////////////
-	char tmpName[256];
-	char ext[256];
-	if(__dsimode == true){
-		char TGDSProj[256];
-		char curChosenBrowseFile[256];
-		strcpy(TGDSProj,"0:/");
-		strcat(TGDSProj, "ToolchainGenericDS-multiboot");
-		if(__dsimode == true){
-			strcat(TGDSProj, ".srl");
-		}
-		else{
-			strcat(TGDSProj, ".nds");
-		}
-		//Force ARM7 reload once 
-		if( 
-			(argc < 2) 
-			&& 
-			(strncmp(argv[1], TGDSProj, strlen(TGDSProj)) != 0) 	
-		){
-			REG_IME = 0;
-			MPUSet();
-			REG_IME = 1;
-			char startPath[MAX_TGDSFILENAME_LENGTH+1];
-			strcpy(startPath,"/");
-			strcpy(curChosenBrowseFile, TGDSProj);
-			
-			char thisTGDSProject[MAX_TGDSFILENAME_LENGTH+1];
-			strcpy(thisTGDSProject, "0:/");
-			strcat(thisTGDSProject, TGDSPROJECTNAME);
-			if(__dsimode == true){
-				strcat(thisTGDSProject, ".srl");
-			}
-			else{
-				strcat(thisTGDSProject, ".nds");
-			}
-			
-			//Boot .NDS file! (homebrew only)
-			strcpy(tmpName, curChosenBrowseFile);
-			separateExtension(tmpName, ext);
-			strlwr(ext);
-			
-			//pass incoming launcher's ARGV0
-			char arg0[256];
-			int newArgc = 2;
-			if (argc > 2) {
-				//Arg0:	Chainload caller: TGDS-MB
-				//Arg1:	This NDS Binary reloaded through ChainLoad
-				//Arg2: This NDS Binary reloaded through ChainLoad's Argument0
-				strcpy(arg0, (const char *)argv[2]);
-				newArgc++;
-			}
-			
-			char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-			memset(thisArgv, 0, sizeof(thisArgv));
-			strcpy(&thisArgv[0][0], curChosenBrowseFile);	//Arg0:	Chainload caller: TGDS-MB
-			strcpy(&thisArgv[1][0], thisTGDSProject);	//Arg1:	NDS Binary reloaded through ChainLoad
-			strcpy(&thisArgv[2][0], (char*)arg0);	//Arg2: NDS Binary reloaded through ChainLoad's ARG0
-			u32 * payload = getTGDSMBV3ARM7Bootloader();
-			if(TGDSMultibootRunNDSPayload(curChosenBrowseFile, (u8*)payload, newArgc, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
-				
-			}
-		}
-	}
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	REG_IME = 0;
 	setSnemulDSSpecial0xFFFF0000MPUSettings();
@@ -333,6 +300,8 @@ int main(int argc, char **argv) {
 		TWLSetTouchscreenTWLMode();
 	}
 	REG_IME = 1;
+	
+	setupDisabledExceptionHandler();
 	
 	strcpy(globalPath, "/");
 	menuShow();
@@ -361,7 +330,7 @@ int main(int argc, char **argv) {
 		strcpy(callerNDSBinary, (char *)argv[0]);
 	}
 	if(argc > 2){
-		playTVSFile((char *)argv[3]);
+		playTVSFile((char *)argv[2]);
 	}
 	else{
 		TGDSVideoPlayback = false;
@@ -409,4 +378,13 @@ int main(int argc, char **argv) {
 	}
 
 	return 0;
+}
+
+
+void updateStreamCustomDecoder(u32 srcFrmt){
+
+}
+
+void freeSoundCustomDecoder(u32 srcFrmt){
+
 }

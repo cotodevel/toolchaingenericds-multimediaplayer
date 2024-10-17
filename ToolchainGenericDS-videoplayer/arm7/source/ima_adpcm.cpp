@@ -18,11 +18,13 @@ extern "C" {
 	void decode_stereo_ima_adpcm( IMA_Adpcm_Data *data, u8 *src, s16 *dest, int iterations );
 }
 
+__attribute__((section(".iwram64K")))
 IMA_Adpcm_Stream::IMA_Adpcm_Stream()	
 {
 	
 }
 
+__attribute__((section(".iwram64K")))
 IMA_Adpcm_Stream::~IMA_Adpcm_Stream()	
 {
 	
@@ -34,6 +36,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 int IMA_Adpcm_Stream::reset(bool loop )	
 {
 	close();
@@ -134,6 +137,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 int IMA_Adpcm_Stream::stream( s16 *target, int length )	
 {
 	if( format == WAV_FORMAT_PCM )
@@ -148,6 +152,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 int IMA_Adpcm_Stream::stream_pcm( s16 *target, int length )	
 {
 	if( !wave_loop && ( currentblock >= wave_end ))
@@ -208,6 +213,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 int IMA_Adpcm_Stream::decode_ima( s16 *target, int length )	
 {
 	if( !wave_loop && ( currentblock >= wave_end ))
@@ -326,6 +332,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 void IMA_Adpcm_Stream::close() 	{
 	pf_lseek(0, currentFatfsFILEHandle);
 }
@@ -336,6 +343,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 void IMA_Adpcm_Stream::capture_frame()	
 {
 	loop_data = data;
@@ -352,6 +360,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 void IMA_Adpcm_Stream::restore_frame()	
 {
 	pf_lseek (loop_cblock, currentFatfsFILEHandle);
@@ -370,6 +379,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 int IMA_Adpcm_Stream::fget8() 	{
 	u8 a[1];
 	UINT nbytes_read;
@@ -383,6 +393,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 int IMA_Adpcm_Stream::fget16() 	{
 	return fget8() + (fget8() << 8);
 }
@@ -393,6 +404,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 u32 IMA_Adpcm_Stream::fget32() 	{
 	return fget16() | (fget16() << 16);
 }
@@ -403,6 +415,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 int IMA_Adpcm_Stream::get8() 	{
 	return *srcb++;
 }
@@ -413,6 +426,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 int IMA_Adpcm_Stream::get16()		{
 	return get8() | (get8() << 8);
 }
@@ -423,6 +437,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 u32 IMA_Adpcm_Stream::get32()		{
 	return get16() | (get16() << 16);
 }
@@ -433,6 +448,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 void IMA_Adpcm_Stream::getblock()	
 {
 	currentblock = pf_tell(currentFatfsFILEHandle);
@@ -448,6 +464,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 int IMA_Adpcm_Stream::get_channels()		{
 	return channels;
 }
@@ -468,6 +485,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 int IMA_Adpcm_Stream::get_format()		{
 	return (( format == WAV_FORMAT_PCM ? (( sampBits >> 4 ) << 1 ) : WAV_FORMAT_PCM ) + ( channels - 1 ));
 }
@@ -484,6 +502,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 IMA_Adpcm_Player::IMA_Adpcm_Player()		{
 	active=false;
 }
@@ -587,6 +606,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 void IMA_Adpcm_Player::setvolume( int vol )		{
 	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 	
 	TGDSIPC->soundIPC.volume = vol;
@@ -598,6 +618,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 int IMA_Adpcm_Player::getvolume()		{
 	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 
 	return TGDSIPC->soundIPC.volume;
@@ -609,6 +630,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 bool IMA_Adpcm_Player::isactive()		{
 	return active;
 }
@@ -619,6 +641,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 IMA_Adpcm_Stream * IMA_Adpcm_Player::getStream()		{
 	return &stream;
 }
@@ -629,6 +652,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 int IMA_Adpcm_Player::i_stream_request( int length, void * dest, int format )		{
 	if( !paused ) {
 		if( stream.stream( (s16*)dest, length ) != 1)
@@ -652,6 +676,7 @@ int IMA_Adpcm_Player::i_stream_request( int length, void * dest, int format )		{
 	return length;
 }
 
+__attribute__((section(".iwram64K")))
 void IMA_Adpcm_Player::update()		{
 	
 }
@@ -670,6 +695,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 void IMAADPCMDecode(s16 * lBuf, s16 * rBuf, IMA_Adpcm_Player * thisPlayer)	{
 	s16 * tmpData = (s16 *)&adpcmWorkBuffer[0];
 	thisPlayer->i_stream_request(ADPCM_SIZE, tmpData, WAV_FORMAT_IMA_ADPCM);
@@ -730,6 +756,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 void timerAudioCallback(){
 	s16 *bufL, *bufR;
 	if(sndCursor == 0){
@@ -747,7 +774,7 @@ void timerAudioCallback(){
 
 	//Sound effect mix
 	if(SoundEffect0Player.active == true){
-		s16 * tmpDat = (s16*)workBufferSoundEffect0;
+		s16 * tmpDat = (s16 *)&adpcmWorkBuffer[0];
 		SoundEffect0Player.i_stream_request(ADPCM_SIZE, tmpDat, WAV_FORMAT_IMA_ADPCM);
 		if(SoundEffect0Player.stream.get_channels() == 2){
 			uint i=0;
