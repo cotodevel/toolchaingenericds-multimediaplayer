@@ -23,6 +23,7 @@ USA
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
+#include "dsregs_asm.h"
 #include "fatfslayerTGDS.h"
 #include "utilsTGDS.h"
 
@@ -32,6 +33,9 @@ USA
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern u32 * getTGDSMBV3ARM7Bootloader(); //Required by ToolchainGenericDS-multiboot v3
+extern u32 * getTGDSARM7VRAMCore();	//TGDS Project specific ARM7 VRAM Core
 
 //TGDS Dir API: Directory Iterator(s)
 extern struct FileClassList * menuIteratorfileClassListCtx;			//Menu Directory Iterator
@@ -45,6 +49,7 @@ extern void playTVSFile(char * tvsFile);
 extern void TGDSProjectReturnToCaller(char * NDSPayload);
 extern char callerNDSBinary[256];
 extern void menuShow();
+extern char fnameRead[256];
 
 #ifdef __cplusplus
 }

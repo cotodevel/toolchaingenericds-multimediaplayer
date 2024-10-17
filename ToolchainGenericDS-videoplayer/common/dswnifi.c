@@ -110,6 +110,22 @@ void OnDSWIFIGDBStubEnable(){
 
 }
 
+//UDP Nifi:
+//Step 1: TGDS Project is asked for Remote Companion's IP (AKA: WAN Remote TCP/IP)
+void ONDSWIFI_UDPNifiInvalidIP(char * targetIP){
+	
+}
+
+//Step 2: TGDS Project connected successfully to Remote Companion
+void ONDSWIFI_UDPNifiRemoteServerConnected(char * targetIP){
+	
+}
+
+//Step 3: TGDS Project connected successfully to another DS implementing the DSWNFI protocol
+void ONDSWIFI_UDPNifiExternalDSConnected(char * externalDSIP){
+	
+}
+
 //GDBStub Callbacks
 void onGDBStubConnect(){
 

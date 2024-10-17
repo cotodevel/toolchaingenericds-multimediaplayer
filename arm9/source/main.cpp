@@ -43,17 +43,18 @@ USA
 #include "tgds_intro_m4a.h"
 #include "dswnifi_lib.h"
 #include "powerTGDS.h"
+#include "TGDSMemoryAllocator.h"
 
 //ARM7 VRAM core
-#include "arm7bootldr.h"
-#include "arm7bootldr_twl.h"
+#include "arm7bootldr_standalone.h"
+#include "arm7bootldr_standalone_twl.h"
 
 u32 * getTGDSMBV3ARM7Bootloader(){
 	if(__dsimode == false){
-		return (u32*)&arm7bootldr[0];	
+		return (u32*)&arm7bootldr_standalone[0];	
 	}
 	else{
-		return (u32*)&arm7bootldr_twl[0];
+		return (u32*)&arm7bootldr_standalone_twl[0];
 	}
 }
 
@@ -650,14 +651,13 @@ void handleInput(){
 					argcCount++;
 					printf("[Booting... Please wait] >%d", TGDSPrintfColor_Red);
 					
-					char thisArgv[4][MAX_TGDSFILENAME_LENGTH];
+					char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
 					memset(thisArgv, 0, sizeof(thisArgv));
-					strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
-					strcpy(&thisArgv[1][0], bootldr);	//Arg1:	NDS Binary reloaded
-					strcpy(&thisArgv[2][0], "0:/stub.bin");			//bugged arg slot
-					strcpy(&thisArgv[3][0], curChosenBrowseFile);			//Arg2: NDS Binary ARG0
+					strcpy(&thisArgv[0][0], TGDSPROJECTNAME);		//Arg0:	This Binary loaded
+					strcpy(&thisArgv[1][0], bootldr);				//Arg1:	NDS Binary reloaded
+					strcpy(&thisArgv[2][0], curChosenBrowseFile);	//Arg2: NDS Binary ARG0
 					u32 * payload = getTGDSMBV3ARM7Bootloader();
-					if(TGDSMultibootRunNDSPayload(bootldr, (u8*)payload, 4, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
+					if(TGDSMultibootRunNDSPayload(bootldr, (u8*)payload, 3, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
 						printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
 						printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
 						printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
@@ -1076,7 +1076,7 @@ int main(int argc, char **argv) {
 	GUI_init(project_specific_console);
 	GUI_clear();
 	
-	bool isCustomTGDSMalloc = false; //default newlib-nds's malloc
+	bool isCustomTGDSMalloc = true; //default newlib-nds's malloc
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
