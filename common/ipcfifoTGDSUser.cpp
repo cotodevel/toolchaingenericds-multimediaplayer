@@ -1,4 +1,3 @@
-
 /*
 
 			Copyright (C) 2017  Coto
@@ -25,7 +24,6 @@ USA
 //		struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 														// Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
 //		struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;		// Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
 
-
 #include "ipcfifoTGDS.h"
 #include "ipcfifoTGDSUser.h"
 #include "dsregs.h"
@@ -33,13 +31,12 @@ USA
 #include "InterruptsARMCores_h.h"
 #include "libutilsShared.h"
 #include "microphoneShared.h"
-#include "loader.h"
-
 #ifdef ARM7
 #include <string.h>
+
 #include "main.h"
-#include "spifwTGDS.h"
 #include "wifi_arm7.h"
+#include "spifwTGDS.h"
 
 #ifdef ARM7SPCCUSTOMCORE
 #include "apu.h"
@@ -47,14 +44,21 @@ USA
 #include "spcdefs.h"
 #endif
 
+#if defined(ARM7VRAMCUSTOMCORE)
+#include "pff.h"
+#include "ima_adpcm.h"
+#endif
+
 #endif
 
 #ifdef ARM9
+
 #include <stdbool.h>
 #include "main.h"
-#include "sound.h"
 #include "wifi_arm9.h"
 #include "dswnifi_lib.h"
+#include "soundTGDS.h"
+#include "biosTGDS.h"
 #endif
 
 #ifdef ARM9
@@ -78,31 +82,6 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 	switch (cmd1) {
 		//NDS7: 
 		#ifdef ARM7
-		case(FIFO_SEND_TGDS_CMD):{
-			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
-			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
-			uint32 FIFO_SEND_TGDS_CMD_in = (uint32)getValueSafe(&fifomsg[7]);
-			switch(FIFO_SEND_TGDS_CMD_in){
-				//ARM7 TGDS-Multiboot loader 
-				case(FIFO_ARM7_RELOAD):{	//TGDS-MB v3 VRAM Loader's tgds_multiboot_payload.bin: void executeARM7Payload(u32 arm7entryaddress, int arm7BootCodeSize);
-					u32 arm7EntryAddressPhys = getValueSafe(&fifomsg[0]);
-					int arm7BootCodeSize = getValueSafe(&fifomsg[1]);
-					u32 arm7entryaddress = getValueSafe(&fifomsg[2]);
-					if(arm7EntryAddressPhys != ((u32)0) ){
-						memcpy((void *)arm7entryaddress,(const void *)arm7EntryAddressPhys, arm7BootCodeSize);
-					}
-					setValueSafe((u32*)0x02FFFE34, (u32)arm7entryaddress);
-					swiSoftReset();	// Jump to boot loader
-				}
-				break;
-	
-				case(BOOT_FILE_TGDSMB):{	//TGDS-MB v3 VRAM Loader's tgds_multiboot_payload.bin: arm9 bootloader: char * homebrewToBoot
-					bootfile();
-				}break;
-			}			
-			setValueSafe(&fifomsg[7], (u32)0);
-		}break;
-		
 		
 		case(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ):{
 			REG_DISPSTAT = (DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
@@ -115,6 +94,18 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 			REG_IE = REG_IE & ~(IRQ_VBLANK|IRQ_VCOUNT);
 		}
 		break;
+		
+		#if defined(ARM7VRAMCUSTOMCORE)
+		case(FIFO_STOPSOUNDSTREAM_FILE):{
+			backgroundMusicPlayer.stop();
+		}
+		break;
+		
+		case(FIFO_PLAYSOUNDSTREAM_FILE):{
+			playSoundStreamARM7();
+		}
+		break;
+		#endif
 		
 		//pocketspc 0.9
 		#ifdef ARM7SPCCUSTOMCORE
@@ -135,6 +126,7 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 		
 		//NDS9: 
 		#ifdef ARM9
+		
 		#endif
 	}
 }
@@ -143,7 +135,6 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 __attribute__((section(".itcm")))
 #endif
 void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
-
 }
 
 //Libutils setup: TGDS project uses Soundstream, WIFI, ARM7 malloc, etc.
@@ -151,40 +142,108 @@ void setupLibUtils(){
 	//libutils:
 	
 	//Stage 0
-	#ifdef ARM9
-	initializeLibUtils9(
-		(HandleFifoNotEmptyWeakRefLibUtils_fn)&libUtilsFIFONotEmpty, //ARM7 & ARM9
-		(timerWifiInterruptARM9LibUtils_fn)&Timer_50ms, //ARM9 
-		(SoundStreamStopSoundStreamARM9LibUtils_fn)&stopSoundStream,	//ARM9: bool stopSoundStream(struct fd * tgdsStructFD1, struct fd * tgdsStructFD2, int * internalCodecType)
-		(SoundStreamUpdateSoundStreamARM9LibUtils_fn)&updateStream, //ARM9: void updateStream() 
-		(wifiDeinitARM7ARM9LibUtils_fn)&DeInitWIFI, //ARM7 & ARM9: DeInitWIFI()
-		(wifiswitchDsWnifiModeARM9LibUtils_fn)&switch_dswnifi_mode //ARM9: bool switch_dswnifi_mode(sint32 mode)
-	);
+	#if defined(ARM7VRAMCUSTOMCORE)
+		#ifdef ARM9
+		initializeLibUtils9(
+			NULL, //ARM7 & ARM9
+			NULL, //ARM9 
+			NULL, //ARM9: bool stopSoundStream(struct fd * tgdsStructFD1, struct fd * tgdsStructFD2, int * internalCodecType)
+			NULL,  //ARM9: void updateStream() 
+			NULL, //ARM7 & ARM9: DeInitWIFI()
+			NULL //ARM9: bool switch_dswnifi_mode(sint32 mode)
+		);
+		#endif
+		
+		//Stage 1
+		#ifdef ARM7
+		initializeLibUtils7(
+			NULL, //ARM7 & ARM9
+			NULL, //ARM7
+			NULL, //ARM7
+			NULL, //ARM7: void TIMER1Handler()
+			NULL, //ARM7: void stopSound()
+			NULL, //ARM7: void setupSound()
+			(initMallocARM7LibUtils_fn)&initARM7Malloc, //ARM7: void initARM7Malloc(u32 ARM7MallocStartaddress, u32 ARM7MallocSize);
+			NULL, //ARM7 & ARM9: DeInitWIFI()
+			NULL, //ARM7: micInterrupt()
+			NULL, //ARM7: DeInitWIFI()
+			NULL  //ARM7: void wifiAddressHandler( void * address, void * userdata )
+		);
+		#endif
 	#endif
 	
-	//Stage 1: ARM7 Stage1 & SPC core
-	#if defined(ARM7) 
-	initializeLibUtils7(
-		NULL, //ARM7 & ARM9
-		NULL, //ARM7
-		NULL,  //ARM7
-		(SoundStreamTimerHandlerARM7LibUtils_fn)&TIMER1Handler, //ARM7: void TIMER1Handler()
-		(SoundStreamStopSoundARM7LibUtils_fn)&stopSound, 	//ARM7: void stopSound()
-		(SoundStreamSetupSoundARM7LibUtils_fn)&setupSound,	//ARM7: void setupSound()
-		NULL, //ARM7: void initARM7Malloc(u32 ARM7MallocStartaddress, u32 ARM7MallocSize);
-		NULL,  //ARM7 & ARM9: DeInitWIFI()
-		NULL, //ARM7: micInterrupt()
-		NULL, //ARM7: DeInitWIFI()
-		NULL//ARM7: void wifiAddressHandler( void * address, void * userdata )
-	);
+	#ifdef ARM7SPCCUSTOMCORE
+		//Stage 0
+		#ifdef ARM9
+		initializeLibUtils9(
+			(HandleFifoNotEmptyWeakRefLibUtils_fn)&libUtilsFIFONotEmpty, //ARM7 & ARM9
+			(timerWifiInterruptARM9LibUtils_fn)&Timer_50ms, //ARM9 
+			(SoundStreamStopSoundStreamARM9LibUtils_fn)&stopSoundStream,	//ARM9: bool stopSoundStream(struct fd * tgdsStructFD1, struct fd * tgdsStructFD2, int * internalCodecType)
+			(SoundStreamUpdateSoundStreamARM9LibUtils_fn)&updateStream, //ARM9: void updateStream() 
+			(wifiDeinitARM7ARM9LibUtils_fn)&DeInitWIFI, //ARM7 & ARM9: DeInitWIFI()
+			(wifiswitchDsWnifiModeARM9LibUtils_fn)&switch_dswnifi_mode //ARM9: bool switch_dswnifi_mode(sint32 mode)
+		);
+		#endif
+		
+		//Stage 1: ARM7 Stage1 & SPC core
+		#if defined(ARM7) 
+		initializeLibUtils7(
+			NULL, //ARM7 & ARM9
+			NULL, //ARM7
+			NULL,  //ARM7
+			(SoundStreamTimerHandlerARM7LibUtils_fn)&TIMER1Handler, //ARM7: void TIMER1Handler()
+			(SoundStreamStopSoundARM7LibUtils_fn)&stopSound, 	//ARM7: void stopSound()
+			(SoundStreamSetupSoundARM7LibUtils_fn)&setupSound,	//ARM7: void setupSound()
+			NULL, //ARM7: void initARM7Malloc(u32 ARM7MallocStartaddress, u32 ARM7MallocSize);
+			NULL,  //ARM7 & ARM9: DeInitWIFI()
+			NULL, //ARM7: micInterrupt()
+			NULL, //ARM7: DeInitWIFI()
+			NULL//ARM7: void wifiAddressHandler( void * address, void * userdata )
+		);
+		#endif
 	#endif
 }
-
-
 
 //project specific stuff
 
 #ifdef ARM9
+
+void BgMusic(char * filename){
+	//ARM7 ADPCM playback 
+	char * filen = FS_getFileName(filename);
+	strcat(filen, ".ima");
+	u32 streamType = FIFO_PLAYSOUNDSTREAM_FILE;
+	playSoundStreamFromFile((char*)&filen[2], true, streamType);
+}
+
+void BgMusicOff(){
+	SendFIFOWords(FIFO_STOPSOUNDSTREAM_FILE, 0xFF);
+}
+
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+u32 playSoundStreamFromFile(char * videoStructFDFilename, bool loop, u32 streamType){
+	struct sIPCSharedTGDSSpecific* sharedIPC = getsIPCSharedTGDSSpecific();
+	char * filename = (char*)&sharedIPC->filename[0];
+	strcpy(filename, videoStructFDFilename);
+	
+	uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
+	fifomsg[33] = (uint32)0xFFFFCCAA;
+	fifomsg[34] = (uint32)loop;
+	fifomsg[35] = (uint32)streamType;
+	SendFIFOWords(FIFO_PLAYSOUNDSTREAM_FILE, 0xFF);
+	while(fifomsg[33] == (uint32)0xFFFFCCAA){
+		swiDelay(1);
+	}
+	return fifomsg[33];
+}
+
 void enableFastMode(){
 	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_DISABLEIRQ, 0xFF);
 }

@@ -8,7 +8,7 @@
 
 .arch	armv4t
 .cpu	arm7tdmi
-.text
+.section .iwram64K,"ax",%progbits
 .arm
 .align
 

@@ -24,7 +24,6 @@ USA
 #include "spifwTGDS.h"
 #include "wifi_arm7.h"
 #include "pff.h"
-#include "ima_adpcm.h"
 #include "soundTGDS.h"
 #include "biosTGDS.h"
 #include "timerTGDS.h"
@@ -34,25 +33,10 @@ USA
 #include "dldi.h"
 #include "debugNocash.h"
 
-//TGDS-videoplayer
-__attribute__((section(".iwram64K")))
-IMA_Adpcm_Player backgroundMusicPlayer;	//Actual PLAYER Instance. See ima_adpcm.cpp -> [PLAYER: section
-
-__attribute__((section(".iwram64K")))
-IMA_Adpcm_Player SoundEffect0Player;
-
-__attribute__((section(".iwram64K")))
-FATFS FatfsFILEBgMusic; //Sound stream handle
-
-__attribute__((section(".iwram64K")))
-FATFS FatfsFILESoundSample0; //Sound effect handle #0
-
-
-struct soundPlayerContext soundData;
-char fname[256];
-
 //////////////////////////////////////////////////////////////////////////
 //TGDS-mb v3
+char fname[256];
+
 __attribute__((section(".iwram64K")))
 FATFS fileHandle;					// Petit-FatFs work area 
 
@@ -94,85 +78,6 @@ int isNTROrTWLBinaryTGDSMB7(FATFS * currentFH, u8 * NDSHeaderStructInst, int NDS
 		pf_read((u8*)&passmeRead[0], sizeof(passmeRead), &nbytes_read, currentFH);
 	}
 	return isNTROrTWLBinaryTGDSShared(NDSHeaderStructInst, (u8*)&passmeRead[0], ARM7i_HEADER_SCFG_EXT7Inst, inIsTGDSTWLHomebrew);
-}
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-void playSoundStreamARM7(){
-	uint32 * fifomsg = (uint32 *)NDS_CACHED_SCRATCHPAD;			
-	UINT br;
-	uint8_t fresult;
-	bool loop = fifomsg[34];
-	FATFS * currentFH;
-	u32 streamType = (u32)fifomsg[35];
-	struct sIPCSharedTGDSSpecific* sharedIPC = getsIPCSharedTGDSSpecific();
-	char * filename = (char*)&sharedIPC->filename[0];
-	strcpy((char*)fname, filename);
-	
-	if(streamType == FIFO_PLAYSOUNDSTREAM_FILE){
-		currentFH = &FatfsFILEBgMusic;
-	}
-	else if(streamType == FIFO_PLAYSOUNDEFFECT_FILE){
-		currentFH = &FatfsFILESoundSample0;
-	}
-	fresult = pf_mount(currentFH);
-	if (fresult != FR_OK) { 
-		
-		//Throw exception
-		int stage = 10;
-		handleDSInitOutputMessage("playSoundStreamARM7(): pf_mount() failed");
-		handleDSInitError7(stage, (u32)savedDSHardware);
-
-		fifomsg[33] = 0xAABBCCDD;
-	}
-	fresult = pf_open(fname, currentFH);
-	if(streamType == FIFO_PLAYSOUNDEFFECT_FILE){
-		if (fresult != FR_OK) { 
-			//strcpy((char*)0x02000000, "soundeffect failed to open:");
-			//strcat((char*)0x02000000, filename);
-		}
-		else{
-			//strcpy((char*)0x02000000, "soundeffect open OK:"); //ok so far
-			//strcat((char*)0x02000000, filename);
-		}
-	}
-	pf_lseek(0, currentFH);
-	
-	int argBuffer[MAXPRINT7ARGVCOUNT];
-	memset((unsigned char *)&argBuffer[0], 0, sizeof(argBuffer));
-	argBuffer[0] = 0xc070ffff;
-	
-	//decode audio here
-	bool loop_audio = loop;
-	bool automatic_updates = false;
-	if(streamType == FIFO_PLAYSOUNDSTREAM_FILE){
-		if(backgroundMusicPlayer.play(loop_audio, automatic_updates, ADPCM_SIZE, stopSoundStreamUser, currentFH, streamType) == 0){
-			//ADPCM Playback!
-		}
-	}
-	else if(streamType == FIFO_PLAYSOUNDEFFECT_FILE){
-		if(SoundEffect0Player.play(loop_audio, automatic_updates, ADPCM_SIZE, stopSoundStreamUser, currentFH, streamType) == 0){
-			//ADPCM Sample Playback!
-		}
-	}
-	fifomsg[33] = (u32)fresult;
-}
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-void handleARM7FSRender(){
-	uint32 * fifomsg = (uint32 *)NDS_CACHED_SCRATCHPAD;
-	int fileOffset = (int)fifomsg[32];
-	int bufferSize = (int)fifomsg[33];
-	fifomsg[34] = (u32)0;
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))

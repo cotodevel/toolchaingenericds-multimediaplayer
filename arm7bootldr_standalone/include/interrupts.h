@@ -18,10 +18,11 @@ USA
 
 */
 
-#ifndef __TGDSMemoryAllocator_h__
-#define __TGDSMemoryAllocator_h__
+#ifndef __interrupts7_h__
+#define __interrupts7_h__
 
-#include "posixHandleTGDS.h"
+#include "typedefsTGDS.h"
+#include "dsregs.h"
 
 #endif
 
@@ -29,14 +30,16 @@ USA
 extern "C" {
 #endif
 
-	////////[Default Memory implementation (newlib's malloc)]////////
-
-//Definition that overrides the weaksymbol expected from toolchain to init ARM9's TGDS memory allocation
-extern struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(bool isCustomTGDSMalloc);
-
-
-	////////[Custom Memory implementation: WoopsiSDK TGDS-multiboot interoperability]////////
-extern struct AllocatorInstance * getWoopsiSDKToolchainGenericDSMultibootMemoryAllocatorSetup(bool isCustomTGDSMalloc);
+extern void IpcSynchandlerUser(uint8 ipcByte);
+extern void Timer0handlerUser();
+extern void Timer1handlerUser();
+extern void Timer2handlerUser();
+extern void Timer3handlerUser();
+extern void HblankUser();
+extern void VblankUser();
+extern void VcounterUser();
+extern void screenLidHasOpenedhandlerUser();
+extern void screenLidHasClosedhandlerUser();
 
 #ifdef __cplusplus
 }

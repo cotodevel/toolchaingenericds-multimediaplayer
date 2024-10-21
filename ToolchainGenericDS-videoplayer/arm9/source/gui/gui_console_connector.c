@@ -60,8 +60,6 @@ bool InitProjectSpecificConsole(){
 	DefaultSessionConsole = (ConsoleInstance *)(&DefaultConsole);
 	
 	//Set subEngine as TGDS Console
-	GUI.consoleAtTopScreen = false;
-	GUI.consoleBacklightOn = true;	//Backlight On for console
 	SetEngineConsole(subEngine, DefaultSessionConsole);
 	
 	//Set subEngine properties
@@ -109,7 +107,8 @@ bool InitProjectSpecificConsole(){
 	
 	//Main Engine Setup: 
 	REG_DISPCNT	= (0x00020000);	//VRAM_A in LCD mode //draw
-	
+	GUI.GBAMacroMode = true;	//GUI console at top screen. Playback video at bottom screen
+	TGDSLCDSwap();
 	return true;
 }
 
