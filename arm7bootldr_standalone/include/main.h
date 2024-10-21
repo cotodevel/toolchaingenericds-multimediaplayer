@@ -25,7 +25,6 @@ USA
 #include "dsregs.h"
 #include "pff.h"
 #include "soundTGDS.h"
-#include "ima_adpcm.h"
 
 struct addrList {
     u32 armRamAddress;

@@ -36,14 +36,6 @@ brrHash:
 DecodeSampleBlockAsm:
     stmfd sp!, {r4-r12,r14}
 
-	@gaussian interpolation, too slow to enable
-/*
-    @ Save the last 4 samples for gaussian interpolation
-    add r4, r1, #12 * 2
-    ldmia r4, {r5,r6}
-    sub r4, r1, #4 * 2
-    stmia r4, {r5,r6}
-*/
     @ Save the channel pointer
     mov r14, r2
 	
@@ -589,64 +581,26 @@ noSampleUpdate:
     @ TODO - The speed up hack doesn't work.  Find out why
     mov r12, SAMPLE_POS, lsr #12
     add r12, r0, r12, lsl #1
-    ldrsh r8, [r12, #DECODED_OFFSET]
-
-@gaussian interpolation, too slow to enable
-/*
-    @ Store changing values
-    stmfd sp!, {r6,r7,r9-r12,lr}
-
-    @ r6 will be the fractional position
-    ldr r6, =0x1fe
-    and r6, r6, SAMPLE_POS, lsr #3
-    rsb r6, r6, #0x200
-
-    ldr r7, =gauss - 2
-    ldrsh r8, [r7, r6]
-    ldrsh r9, [r12, #DECODED_OFFSET - 6]
-    mul r14, r8, r9
-    ldr r7, =gauss + 510
-    ldrsh r8, [r7, r6]
-    ldrsh r9, [r12, #DECODED_OFFSET - 4]
-    mla r14, r8, r9, r14
-    rsb r6, r6, #0
-    ldr r7, =gauss + 1024
-    ldrsh r8, [r7, r6]
-    ldrsh r9, [r12, #DECODED_OFFSET - 2]
-    mla r14, r8, r9, r14
-    ldr r7, =gauss + 512
-    ldrsh r8, [r7, r6]
-    ldrsh r9, [r12, #DECODED_OFFSET]
-    mla r14, r8, r9, r14
-    @ r8 is the new sample
-    mov r8, r14, asr #11
-
-	@ Store changing values
-    ldmfd sp!, {r6,r7,r9-r12,lr}
-*/
-
+    
+    @simple interpolation filter
+	ldrsh r8, [r12, #DECODED_OFFSET]
+    ldrsh r9, [r12, #DECODED_OFFSET - 6]	
+	ldrsh r12, [r12, #DECODED_OFFSET - 4]
+    SMLAL r12,r8,r9,r12	@r9 (s16) * r12 (s16) + r8 (s16) = r8 (s16 extended to s64)
+    
 branchLocation:
-    b mixEchoEnabled
-
-mixEchoEnabled:
-    @ Echo mixing
-    ldr r9, [r2]
+    @ DSP Echo Mixing
+	ldmia r2, {r9,r12}
     mla r9, r8, LEFT_CALC_VOL, r9
-    str r9, [r2], #4
-
-    ldr r9, [r2]
-    mla r9, r8, RIGHT_CALC_VOL, r9
-    str r9, [r2], #4
-
-mixEchoDisabled:
-    ldr r9, [r1]
+    mla r12, r8, RIGHT_CALC_VOL, r12
+    stmia r2!, {r9,r12}
+    
+    ldmia r1, {r9,r12}
     mla r9, r8, LEFT_CALC_VOL, r9
-    str r9, [r1], #4
-
-    ldr r9, [r1]
-    mla r9, r8, RIGHT_CALC_VOL, r9
-    str r9, [r1], #4
-
+    mla r12, r8, RIGHT_CALC_VOL, r12
+	stmia r1!, {r9,r12}
+	
+endMixEcho:
     subs r3, r3, #1
     bne mixLoopback
 

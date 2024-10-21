@@ -37,21 +37,24 @@ USA
 #include "fatfslayerTGDS.h"
 #include "loader.h"
 #include "spitscTGDS.h"
+#include "timerTGDS.h"
 #include "ipcfifoTGDSUser.h"
 #include "InterruptsARMCores_h.h"
 #include "tgds_intro_m4a.h"
 #include "dswnifi_lib.h"
+#include "powerTGDS.h"
+#include "TGDSMemoryAllocator.h"
 
 //ARM7 VRAM core
-#include "arm7bootldr.h"
-#include "arm7bootldr_twl.h"
+#include "arm7bootldr_standalone.h"
+#include "arm7bootldr_standalone_twl.h"
 
 u32 * getTGDSMBV3ARM7Bootloader(){
 	if(__dsimode == false){
-		return (u32*)&arm7bootldr[0];	
+		return (u32*)&arm7bootldr_standalone[0];	
 	}
 	else{
-		return (u32*)&arm7bootldr_twl[0];
+		return (u32*)&arm7bootldr_standalone_twl[0];
 	}
 }
 
@@ -275,8 +278,8 @@ __attribute__ ((optnone))
 bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileIndex){	//MUST be same as the template one at "fileBrowse.h" but added some custom code
 	scanKeys();
 	while((keysDown() & KEY_START) || (keysDown() & KEY_A) || (keysDown() & KEY_B)){
+		bottomScreenIsLit = true; //input event triggered
 		scanKeys();
-		
 	}
 	
 	//Create TGDS Dir API context
@@ -337,17 +340,17 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 		scanKeys();
 		pressed = keysDown();
 		if (pressed&KEY_DOWN && (j < (itemsToLoad - 1) ) ){
+			bottomScreenIsLit = true; //input event triggered
 			j++;
 			while(pressed&KEY_DOWN){
 				scanKeys();
 				pressed = keysDown();
-				
 			}
 		}
 		
 		//downwards: means we need to reload new screen
 		else if(pressed&KEY_DOWN && (j >= (itemsToLoad - 1) ) && ((fileClassListSize - curjoffset - itemRead) > 0) ){
-			
+			bottomScreenIsLit = true; //input event triggered
 			//list only the remaining items
 			clrscr();
 			
@@ -365,7 +368,7 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 		
 		//LEFT, reload new screen
 		else if(pressed&KEY_LEFT && ((curjoffset - itemsToLoad) > 0) ){
-			
+			bottomScreenIsLit = true; //input event triggered
 			//list only the remaining items
 			clrscr();
 			
@@ -378,13 +381,12 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 			while(pressed&KEY_LEFT){
 				scanKeys();
 				pressed = keysDown();
-				
 			}
 		}
 		
 		//RIGHT, reload new screen
 		else if(pressed&KEY_RIGHT && ((fileClassListSize - curjoffset - itemsToLoad) > 0) ){
-			
+			bottomScreenIsLit = true; //input event triggered
 			//list only the remaining items
 			clrscr();
 			
@@ -397,11 +399,11 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 			while(pressed&KEY_RIGHT){
 				scanKeys();
 				pressed = keysDown();
-				
 			}
 		}
 		
 		else if (pressed&KEY_UP && (j >= 1)) {
+			bottomScreenIsLit = true; //input event triggered
 			j--;
 			while(pressed&KEY_UP){
 				scanKeys();
@@ -411,6 +413,7 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 		
 		//upwards: means we need to reload new screen
 		else if (pressed&KEY_UP && (j <= 1) && (curjoffset > 0) ) {
+			bottomScreenIsLit = true; //input event triggered
 			//list only the remaining items
 			clrscr();
 			
@@ -423,7 +426,6 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 			while(pressed&KEY_UP){
 				scanKeys();
 				pressed = keysDown();
-				
 			}
 		}
 		
@@ -446,6 +448,37 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 			break;
 		}
 		
+		//Handle normal input to turn back on bottom screen 
+		if(
+			(pressed&KEY_TOUCH)
+			||
+			(pressed&KEY_A)
+			||
+			(pressed&KEY_B)
+			||
+			(pressed&KEY_X)
+			||
+			(pressed&KEY_Y)
+			||
+			(pressed&KEY_UP)
+			||
+			(pressed&KEY_DOWN)
+			||
+			(pressed&KEY_LEFT)
+			||
+			(pressed&KEY_RIGHT)
+			||
+			(pressed&KEY_L)
+			||
+			(pressed&KEY_R)
+			||
+			(pressed&KEY_SELECT)
+			||
+			(pressed&KEY_START)
+			){
+			bottomScreenIsLit = true; //input event triggered
+		}
+
 		// Show cursor
 		printfCoords(0, j + printYoffset, "*");
 		if(lastVal != j){
@@ -518,6 +551,7 @@ void handleInput(){
 	
 	scanKeys();
 	if (keysDown() & KEY_A){
+		bottomScreenIsLit = true; //input event triggered
 		keypadLocked=!keypadLocked;
 		menuShow();
 		while(keysDown() & KEY_A){
@@ -527,6 +561,7 @@ void handleInput(){
 
 	if(keypadLocked == false){
 		if (keysDown() & KEY_UP){
+			bottomScreenIsLit = true; //input event triggered
 			struct touchPosition touchPos;
 			XYReadScrPosUser(&touchPos);
 			volumeUp(touchPos.px, touchPos.py);
@@ -538,6 +573,7 @@ void handleInput(){
 		}
 		
 		if (keysDown() & KEY_DOWN){
+			bottomScreenIsLit = true; //input event triggered
 			struct touchPosition touchPos;
 			XYReadScrPosUser(&touchPos);
 			volumeDown(touchPos.px, touchPos.py);
@@ -550,16 +586,17 @@ void handleInput(){
 		
 		
 		if (keysDown() & KEY_TOUCH){
+			bottomScreenIsLit = true; //input event triggered
 			u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
 			//setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample //todo: use writeARM7SoundChannelFromSource() instead
 			scanKeys();
 			while(keysDown() & KEY_TOUCH){
 				scanKeys();
-				
 			}
 		}
 		
 		if (keysDown() & KEY_L){
+			bottomScreenIsLit = true; //input event triggered
 			soundPrevTrack(0, 0);
 			scanKeys();
 			while(keysHeld() & KEY_L){
@@ -569,6 +606,7 @@ void handleInput(){
 		}
 		
 		if (keysDown() & KEY_R){
+			bottomScreenIsLit = true; //input event triggered
 			soundNextTrack(0, 0);
 			scanKeys();
 			while(keysHeld() & KEY_R){
@@ -578,6 +616,7 @@ void handleInput(){
 		}
 		
 		if (keysDown() & KEY_START){
+			bottomScreenIsLit = true; //input event triggered
 			if(soundLoaded == false){
 				while( ShowBrowserC((char *)globalPath, curChosenBrowseFile, &pendingPlay, &curFileIndex) == true ){	//as long you keep using directories ShowBrowser will be true
 					//navigating DIRs here...
@@ -612,14 +651,13 @@ void handleInput(){
 					argcCount++;
 					printf("[Booting... Please wait] >%d", TGDSPrintfColor_Red);
 					
-					char thisArgv[4][MAX_TGDSFILENAME_LENGTH];
+					char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
 					memset(thisArgv, 0, sizeof(thisArgv));
-					strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
-					strcpy(&thisArgv[1][0], bootldr);	//Arg1:	NDS Binary reloaded
-					strcpy(&thisArgv[2][0], "0:/stub.bin");			//bugged arg slot
-					strcpy(&thisArgv[3][0], curChosenBrowseFile);			//Arg2: NDS Binary ARG0
+					strcpy(&thisArgv[0][0], TGDSPROJECTNAME);		//Arg0:	This Binary loaded
+					strcpy(&thisArgv[1][0], bootldr);				//Arg1:	NDS Binary reloaded
+					strcpy(&thisArgv[2][0], curChosenBrowseFile);	//Arg2: NDS Binary ARG0
 					u32 * payload = getTGDSMBV3ARM7Bootloader();
-					if(TGDSMultibootRunNDSPayload(bootldr, (u8*)payload, 4, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
+					if(TGDSMultibootRunNDSPayload(bootldr, (u8*)payload, 3, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
 						printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
 						printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
 						printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
@@ -627,6 +665,7 @@ void handleInput(){
 						while(1==1){
 							scanKeys();
 							if(keysDown()&KEY_A){
+								bottomScreenIsLit = true; //input event triggered
 								scanKeys();
 								while(keysDown() & KEY_A){
 									scanKeys();
@@ -646,7 +685,6 @@ void handleInput(){
 				scanKeys();
 				while(keysDown() & KEY_START){
 					scanKeys();
-					
 				}
 				menuShow();
 			}
@@ -654,6 +692,7 @@ void handleInput(){
 		}
 		
 		if (keysDown() & KEY_B){
+			bottomScreenIsLit = true; //input event triggered
 			//Audio stop here
 			closeSound();
 			
@@ -683,11 +722,13 @@ void handleInput(){
 			scanKeys();
 			while(keysDown() & KEY_B){
 				scanKeys();
-				
 			}
 		}
 		
+		//Coto: this piece of art is magic, truth.
+		/*
 		if (keysDown() & KEY_X){
+			bottomScreenIsLit = true; //input event triggered
 			if(drawMandelbrt == false){
 				drawMandelbrt = true;
 				double factor = 1.0; 
@@ -699,14 +740,35 @@ void handleInput(){
 			scanKeys();
 			while(keysDown() & KEY_X){
 				scanKeys();
-				
 			}
 		}
+		*/
+
+		if (keysDown() & KEY_SELECT){
+			bottomScreenIsLit = true; //input event triggered
+			//0 = playlist / 1 = repeat
+			if(playbackMode == 1){
+				playbackMode = 0;
+			}
+			else{
+				playbackMode = 1;
+			}
+			menuShow();
+			scanKeys();
+			while(keysDown() & KEY_SELECT){
+				scanKeys();
+			}
+		}
+
 	}
 
 	//Audio track ended? Play next audio file
 	if((pendingPlay == false) && (cutOff == true)){ 
-		curFileIndex++;
+		
+		if(playbackMode == 0){
+			curFileIndex++;
+		}
+
 		if(curFileIndex >= getCurrentDirectoryCount(activePlayListRead)){
 			curFileIndex = 0;
 		}
@@ -896,10 +958,13 @@ void drawMandel(double factor){
 	}
 }
 
+int playbackMode = 0; //0 = playlist / 1 = repeat
+
 void menuShow(){
 	clrscr();
 	printf("                              ");
 	printf("%s >%d", TGDSPROJECTNAME, TGDSPrintfColor_Yellow);
+	printf("Free Mem : %d KB ", ( (int)TGDSARM9MallocFreeMemory()/1024) );
 	printf("Formats: ");
 	printf("IMA-ADPCM (Intel)/WAV/MP3/AAC/Ogg >%d", TGDSPrintfColor_Yellow);
 	printf("/FLAC/NSF/SPC/GBS/.TVS VideoStream >%d", TGDSPrintfColor_Yellow);
@@ -915,10 +980,10 @@ void menuShow(){
 	}
 
 	printf("(B): Stop audio playback ");
-	printf("(X): Mandelbrot demo ");
+	//printf("(X): Mandelbrot demo ");
 	printf("(D-PAD: Down): Volume - ");
 	printf("(D-PAD: Up): Volume + ");
-	printf("(Select): this menu");
+	printf("(Select): Playback Mode");
 	if(soundLoaded == false){
 		printf("Playback: Stopped.");
 	}
@@ -935,6 +1000,16 @@ void menuShow(){
 		}
 	}
 	printf("Current Volume: %d", (int)getVolume());
+
+	if(playbackMode == 0){
+		printf("Playback mode: Playlist");
+	}
+	else if(playbackMode == 1){
+		printf("Playback mode: Repeat ");
+	}
+	else{
+		printf("Unhandled Playback mode");
+	}
 }
 
 void playIntro(){
@@ -1001,7 +1076,7 @@ int main(int argc, char **argv) {
 	GUI_init(project_specific_console);
 	GUI_clear();
 	
-	bool isCustomTGDSMalloc = true;
+	bool isCustomTGDSMalloc = true; //default newlib-nds's malloc
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
@@ -1037,6 +1112,10 @@ int main(int argc, char **argv) {
 	}
 	REG_IME = 1;
 	
+	powerOFF3DEngine(); //Power off ARM9 3D Engine to save power
+	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT); 
+	bottomScreenIsLit = true;
+
 	//Init TGDS FS Directory Iterator Context(s). Mandatory to init them like this!! Otherwise several functions won't work correctly.
 	playListRead = initFileList();
 	activePlayListRead = initFileList();
@@ -1050,6 +1129,12 @@ int main(int argc, char **argv) {
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
 	REG_IE = REG_IE & ~(IRQ_TIMER3|IRQ_VCOUNT); //disable VCOUNT and WIFI timer
 	REG_IE = (REG_IE | IRQ_VBLANK);
+	
+	//VBLANK can't be used to count up screen power timeout because sound stutters. Use timer instead
+	TIMERXDATA(2) = TIMER_FREQ((int)1);
+	TIMERXCNT(2) = TIMER_DIV_1 | TIMER_IRQ_REQ | TIMER_ENABLE;
+	irqEnable(IRQ_TIMER2);
+
 	keypadLocked=false;
 	menuShow();
 	playIntro();
@@ -1074,8 +1159,28 @@ int main(int argc, char **argv) {
 		updateStream();
 		updateStream();
 		updateStream();
+		
 		HaltUntilIRQ(); //Save power until next irq
 	}
 	
 	return 0;
+}
+
+bool bottomScreenIsLit = false;
+
+static int secondsElapsed = 0;
+void handleTurnOnTurnOffScreenTimeout(){
+	secondsElapsed ++;
+
+	if (  secondsElapsed == 12300 ){ //2728hz per unit @ 33Mhz
+		setBacklight(0);
+		secondsElapsed = 0;
+	}
+
+	//turn on bottom screen if input event
+	if(bottomScreenIsLit == true){
+		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+		bottomScreenIsLit = false;
+		secondsElapsed = 0;
+	}
 }

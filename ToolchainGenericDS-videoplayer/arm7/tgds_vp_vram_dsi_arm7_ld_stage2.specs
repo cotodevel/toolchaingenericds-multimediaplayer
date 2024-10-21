@@ -1,0 +1,7 @@
+%rename link                old_link
+
+*link:
+%(old_link) -T ./tgds_vp_vram_dsi_arm7_ld_stage2.ld%s
+
+*startfile:
+./build/nds_arm_ld_crt0custom%O%s crti%O%s crtbegin%O%s
