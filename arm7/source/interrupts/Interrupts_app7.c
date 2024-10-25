@@ -68,7 +68,9 @@ void Timer2handlerUser(){
 
 		DspMixSamplesStereo(MIXBUFSIZE, &playBuffer[soundCursor]);
 		ApuExecute(cyclesToExecute * 21);
-		ApuUpdateTimers(cyclesToExecute);
+		if(PocketSPCVersion == 9){
+			ApuUpdateTimers(cyclesToExecute);
+		}
 	}
 }
 

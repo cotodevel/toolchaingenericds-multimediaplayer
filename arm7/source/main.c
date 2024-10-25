@@ -13,6 +13,8 @@
 
 bool SPCExecute=false;
 
+int PocketSPCVersion = 0; //9 = pocketspcv0.9 / 10 = pocketspcv1.0
+
 //TGDS-MB v3 bootloader
 void bootfile(){
 }
@@ -58,6 +60,18 @@ void StopSoundSPC() {
 
 void LoadSpc(const uint8 *spc) {
     int i=0;
+    
+    PocketSPCVersion = 9; //9 == default SPC timers. 10 == faster SPC timers
+    if(strncmpi((char*)&spc[0x4E], "Yoshi's Island", 14) == 0){
+        PocketSPCVersion = 10;
+    }
+    else if(strncmpi((char*)&spc[0x4E], "Super Mario World", 17) == 0){
+        PocketSPCVersion = 10;
+    }
+    else if(strncmpi((char*)&spc[0x4E], "Earthbound", 10) == 0){
+        PocketSPCVersion = 10;
+    }
+
     ApuReset();
     DspReset();
 
