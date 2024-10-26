@@ -8,7 +8,7 @@
 #include "spcdefs.h"
 #include "apu.h"
 #include "ipcfifoTGDSUser.h"
-//#include "sprintf.h"
+#include "main.h"
 
 void unimpl(uint8 opcode, uint16 startPC) {
 //    SendArm9Command(0x80000000 + opcode);
@@ -78,7 +78,10 @@ extern uint32 MemWriteDspData;
 extern uint32 MemWriteUpperByte;
 extern uint32 MemWriteApuPort;
 extern uint32 MemReadDoNothing;
-extern uint32 MemReadCounter;
+
+extern uint32 MemReadCounterSPCv9;
+extern uint32 MemReadCounterSPCv10;
+
 extern uint32 MemReadApuPort;
 extern uint32 MemReadDspData;
 
@@ -86,8 +89,6 @@ extern uint32 MemZeroPageReadTable;
 extern uint32 MemZeroPageWriteTable;
 
 void ApuReset() {
-	struct sIPCSharedTGDSSpecific* sharedIPC = getsIPCSharedTGDSSpecific();
-
     int i = 0;
 	apuSleeping = 0;
 	
@@ -117,13 +118,25 @@ void ApuReset() {
 
     // Set up special read/write zones
     ((uint32*)APU_MEM_ZEROPAGEREAD)[0xf3] = (uint32)(&MemReadDspData);
-    ((uint32*)APU_MEM_ZEROPAGEREAD)[0xfd] = (uint32)(&MemReadCounter);
-    ((uint32*)APU_MEM_ZEROPAGEREAD)[0xfe] = (uint32)(&MemReadCounter);
-    ((uint32*)APU_MEM_ZEROPAGEREAD)[0xff] = (uint32)(&MemReadCounter);
-
+    
+	if(PocketSPCVersion == 9){
+		((uint32*)APU_MEM_ZEROPAGEREAD)[0xfd] = (uint32)(&MemReadCounterSPCv9);
+		((uint32*)APU_MEM_ZEROPAGEREAD)[0xfe] = (uint32)(&MemReadCounterSPCv9);
+		((uint32*)APU_MEM_ZEROPAGEREAD)[0xff] = (uint32)(&MemReadCounterSPCv9);
+	}
+	else if(PocketSPCVersion == 10){
+		((uint32*)APU_MEM_ZEROPAGEREAD)[0xfd] = (uint32)(&MemReadCounterSPCv10);
+		((uint32*)APU_MEM_ZEROPAGEREAD)[0xfe] = (uint32)(&MemReadCounterSPCv10);
+		((uint32*)APU_MEM_ZEROPAGEREAD)[0xff] = (uint32)(&MemReadCounterSPCv10);
+	}
+	
     ((uint32*)APU_MEM_ZEROPAGEWRITE)[0xf1 + 0x40] = (uint32)(&MemWriteApuControl);
     ((uint32*)APU_MEM_ZEROPAGEWRITE)[0xf3 + 0x40] = (uint32)(&MemWriteDspData);
-
+    if(PocketSPCVersion == 10){
+		((uint32*)APU_MEM_ZEROPAGEWRITE)[0xfa + 0x40] = (uint32)(&MemWriteCounter);
+    	((uint32*)APU_MEM_ZEROPAGEWRITE)[0xfb + 0x40] = (uint32)(&MemWriteCounter);
+    	((uint32*)APU_MEM_ZEROPAGEWRITE)[0xfc + 0x40] = (uint32)(&MemWriteCounter);
+	}
     for (i = 0; i < 4; i++) {
         ((uint32*)APU_MEM_ZEROPAGEREAD)[0xF4 + i] = (uint32)(&MemReadApuPort);
         ((uint32*)APU_MEM_ZEROPAGEWRITE)[0xF4 + i + 0x40]= (uint32)(&MemWriteApuPort);

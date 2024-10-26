@@ -56,9 +56,9 @@ extern uint8 MakeRawPSWFromState(uint32 state[16]);
 extern void SetStateFromRawPSW(uint32 state[16], uint8 psw);
 extern void ApuReset();
 extern void ApuPrepareStateAfterReload();
-extern void ApuUpdateTimers(uint32 cycles);
+extern void ApuUpdateTimers(uint32 cycles); //pocketspcv0.9 only
 extern void ApuWriteControlByte(uint8 byte);
-extern uint32 ApuReadCounter(uint32 address);
+extern uint32 ApuReadCounter(uint32 address); //pocketspcv0.9 only
 extern void ApuWriteUpperByte(uint8 byte, uint32 address);
 extern struct Timer timers[3];
 
@@ -67,8 +67,12 @@ extern void ApuResetTimers();
 //apumisc.c
 extern uint8 iplRom[64];
 extern struct Timer timers[3];
-extern uint32 apuTimerSkipCycles;
+extern uint32 apuTimerSkipCycles; //pocketspcv0.9 only
 extern uint8 apuShowRom;
+
+extern u32 ApuReadCounterHack(); 	//pocketspcv1.0 only
+extern u32 MemWriteCounter();		//pocketspcv1.0 only
+
 #ifdef __cplusplus
 }
 #endif

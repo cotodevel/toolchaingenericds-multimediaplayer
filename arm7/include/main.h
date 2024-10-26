@@ -28,6 +28,7 @@ extern void StopSoundSPC();
 extern void LoadSpc(const uint8 *spc);
 extern void SaveSpc(uint8 *spc);
 extern bool SPCExecute;
+extern int PocketSPCVersion;
 
 #ifdef __cplusplus
 }
