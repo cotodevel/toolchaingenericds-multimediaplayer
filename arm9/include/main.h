@@ -38,7 +38,7 @@ struct rgbMandel{
 extern "C" {
 #endif
 
-extern u32 * getTGDSMBV3ARM7Bootloader();
+extern u32 * getTGDSMBV3ARM7AudioCore();
 extern int main(int argc, char **argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 extern char globalPath[MAX_TGDSFILENAME_LENGTH+1];
@@ -62,6 +62,8 @@ extern int lastRand;
 extern void handleTurnOnTurnOffScreenTimeout();
 extern bool bottomScreenIsLit;
 extern int playbackMode;
+extern void enableScreenPowerTimeout();
+extern void disableScreenPowerTimeout();
 
 #ifdef __cplusplus
 }

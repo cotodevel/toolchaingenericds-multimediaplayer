@@ -8,8 +8,7 @@ ENTRY(_startarm7bootldr)
 MEMORY {
 	ewram  : ORIGIN = 0x02380000, LENGTH = 96K
 	rom    : ORIGIN = 0x08000000, LENGTH = 32M
-	iwram  : ORIGIN = 0x06000000, LENGTH = 96K
-	iwramFast  : ORIGIN = 0x03800000, LENGTH = 64K
+	iwram  : ORIGIN = 0x037f8000, LENGTH = 96K
 	
 	twl_ewram : ORIGIN = 0x02e80000, LENGTH = 512K - 64K
 	twl_iwram : ORIGIN = 0x03000000, LENGTH = 256K
@@ -17,9 +16,6 @@ MEMORY {
 
 __iwram_start	=	ORIGIN(iwram);
 __iwram_top	=	ORIGIN(iwram)+ LENGTH(iwram);
-
-__iwram_startFast	=	ORIGIN(iwramFast);
-__iwram_topFast	=	ORIGIN(iwramFast)+ LENGTH(iwramFast);
 
 __irq_flags	=	0x04000000 - 8;
 __irq_flagsaux	=	0x04000000 - 0x40;
@@ -32,7 +28,7 @@ __arm7_start__ = __iwram_start;
 __arm7_end__ = __iwram_top;
 		
 /* ARM ABI says stacks are full decreasing */
-sp_SVC	= __iwram_topFast - 0x200; /* reset, swi exception*/
+sp_SVC	= __iwram_top - 0x200; /* reset, swi exception*/
 sp_IRQ	= sp_SVC - 0x200;	/*irq exception*/
 sp_FIQ	= sp_IRQ - 0x200;	/* fiq exception */
 sp_ABT	= sp_FIQ - 0x200;	/* prefetch / data aborts exception */
@@ -186,12 +182,4 @@ SECTIONS
 		__data_end = ABSOLUTE(.) ;
 	} >iwram AT>ewram
 
-	__arm7iwram_lma__  = LOADADDR(.iwram64K);
-	.iwram64K           :
-	{
-		KEEP (*(.iwram64K))
-		. = ALIGN(4);  /* REQUIRED. LD is flaky without it. */
-		__arm7iwram_lma_end__ = ABSOLUTE(.);
-	} >iwramFast AT>ewram
-	
 }

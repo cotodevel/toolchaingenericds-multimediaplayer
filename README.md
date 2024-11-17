@@ -37,7 +37,7 @@ Changelog:
 -0.1 Alpha:
 - Plays up to 10FPS videos (yeah slow I know), but the ARM7DLDI implementation causes some bottlenecks. Audio: IMA-PCM up to 22khz
 
-How to generate .TVS video streams compatible:
+How to generate compatible .TVS video streams:
 https://bitbucket.org/Coto88/newlib-nds/src/master/installer/shared/6.2_2016q4/bin/TVS-SCRIPT-EXPORT-README.MD
 
 demo:
