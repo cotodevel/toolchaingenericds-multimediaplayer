@@ -38,12 +38,14 @@ USA
 #include "lz77.h"
 #include "posixHandleTGDS.h"
 #include "timerTGDS.h"
+#include "loader.h"
 #endif
 #include "lzss9.h"
 #if defined (MSDOS) || defined(WIN32)
 #include "../ToolchainGenericDSFS/fatfslayerTGDS.h"
 #include "../utilities.h"
 #include "TGDSTypes.h"
+#include "gui_console_connector.h"
 #endif
 
 u8 decompBuf[256*192*2];
@@ -82,16 +84,6 @@ FILE* audioHandleFD = NULL;
 #ifdef ARM9
 __attribute__((section(".dtcm")))
 #endif
-volatile u64 DPGAudioStream_SyncSamples=0; //Samples per audio frame
-
-#ifdef ARM9
-__attribute__((section(".dtcm")))
-#endif
-u32 DPGAudioStream_PregapSamples=0; //Samples to account always because of the timestamp difference between Video frames
-
-#ifdef ARM9
-__attribute__((section(".dtcm")))
-#endif
 u32 vblankCount=1;
 
 #ifdef ARM9
@@ -104,11 +96,6 @@ __attribute__((section(".dtcm")))
 #endif
 u32 frameCount=1;
 
-
-#ifdef ARM9
-__attribute__((section(".dtcm")))
-#endif
-static struct videoFrame videoFrameDef;
 
 //Returns: Total videoFrames found in File handle
 
@@ -179,9 +166,8 @@ __attribute__((section(".itcm")))
 #endif
 int TGDSVideoRender(){	
 	#ifdef ARM9
-	//Any frames loaded? Handle them
 	if( (vblankCount != 1) && ((vblankCount % (frameInterval) ) == 0)){
-		//render one frame proportional to timestamp sync'd to actual TGDS videoframe
+		//Render one videoframe synchronized to its internal timestamp 
 		if(TGDSVideoPlayback == true){
 			UINT nbytes_read;
 			int frameDescSize = sizeof(struct videoFrame);
@@ -208,8 +194,13 @@ int TGDSVideoRender(){
 					nextVideoFrameFileSize = TGDSVideoFrameContextReference->videoFrameStartFileSize;
 					TGDSVideoPlayback = false;
 					
-					//Exit inmediately to TGDS-LM Caller on videoplayback end
-					TGDSProjectReturnToCaller(callerNDSBinary);
+					ARM7LoadDefaultCore();
+					enableScreenPowerTimeout();
+					
+					GUI.GBAMacroMode = false;	//GUI console at bottom screen. 
+					TGDSLCDSwap();
+					setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+					menuShow();
 				}
 			}
 		}
@@ -220,3 +211,96 @@ int TGDSVideoRender(){
 
 //NDS Client implementation End
 #endif
+
+void playTVSFile(char * tvsFile){
+	//Process TVS file
+	int tgdsfd = -1;
+	int res = fatfs_open_fileIntoTargetStructFD(tvsFile, "r", &tgdsfd, &videoHandleFD);
+	if(parseTGDSVideoFile(&videoHandleFD, tvsFile) > 0){
+		disableScreenPowerTimeout();
+		ARM7LoadStreamCore();
+		disableFastMode(); //enable Vblank
+
+		GUI.GBAMacroMode = true;	//GUI console at top screen. Bottom screen is playback
+		TGDSLCDSwap();
+		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+
+		int readFileSize = FS_getFileSizeFromOpenStructFD(&videoHandleFD);
+		int predictedClusterCount = (readFileSize / (getDiskClusterSize() * getDiskSectorSize())) + 2;
+		nextVideoFrameOffset = TGDSVideoFrameContextReference->videoFrameStartFileOffset;
+		nextVideoFrameFileSize = TGDSVideoFrameContextReference->videoFrameStartFileSize;			
+		
+		//ARM7 ADPCM playback 
+		BgMusic(tvsFile);
+		
+		if(GUI.GBAMacroMode == false){
+			setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
+		}
+		else{
+			setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+		}
+
+		TGDSVideoPlayback = true;
+		strcpy(curChosenBrowseFile, tvsFile);
+		startTimerCounter(tUnitsMilliseconds, 1); //tUnitsMilliseconds equals 1 millisecond/unit. A single unit (1) is the default value for normal timer count-up scenarios. 
+
+		clrscr();
+		printf("--");
+		printf("--");
+		printf(".TVS Playing OK: %s", (char*)tvsFile);
+	}
+	else{
+		TGDSVideoPlayback = false;
+		enableFastMode(); //disable Vblank
+
+		GUI.GBAMacroMode = false;	//GUI console at bottom screen. Handle error
+		TGDSLCDSwap();
+		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+		
+		clrscr();
+		printf("--");
+		printf("--");
+		printf("Not a .TVS File: %s", (char*)tvsFile);
+		printf("Press (B) to exit.");
+		
+		while(1==1){
+			scanKeys();
+			if (keysDown() & KEY_B){	
+				break;
+			}
+			IRQVBlankWait();
+		}
+		menuShow();
+	}
+}
+
+
+void ARM7LoadStreamCore(){
+	//Playback:
+	//Let decoder close context so we can start again
+	closeSound();
+	
+	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
+	GUI_init(isTGDSCustomConsole);
+	GUI_clear();
+
+	WRAM_CR = WRAM_0KARM9_32KARM7;
+	
+	//Reload VRAM Core here
+	u32 * payload = getTGDSMBV3ARM7AudioCore();
+	executeARM7Payload((u32)0x02380000, 96*1024, payload);
+	BgMusicOff();
+}
+
+void ARM7LoadDefaultCore(){
+	BgMusicOff();
+	closeSound();
+	
+	bool project_specific_console = false;	//set default console or custom console: custom console
+	GUI_init(project_specific_console);
+	GUI_clear();
+	
+	//Stop playback. Go back to IWRAM Core
+	executeARM7Payload((u32)0x02380000, 96*1024, (u32*)TGDS_MB_V3_ARM7_STAGE1_ADDR);
+	WRAM_CR = WRAM_32KARM9_0KARM7;
+}

@@ -99,6 +99,7 @@ typedef sint16 int16;
 #define FIFO_PLAYSOUNDSTREAM_FILE (u32)(0xFFFFABCB)
 #define FIFO_STOPSOUNDSTREAM_FILE (u32)(0xFFFFABCC)
 #define FIFO_PLAYSOUNDEFFECT_FILE (u32)(0xFFFFABCD)
+#define FIFO_STOP_ARM7_VRAM_CORE (u32)(0xFFFFABCE)
 
 #define ARM7_PAYLOAD ((u32)0x023E8000)
 
@@ -111,7 +112,7 @@ typedef sint16 int16;
 	extern IMA_Adpcm_Player backgroundMusicPlayer;	//Sound stream Background music Instance
 	extern IMA_Adpcm_Player SoundEffect0Player;	//Sound stream Background music Instance
 
-	extern FATFS FatfsFILEBgMusic; //Sound stream handle
+	extern FATFS fileHandle; //Sound stream handle
 	extern FATFS FatfsFILESoundSample0; //Sound effect handle #0
 #endif
 #endif
@@ -161,7 +162,7 @@ extern void playerStopARM7();
 extern u32 playSoundStreamFromFile(char * videoStructFDFilename, bool loop, u32 streamType);
 extern void BgMusic(char * filename);
 extern void BgMusicOff();
-
+extern void haltARM7();
 #endif
 
 #ifdef __cplusplus

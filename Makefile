@@ -166,7 +166,6 @@ compile	:
 ifeq ($(SOURCE_MAKEFILE9),default)
 	cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC9_NOFPIC)	$(CURDIR)/$(DIR_ARM9)
 endif
-	$(MAKE)	-R	-C	ToolchainGenericDS-videoplayer/
 	$(MAKE)	-R	-C	$(DIR_ARM9)/
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
@@ -189,7 +188,6 @@ clean:
 	$(MAKE) clean	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/
 	$(MAKE) clean	-C	$(CURDIR)/arm7bootldr_standalone/
 #--------------------------------------------------------------------
-	$(MAKE)	clean	-C	ToolchainGenericDS-videoplayer/
 	$(MAKE)	clean	-C	$(DIR_ARM9)/
 	$(MAKE) clean	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/
 ifeq ($(SOURCE_MAKEFILE9),default)
