@@ -29,6 +29,7 @@ USA
 #include "powerTGDS.h"
 
 //User Handler Definitions
+#include "TGDSVideo.h"
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
@@ -78,7 +79,14 @@ void HblankUser(){
 __attribute__((section(".itcm")))
 #endif
 void VblankUser(){
-	
+	if(TGDSVideoPlayback == true){
+		if(vblankCount < vblankMaxFrame){
+			vblankCount++;
+		}
+		else{
+			vblankCount = 1;
+		}
+	}
 }
 
 #ifdef ARM9

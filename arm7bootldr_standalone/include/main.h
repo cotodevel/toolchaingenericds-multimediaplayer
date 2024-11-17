@@ -25,6 +25,7 @@ USA
 #include "dsregs.h"
 #include "pff.h"
 #include "soundTGDS.h"
+#include "ima_adpcm.h"
 
 struct addrList {
     u32 armRamAddress;
@@ -49,16 +50,19 @@ extern "C" {
 
 #if defined(ARM7VRAMCUSTOMCORE)
 
-extern FATFS fileHandle;					// Petit-FatFs work area 
-extern u8 NDSHeaderStruct[4096];
+extern u8 * NDSHeaderStruct;
 extern char debugBuf7[256];
 extern struct addrList addresses[TGDS_MB_V3_ADDR_COUNT];
 extern int compare(const void* a, const void* b);
 extern int isNTROrTWLBinaryTGDSMB7(FATFS * currentFH, u8 * NDSHeaderStructInst, int NDSHeaderStructSize, u32 * ARM7i_HEADER_SCFG_EXT7Inst, bool * inIsTGDSTWLHomebrew);
+extern void bootfile();
+extern void stopBGMusic7();
+
+//misc
+extern char *itoa(int number, char *arr, int base);
+extern void strrev(char *arr, int start, int end);
 
 #endif
-
-extern void bootfile();
 
 #ifdef __cplusplus
 }

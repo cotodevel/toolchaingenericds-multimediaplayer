@@ -475,6 +475,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".iwram64K")))
 int IMA_Adpcm_Stream::get_sampling_rate()		{
 	return sampling_rate;
 }
@@ -551,10 +552,10 @@ int IMA_Adpcm_Player::play(
 		
 		//ARM7 sound code
 		setupSoundTGDSVideoPlayerARM7();
-		strpcmL0 = (s16*)0x037f8000;
-		strpcmL1 = (s16*)((int)strpcmL0 + (sampleLen << 1 )); 	//strpcmL0 + (size >> 1);
-		strpcmR0 = (s16*)((int)strpcmL1 + (sampleLen << 1 ));	//strpcmL1 + (size >> 1);
-		strpcmR1 = (s16*)((int)strpcmR0 + (sampleLen << 1 ));		//strpcmR0 + (size >> 1);		
+		strpcmL0 = (s16*)TGDS_ARM7_MALLOCSTART;
+		strpcmL1 = (strpcmL0 + (sampleLen ));
+		strpcmR0 = (strpcmL1 + (sampleLen ));
+		strpcmR1 = (strpcmR0 + (sampleLen ));		
 	}
 	else if(currentStreamingMode == FIFO_PLAYSOUNDEFFECT_FILE){
 		//file handle is opened, and decoding is realtime in small samples, then mixed into the final output audio buffer.
@@ -687,8 +688,9 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-u8 adpcmWorkBuffer[ADPCM_SIZE*4];
+u8 adpcmWorkBuffer[ADPCM_SIZE*2];
 
+u8 streamBuffer[ADPCM_SIZE*2];
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
