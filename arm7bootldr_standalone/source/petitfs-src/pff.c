@@ -663,9 +663,6 @@ void get_fileinfo (		/* No return code */
 /*-----------------------------------------------------------------------*/
 /* Follow a file path                                                    */
 /*-----------------------------------------------------------------------*/
-#ifdef ARM7
-__attribute__ ((optnone))
-#endif
 __attribute__((section(".iwram64K")))
 FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 	DIR *dj,			/* Directory object to return last directory and found object */
@@ -811,9 +808,6 @@ FRESULT pf_mount (
 /*-----------------------------------------------------------------------*/
 /* Open or Create a File                                                 */
 /*-----------------------------------------------------------------------*/
-#ifdef ARM7
-__attribute__ ((optnone))
-#endif
 __attribute__((section(".iwram64K")))
 FRESULT pf_open (
 	const char *path,	/* Pointer to the file name */
@@ -848,9 +842,6 @@ FRESULT pf_open (
 /* Read File                                                             */
 /*-----------------------------------------------------------------------*/
 #if _USE_READ
-#ifdef ARM7
-__attribute__ ((optnone)) 
-#endif
 __attribute__((section(".iwram64K")))
 FRESULT pf_read (
 	void* buff,		/* Pointer to the read buffer (NULL:Forward data to the stream)*/
@@ -987,7 +978,6 @@ DWORD pf_tell (FATFS *fs){
 /* Seek File R/W Pointer                                                 */
 /*-----------------------------------------------------------------------*/
 #if _USE_LSEEK
-
 __attribute__((section(".iwram64K")))
 FRESULT pf_lseek (
 	DWORD ofs,		/* File pointer from top of file */
@@ -1038,7 +1028,6 @@ FRESULT pf_lseek (
 /* Create a Directroy Object                                             */
 /*-----------------------------------------------------------------------*/
 #if _USE_DIR
-
 __attribute__((section(".iwram64K")))
 FRESULT pf_opendir (
 	DIR *dj,			/* Pointer to directory object to create */
@@ -1076,7 +1065,6 @@ FRESULT pf_opendir (
 /*-----------------------------------------------------------------------*/
 /* Read Directory Entry in Sequense                                      */
 /*-----------------------------------------------------------------------*/
-
 __attribute__((section(".iwram64K")))
 FRESULT pf_readdir (
 	DIR *dj,			/* Pointer to the open directory object */

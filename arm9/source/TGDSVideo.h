@@ -133,8 +133,6 @@ extern "C" {
 extern struct TGDSVideoFrameContext TGDSVideoFrameContextDefinition;
 extern struct TGDSVideoFrameContext * TGDSVideoFrameContextReference;
 
-extern volatile u64 DPGAudioStream_SyncSamples;
-extern u32 DPGAudioStream_PregapSamples;
 extern u32 vblankCount;
 extern int parseTGDSVideoFile(struct fd * _VideoDecoderFileHandleFD, char * audioFname);
 extern u32 getVideoFrameOffsetFromIndexInFileHandle(int videoFrameIndexFromFileHandle);
@@ -154,7 +152,10 @@ extern u32 frameCount;
 extern bool TGDSVideoPlayback;
 
 extern u8 decompBuf[256*192*2];
+extern void playTVSFile(char * tvsFile);
 
+extern void ARM7LoadStreamCore();
+extern void ARM7LoadDefaultCore();
 #endif
 
 #ifdef __cplusplus
