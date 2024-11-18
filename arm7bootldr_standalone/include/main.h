@@ -57,6 +57,7 @@ extern int compare(const void* a, const void* b);
 extern int isNTROrTWLBinaryTGDSMB7(FATFS * currentFH, u8 * NDSHeaderStructInst, int NDSHeaderStructSize, u32 * ARM7i_HEADER_SCFG_EXT7Inst, bool * inIsTGDSTWLHomebrew);
 extern void bootfile();
 extern void stopBGMusic7();
+extern void playerStopARM7();
 
 //misc
 extern char *itoa(int number, char *arr, int base);
