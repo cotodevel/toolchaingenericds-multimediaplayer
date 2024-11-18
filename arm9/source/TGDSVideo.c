@@ -194,6 +194,7 @@ int TGDSVideoRender(){
 					nextVideoFrameFileSize = TGDSVideoFrameContextReference->videoFrameStartFileSize;
 					TGDSVideoPlayback = false;
 					
+					stopTimerCounter();	//Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
 					ARM7LoadDefaultCore();
 					enableScreenPowerTimeout();
 					
@@ -274,11 +275,34 @@ void playTVSFile(char * tvsFile){
 	}
 }
 
+u8 savedDefaultCore[96*1024];
 
 void ARM7LoadStreamCore(){
 	//Playback:
 	//Let decoder close context so we can start again
+	//Audio stop here
 	closeSound();
+	
+	updateStream();	
+	updateStream();
+	updateStream();
+	updateStream();
+	
+	updateStream();	
+	updateStream();
+	updateStream();
+	updateStream();
+	
+	updateStream();	
+	updateStream();
+	updateStream();
+	updateStream();
+	
+	updateStream();	
+	updateStream();
+	updateStream();
+	updateStream();
+	haltARM7(); //Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
 	
 	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
 	GUI_init(isTGDSCustomConsole);
@@ -287,20 +311,25 @@ void ARM7LoadStreamCore(){
 	WRAM_CR = WRAM_0KARM9_32KARM7;
 	
 	//Reload VRAM Core here
+	REG_IME = 0;
 	u32 * payload = getTGDSMBV3ARM7AudioCore();
 	executeARM7Payload((u32)0x02380000, 96*1024, payload);
 	BgMusicOff();
+	REG_IME = 1;
+	haltARM7(); //Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
 }
 
 void ARM7LoadDefaultCore(){
 	BgMusicOff();
-	closeSound();
+	haltARM7(); //Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
 	
 	bool project_specific_console = false;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
 	GUI_clear();
 	
 	//Stop playback. Go back to IWRAM Core
-	executeARM7Payload((u32)0x02380000, 96*1024, (u32*)TGDS_MB_V3_ARM7_STAGE1_ADDR);
+	REG_IME = 0;
+	executeARM7Payload((u32)0x02380000, 96*1024, (u32*)savedDefaultCore);
 	WRAM_CR = WRAM_32KARM9_0KARM7;
+	REG_IME = 1;
 }

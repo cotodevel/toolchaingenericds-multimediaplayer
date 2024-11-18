@@ -154,6 +154,7 @@ extern bool TGDSVideoPlayback;
 extern u8 decompBuf[256*192*2];
 extern void playTVSFile(char * tvsFile);
 
+extern u8 savedDefaultCore[96*1024];
 extern void ARM7LoadStreamCore();
 extern void ARM7LoadDefaultCore();
 #endif
