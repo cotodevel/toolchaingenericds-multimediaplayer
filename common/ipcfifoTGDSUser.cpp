@@ -95,9 +95,22 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 		}
 		break;
 		
+		case(FIFO_STOP_ARM7_VRAM_CORE):{
+			#ifdef ARM7SPCCUSTOMCORE
+			StopSoundSPC();
+			#endif
+			
+			#if defined(ARM7VRAMCUSTOMCORE)
+			playerStopARM7();
+			#endif
+			uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
+			setValueSafe(&fifomsg[34], (uint32)0);
+		}
+		break;
+
 		#if defined(ARM7VRAMCUSTOMCORE)
 		case(FIFO_STOPSOUNDSTREAM_FILE):{
-			backgroundMusicPlayer.stop();
+			stopBGMusic7();
 		}
 		break;
 		
@@ -220,6 +233,21 @@ void BgMusicOff(){
 	SendFIFOWords(FIFO_STOPSOUNDSTREAM_FILE, 0xFF);
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void haltARM7(){
+	uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
+	setValueSafe(&fifomsg[34], (uint32)FIFO_STOP_ARM7_VRAM_CORE);
+	SendFIFOWords(FIFO_STOP_ARM7_VRAM_CORE, 0xFF);
+	while( getValueSafe(&fifomsg[34]) == (uint32)FIFO_STOP_ARM7_VRAM_CORE){
+		swiDelay(1);
+	}
+}
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))

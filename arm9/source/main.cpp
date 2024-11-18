@@ -697,6 +697,8 @@ int main(int argc, char **argv) {
 	//Save Stage 1: IWRAM ARM7 payload: NTR/TWL (0x03800000)
 	memcpy((void *)TGDS_MB_V3_ARM7_STAGE1_ADDR, (const void *)0x02380000, (int)(96*1024));
 	coherent_user_range_by_size((uint32)TGDS_MB_V3_ARM7_STAGE1_ADDR, (int)(96*1024));
+	memcpy((void *)savedDefaultCore, (const void *)0x02380000, (int)(96*1024));
+	coherent_user_range_by_size((uint32)savedDefaultCore, (int)(96*1024));
 	
 	bool project_specific_console = false;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
