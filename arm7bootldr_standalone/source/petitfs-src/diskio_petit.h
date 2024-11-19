@@ -35,7 +35,15 @@ DRESULT disk_writep (const BYTE* buff, DWORD sc);
 #define STA_NOINIT		0x01	/* Drive not initialized */
 #define STA_NODISK		0x02	/* No medium in the drive */
 
-extern unsigned char scratchPadSector[512];
+
+//Coto- 18 Nov. 2024: Add cached sectors, to remove audio clicks!
+#define MAX_ENTRIES_BUFFERED ((int)12)
+struct dldiCache {
+	unsigned char scratchPadSector[512];
+	DWORD sector;
+} __attribute__((aligned (4)));
+
+extern struct dldiCache dldiCached[MAX_ENTRIES_BUFFERED];
 
 #ifdef __cplusplus
 }
