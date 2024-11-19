@@ -20,6 +20,11 @@
    Public Functions
 
 ---------------------------------------------------------------------------*/
+
+//Coto- 18 Nov. 2024: Add cached sectors, to remove some more audio clicks!
+struct dldiCache dldiCached[MAX_ENTRIES_BUFFERED];
+static int sequentialCachedEntry = 0;
+
 /*-----------------------------------------------------------------------*/
 /* Initialize Disk Drive                                                 */
 /*-----------------------------------------------------------------------*/
@@ -32,18 +37,22 @@ DSTATUS disk_initialize (void){
 	#endif
 	#ifdef ARM7
 	if(1 == 1){
+		memset((u8*)&dldiCached, 0, sizeof(dldiCached));
+		int i = 0;
+		for(i = 0; i < MAX_ENTRIES_BUFFERED; i++){
+			dldiCached[i].sector = -1;
+		}
+		sequentialCachedEntry = 0;
 	#endif
 		return 0;
 	}
 	return FR_DISK_ERR;
 }
 
-
-
 /*-----------------------------------------------------------------------*/
 /* Read Partial Sector                                                   */
 /*-----------------------------------------------------------------------*/
-unsigned char scratchPadSector[512];
+
 #ifdef ARM7
 __attribute__ ((optnone))
 #endif
@@ -55,11 +64,48 @@ DRESULT disk_readp (
 	UINT count		/* Byte count (bit15:destination) */
 )
 {
-	if(dldi_handler_read_sectors(sector, 1, (char*)&scratchPadSector[0]) == true){
-		memcpy(buff, (char*)&scratchPadSector[offset], count);
-		return RES_OK;
+	char * targetBuffer = NULL;
+	bool found = false;
+	int i = 0;
+	for(i = 0; i < MAX_ENTRIES_BUFFERED; i++){
+		if(dldiCached[i].sector == sector){
+			found = true;
+			break;
+		}
 	}
-	return RES_ERROR;
+	if(found == false){
+		//Allocate a new entry.
+		for(i = 0; i < MAX_ENTRIES_BUFFERED; i++){
+			if(dldiCached[i].sector == -1){
+				targetBuffer = (char*)&dldiCached[i].scratchPadSector[0];
+				dldiCached[i].sector = sector;
+				break;
+			}
+		}
+		
+		//Ran out of entries? re-use a sequential entry
+		if(i >= MAX_ENTRIES_BUFFERED){
+			targetBuffer = (char*)&dldiCached[sequentialCachedEntry].scratchPadSector[0];
+			dldiCached[sequentialCachedEntry].sector = sector;
+			if(sequentialCachedEntry < (MAX_ENTRIES_BUFFERED-1)){
+				sequentialCachedEntry++;
+			}
+			else{
+				sequentialCachedEntry=0;
+			}
+		}
+		
+		//Perform DLDI sector fetch
+		dldi_handler_read_sectors(sector, 1, (char*)targetBuffer);
+	}
+	
+	//Found? Reuse cached entry
+	else{
+		targetBuffer = (char*)&dldiCached[i].scratchPadSector[0];
+	}
+	
+	memcpy(buff, (char*)&targetBuffer[offset], count);
+	return RES_OK;
 }
 
 
