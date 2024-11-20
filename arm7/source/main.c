@@ -71,7 +71,10 @@ void LoadSpc(const uint8 *spc) {
     else if(strncmpi((char*)&spc[0x4E], "Earthbound", 10) == 0){
         PocketSPCVersion = 10;
     }
-
+	else if(strncmpi((char*)&spc[0x4E], "Kirby's Dream Land 3", 20) == 0){
+        PocketSPCVersion = 10;
+    }
+	
     ApuReset();
     DspReset();
 
