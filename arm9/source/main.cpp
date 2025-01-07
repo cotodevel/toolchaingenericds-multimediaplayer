@@ -45,6 +45,7 @@ USA
 #include "powerTGDS.h"
 #include "TGDSMemoryAllocator.h"
 #include "TGDSVideo.h"
+#include "TGDS_threads.h"
 
 //ARM7 VRAM core: *.TVS IMA-ADPCM support
 #include "arm7bootldr_standalone.h"
@@ -669,7 +670,7 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 void enableScreenPowerTimeout(){
-	REG_IE |= IRQ_TIMER2;
+	REG_IE |= IRQ_TIMER1;
 	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 }
 
@@ -680,7 +681,7 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 void disableScreenPowerTimeout(){
-	REG_IE &= ~(IRQ_TIMER2);
+	REG_IE &= ~(IRQ_TIMER1);
 	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 }
 
@@ -759,9 +760,16 @@ int main(int argc, char **argv) {
 	REG_IE = (REG_IE | IRQ_VBLANK);
 	
 	//VBLANK can't be used to count up screen power timeout because sound stutters. Use timer instead
-	TIMERXDATA(2) = TIMER_FREQ((int)1);
-	TIMERXCNT(2) = TIMER_DIV_1 | TIMER_IRQ_REQ | TIMER_ENABLE;
-	irqEnable(IRQ_TIMER2);
+	TIMERXDATA(1) = TIMER_FREQ((int)1);
+	TIMERXCNT(1) = TIMER_DIV_1 | TIMER_IRQ_REQ | TIMER_ENABLE;
+	irqEnable(IRQ_TIMER1);
+
+	//Register threads.
+	int taskATimeMS = 35; //Task execution in unit * milliseconds, currently requires at least 35ms 
+    initThreadSystem(&threadQueue, tUnitsMicroseconds); //tUnitsMilliseconds);	//milliseconds runs too slow, give highest priority instead
+    if(registerThread(&threadQueue, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode) != THREAD_OVERFLOW){
+        
+    }
 
 	keypadLocked=false;
 	TGDSVideoPlayback = false;
@@ -775,25 +783,8 @@ int main(int argc, char **argv) {
 		}
 		else{
 			handleInput();
-			
-			//Audio playback here....
-			updateStream();
-			updateStream();
-			updateStream();
-			updateStream();
-			updateStream();
-			updateStream();
-			updateStream();
-			updateStream();
-			updateStream();
-			updateStream();
-			updateStream();
-			updateStream();
-			updateStream();
-			updateStream();
-			updateStream();
 		}
-		HaltUntilIRQ(); //Save power until next irq
+		int threadsRan = runThreads(&threadQueue);
 	}
 	
 	return 0;
@@ -816,4 +807,92 @@ void handleTurnOnTurnOffScreenTimeout(){
 		bottomScreenIsLit = false;
 		secondsElapsed = 0;
 	}
+}
+
+//////////////////////////////////////////////////////// Threading User code start : TGDS Project specific ////////////////////////////////////////////////////////
+//User callback when Task Overflows. Intended for debugging purposes only, as normal user code tasks won't overflow if a task is implemented properly.
+//	u32 * args = This Task context
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void onThreadOverflowUserCode(u32 * args){
+	struct task_def * thisTask = (struct task_def *)args;
+	struct task_Context * parentTaskCtx = thisTask->parentTaskCtx;	//get parent Task Context node 
+
+	char threadStatus[64];
+	switch(thisTask->taskStatus){
+		case(INVAL_THREAD):{
+			strcpy(threadStatus, "INVAL_THREAD");
+		}break;
+		
+		case(THREAD_OVERFLOW):{
+			strcpy(threadStatus, "THREAD_OVERFLOW");
+		}break;
+		
+		case(THREAD_EXECUTE_OK_WAIT_FOR_SLEEP):{
+			strcpy(threadStatus, "THREAD_EXECUTE_OK_WAIT_FOR_SLEEP");
+		}break;
+		
+		case(THREAD_EXECUTE_OK_WAKEUP_FROM_SLEEP_GO_IDLE):{
+			strcpy(threadStatus, "THREAD_EXECUTE_OK_WAKEUP_FROM_SLEEP_GO_IDLE");
+		}break;
+	}
+	
+	char debOut2[256];
+	char timerUnitsMeasurement[32];
+	if( thisTask->taskStatus == THREAD_OVERFLOW){
+		if(parentTaskCtx->timerFormat == tUnitsMilliseconds){
+			strcpy(timerUnitsMeasurement, "ms");
+		}
+		else if(parentTaskCtx->timerFormat == tUnitsMicroseconds){
+			strcpy(timerUnitsMeasurement, "us");
+		} 
+		else{
+			strcpy(timerUnitsMeasurement, "-");
+		}
+		sprintf(debOut2, "[%s]. Thread requires at least (%d) %s. ", threadStatus, thisTask->internalRemainingThreadTime, timerUnitsMeasurement);
+	}
+	else{
+		sprintf(debOut2, "[%s]. ", threadStatus);
+	}
+	
+	int TGDSDebuggerStage = 10;
+	u8 fwNo = *(u8*)(0x027FF000 + 0x5D);
+	handleDSInitOutputMessage((char*)debOut2);
+	handleDSInitError(TGDSDebuggerStage, (u32)fwNo);
+	
+	while(1==1){
+		HaltUntilIRQ();
+	}
+}
+
+__attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void taskA(u32 * args){
+	//Audio playback here....
+	updateStream();
+	updateStream();
+	updateStream();
+	updateStream();
+	updateStream();
+	updateStream();
+	updateStream();
+	updateStream();
+	updateStream();
+	updateStream();
+	updateStream();
+	updateStream();
+	updateStream();
+	updateStream();
+	updateStream();
 }

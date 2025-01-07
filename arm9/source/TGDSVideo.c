@@ -243,7 +243,7 @@ void playTVSFile(char * tvsFile){
 
 		TGDSVideoPlayback = true;
 		strcpy(curChosenBrowseFile, tvsFile);
-		startTimerCounter(tUnitsMilliseconds, 1, IRQ_TIMER2); //tUnitsMilliseconds equals 1 millisecond/unit. A single unit (1) is the default value for normal timer count-up scenarios. 
+		startTimerCounter(tUnitsMilliseconds, 1, IRQ_TIMER3); //tUnitsMilliseconds equals 1 millisecond/unit. A single unit (1) is the default value for normal timer count-up scenarios. 
 
 		clrscr();
 		printf("--");
