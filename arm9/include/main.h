@@ -66,6 +66,7 @@ extern void enableScreenPowerTimeout();
 extern void disableScreenPowerTimeout();
 
 extern void taskA(u32 * args);
+extern void taskB(u32 * args);
 extern void onThreadOverflowUserCode(u32 * args);
 
 #ifdef __cplusplus

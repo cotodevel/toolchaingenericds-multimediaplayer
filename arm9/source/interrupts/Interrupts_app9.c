@@ -53,7 +53,7 @@ void Timer0handlerUser(){
 __attribute__((section(".itcm")))
 #endif
 void Timer1handlerUser(){
-	handleTurnOnTurnOffScreenTimeout();
+	
 }
 
 #ifdef ARM9
