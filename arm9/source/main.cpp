@@ -663,27 +663,6 @@ void playIntro(){
 	}
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-void enableScreenPowerTimeout(){
-	REG_IE |= IRQ_TIMER1;
-	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
-}
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-void disableScreenPowerTimeout(){
-	REG_IE &= ~(IRQ_TIMER1);
-	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
-}
 
 __attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -759,15 +738,17 @@ int main(int argc, char **argv) {
 	REG_IE = REG_IE & ~(IRQ_TIMER3|IRQ_VCOUNT); //disable VCOUNT and WIFI timer
 	REG_IE = (REG_IE | IRQ_VBLANK);
 	
-	//VBLANK can't be used to count up screen power timeout because sound stutters. Use timer instead
-	TIMERXDATA(1) = TIMER_FREQ((int)1);
-	TIMERXCNT(1) = TIMER_DIV_1 | TIMER_IRQ_REQ | TIMER_ENABLE;
-	irqEnable(IRQ_TIMER1);
-
 	//Register threads.
-	int taskATimeMS = 35; //Task execution in unit * milliseconds, currently requires at least 35ms 
-    initThreadSystem(&threadQueue, tUnitsMicroseconds); //tUnitsMilliseconds);	//milliseconds runs too slow, give highest priority instead
-    if(registerThread(&threadQueue, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode) != THREAD_OVERFLOW){
+	int taskATimeMS = 35; //Task execution requires at least 35us 
+    initThreadSystem(&threadQueue);
+	
+	//Thread in milliseconds will run too slow, give it the highest priority.
+    if(registerThread(&threadQueue, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode, tUnitsMicroseconds) != THREAD_OVERFLOW){
+        
+    }
+
+	int taskBTimeMS = 1; //Task execution in unit * milliseconds 
+    if(registerThread(&threadQueue, (TaskFn)&taskB, (u32*)NULL, taskBTimeMS, (TaskFn)&onThreadOverflowUserCode, tUnitsMilliseconds) != THREAD_OVERFLOW){
         
     }
 
@@ -790,24 +771,44 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void enableScreenPowerTimeout(){
+	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void disableScreenPowerTimeout(){
+	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+}
+
 bool bottomScreenIsLit = false;
+static int millisecondsElapsed = 0;	
 
-static int secondsElapsed = 0;
+//called 20 times per second
 void handleTurnOnTurnOffScreenTimeout(){
-	secondsElapsed ++;
-
-	if (  secondsElapsed == 12300 ){ //2728hz per unit @ 33Mhz
+	millisecondsElapsed ++;
+	if (  millisecondsElapsed >= 200 ){
 		setBacklight(0);
-		secondsElapsed = 0;
+		millisecondsElapsed = 0;
 	}
-
 	//turn on bottom screen if input event
 	if(bottomScreenIsLit == true){
 		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 		bottomScreenIsLit = false;
-		secondsElapsed = 0;
+		millisecondsElapsed = 0;
 	}
 }
+
 
 //////////////////////////////////////////////////////// Threading User code start : TGDS Project specific ////////////////////////////////////////////////////////
 //User callback when Task Overflows. Intended for debugging purposes only, as normal user code tasks won't overflow if a task is implemented properly.
@@ -845,16 +846,16 @@ void onThreadOverflowUserCode(u32 * args){
 	char debOut2[256];
 	char timerUnitsMeasurement[32];
 	if( thisTask->taskStatus == THREAD_OVERFLOW){
-		if(parentTaskCtx->timerFormat == tUnitsMilliseconds){
+		if(thisTask->timerFormat == tUnitsMilliseconds){
 			strcpy(timerUnitsMeasurement, "ms");
 		}
-		else if(parentTaskCtx->timerFormat == tUnitsMicroseconds){
+		else if(thisTask->timerFormat == tUnitsMicroseconds){
 			strcpy(timerUnitsMeasurement, "us");
 		} 
 		else{
 			strcpy(timerUnitsMeasurement, "-");
 		}
-		sprintf(debOut2, "[%s]. Thread requires at least (%d) %s. ", threadStatus, thisTask->internalRemainingThreadTime, timerUnitsMeasurement);
+		sprintf(debOut2, "[%s]. Thread requires at least (%d) %s. ", threadStatus, thisTask->remainingThreadTime, timerUnitsMeasurement);
 	}
 	else{
 		sprintf(debOut2, "[%s]. ", threadStatus);
@@ -895,4 +896,15 @@ void taskA(u32 * args){
 	updateStream();
 	updateStream();
 	updateStream();
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void taskB(u32 * args){
+	handleTurnOnTurnOffScreenTimeout();
 }
