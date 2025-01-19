@@ -794,10 +794,10 @@ void disableScreenPowerTimeout(){
 bool bottomScreenIsLit = false;
 static int millisecondsElapsed = 0;	
 
-//called 20 times per second
+//called 50 times per second
 void handleTurnOnTurnOffScreenTimeout(){
 	millisecondsElapsed ++;
-	if (  millisecondsElapsed >= 200 ){
+	if (  millisecondsElapsed >= 500 ){
 		setBacklight(0);
 		millisecondsElapsed = 0;
 	}
