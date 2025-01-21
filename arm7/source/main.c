@@ -10,6 +10,7 @@
 #include "powerTGDS.h"
 #include "dldi.h"
 #include "ipcfifoTGDSUser.h"
+#include "TGDS_threads.h"
 
 bool SPCExecute=false;
 
@@ -111,6 +112,7 @@ int main(int _argc, char **_argv) {
 	/*			TGDS 1.6 Standard ARM7 Init code start	*/
 	while(!(*(u8*)0x04000240 & 2) ){} //wait for VRAM_D block
 	ARM7InitDLDI(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, TGDSDLDI_ARM7_ADDRESS);
+	struct task_Context * TGDSThreads = getTGDSThreadSystem();
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
@@ -125,8 +127,7 @@ int main(int _argc, char **_argv) {
 	SendFIFOWords(0xFF, 0xFF);
 
 	while(1){
-		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		HaltUntilIRQ(); //Save power until next irq
+		int threadsRan = runThreads(TGDSThreads);
 	}
 
 	return 0;

@@ -739,16 +739,14 @@ int main(int argc, char **argv) {
 	REG_IE = (REG_IE | IRQ_VBLANK);
 	
 	//Register threads.
-	int taskATimeMS = 35; //Task execution requires at least 35us 
-    initThreadSystem(&threadQueue);
-	
-	//Thread in milliseconds will run too slow, give it the highest priority.
-    if(registerThread(&threadQueue, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode, tUnitsMicroseconds) != THREAD_OVERFLOW){
+	struct task_Context * TGDSThreads = getTGDSThreadSystem();
+	int taskATimeMS = 35; //Task execution requires at least 35ms, also, thread in milliseconds will run too slow, give it the highest priority.
+    if(registerThread(TGDSThreads, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode, tUnitsMicroseconds) != THREAD_OVERFLOW){
         
     }
 
-	int taskBTimeMS = 1; //Task execution in unit * milliseconds 
-    if(registerThread(&threadQueue, (TaskFn)&taskB, (u32*)NULL, taskBTimeMS, (TaskFn)&onThreadOverflowUserCode, tUnitsMilliseconds) != THREAD_OVERFLOW){
+	int taskBTimeMS = 1; //Task execution requires at least 1ms
+    if(registerThread(TGDSThreads, (TaskFn)&taskB, (u32*)NULL, taskBTimeMS, (TaskFn)&onThreadOverflowUserCode, tUnitsMilliseconds) != THREAD_OVERFLOW){
         
     }
 
@@ -765,7 +763,7 @@ int main(int argc, char **argv) {
 		else{
 			handleInput();
 		}
-		int threadsRan = runThreads(&threadQueue);
+		int threadsRan = runThreads(TGDSThreads);
 	}
 	
 	return 0;
