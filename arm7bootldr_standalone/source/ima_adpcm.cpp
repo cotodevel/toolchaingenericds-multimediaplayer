@@ -773,43 +773,7 @@ void timerAudioCallback(){
 	if(backgroundMusicPlayer.active == true){
 		IMAADPCMDecode((s16 *)bufR,(s16 *)bufL, &backgroundMusicPlayer);
 	}
-
-	//Sound effect mix
-	if(SoundEffect0Player.active == true){
-		s16 * tmpDat = (s16 *)&adpcmWorkBuffer[0];
-		SoundEffect0Player.i_stream_request(ADPCM_SIZE, tmpDat, WAV_FORMAT_IMA_ADPCM);
-		if(SoundEffect0Player.stream.get_channels() == 2){
-			uint i=0;
-			for(i=0;i<(ADPCM_SIZE);++i)
-			{
-				int mixedL=(int)bufL[i] + (int)checkClipping((int)tmpDat[i << 1]);
-				if (mixedL>32767) mixedL=32767;
-				if (mixedL<-32768) mixedL=-32768;
-				bufL[i] = (short)mixedL;
-				
-				int mixedR=(int)bufR[i] + (int)checkClipping((int)tmpDat[(i << 1) | 1]);
-				if (mixedR>32767) mixedR=32767;
-				if (mixedR<-32768) mixedR=-32768;
-				bufR[i] = (short)mixedR;
-			}
-		}
-		else{
-			uint i=0;
-			for(i=0;i<(ADPCM_SIZE);++i)
-			{
-				int mixedL=(int)bufL[i] + (int)checkClipping((int)tmpDat[i]);
-				if (mixedL>32767) mixedL=32767;
-				if (mixedL<-32768) mixedL=-32768;
-				bufL[i] = (short)mixedL;
-				
-				int mixedR=(int)bufR[i] + (int)checkClipping((int)tmpDat[i]);
-				if (mixedR>32767) mixedR=32767;
-				if (mixedR<-32768) mixedR=-32768;
-				bufR[i] = (short)mixedR;
-			}
-		}
-	}
-
+	
 	// Left channel
 	SCHANNEL_SOURCE((sndCursor << 1)) = (uint32)bufL;
 	SCHANNEL_CR((sndCursor << 1)) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0) | SOUND_16BIT;

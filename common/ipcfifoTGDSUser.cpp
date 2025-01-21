@@ -31,12 +31,14 @@ USA
 #include "InterruptsARMCores_h.h"
 #include "libutilsShared.h"
 #include "microphoneShared.h"
+#include "TGDS_threads.h"
+
 #ifdef ARM7
 #include <string.h>
-
 #include "main.h"
 #include "wifi_arm7.h"
 #include "spifwTGDS.h"
+#include "spitscTGDS.h"
 
 #ifdef ARM7SPCCUSTOMCORE
 #include "apu.h"
@@ -83,15 +85,31 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 		//NDS7: 
 		#ifdef ARM7
 		
+		//void disableFastMode();
 		case(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ):{
 			REG_DISPSTAT = (DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
 			REG_IE = REG_IE | (IRQ_VBLANK|IRQ_VCOUNT);
+
+			//Enable touchscreen thread during idle, prevent stuttering. 
+			struct task_Context * TGDSThreads = getTGDSThreadSystem();
+			resumeThread(TGDSThreads, (TaskFn)&taskARM7TouchScreen);
+
+			uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
+			setValueSafe(&fifomsg[34], (uint32)0);
 		}
 		break;
 		
+		//void enableFastMode();
 		case(FIFO_TGDSAUDIOPLAYER_DISABLEIRQ):{
 			REG_DISPSTAT = 0;
 			REG_IE = REG_IE & ~(IRQ_VBLANK|IRQ_VCOUNT);
+
+			//Disable touchscreen thread during playback, causes stuttering. 
+			struct task_Context * TGDSThreads = getTGDSThreadSystem();
+			pauseThread(TGDSThreads, (TaskFn)&taskARM7TouchScreen);
+
+			uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
+			setValueSafe(&fifomsg[34], (uint32)0);
 		}
 		break;
 		
@@ -273,11 +291,21 @@ u32 playSoundStreamFromFile(char * videoStructFDFilename, bool loop, u32 streamT
 }
 
 void enableFastMode(){
+	uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
+	setValueSafe(&fifomsg[34], (uint32)FIFO_TGDSAUDIOPLAYER_DISABLEIRQ);
 	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_DISABLEIRQ, 0xFF);
+	while( getValueSafe(&fifomsg[34]) == (uint32)FIFO_TGDSAUDIOPLAYER_DISABLEIRQ){
+		swiDelay(1);
+	}
 }
 
 void disableFastMode(){
+	uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
+	setValueSafe(&fifomsg[34], (uint32)FIFO_TGDSAUDIOPLAYER_ENABLEIRQ);
 	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ, 0xFF);
+	while( getValueSafe(&fifomsg[34]) == (uint32)FIFO_TGDSAUDIOPLAYER_ENABLEIRQ){
+		swiDelay(1);
+	}
 }
 #endif
 

@@ -2,7 +2,7 @@
 /* it's got to do with how data is initialized & made relative, as opposed to the standard linker layout which does NOT work and it should*/
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
-ENTRY(_startarm7bootldr)
+ENTRY(_start)
 
 
 MEMORY {
