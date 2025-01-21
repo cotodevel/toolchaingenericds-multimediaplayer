@@ -11,6 +11,7 @@
 #include "dldi.h"
 #include "ipcfifoTGDSUser.h"
 #include "TGDS_threads.h"
+#include "spitscTGDS.h"
 
 bool SPCExecute=false;
 
@@ -123,7 +124,10 @@ int main(int _argc, char **_argv) {
     for (i = 0; i < MIXBUFSIZE * 4; i++) {
         playBuffer[i] = 0;
     }
-	
+	    
+    //Remove touchscreen thread, causes stuttering during playback. 
+    removeThread(TGDSThreads, (TaskFn)&taskARM7TouchScreen);
+
 	SendFIFOWords(0xFF, 0xFF);
 
 	while(1){
