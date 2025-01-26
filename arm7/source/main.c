@@ -146,7 +146,8 @@ int main(int _argc, char **_argv) {
 	SendFIFOWords(0xFF, 0xFF);
 
 	while(1){
-		int threadsRan = runThreads(TGDSThreads);
+		bool waitForVblank = false;
+		int threadsRan = runThreads(TGDSThreads, waitForVblank);
 	}
 
 	return 0;
