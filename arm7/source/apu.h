@@ -72,6 +72,7 @@ extern uint8 apuShowRom;
 
 extern u32 ApuReadCounterHack(); 	//pocketspcv1.0 only
 extern u32 MemWriteCounter();		//pocketspcv1.0 only
+extern u32 apuCacheSamples;
 
 #ifdef __cplusplus
 }
