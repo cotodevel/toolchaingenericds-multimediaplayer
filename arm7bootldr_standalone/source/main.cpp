@@ -171,7 +171,8 @@ int main(int argc, char **argv) {
 	REG_IE|=(IRQ_VBLANK); //X button depends on this
 	
 	while (1) {
-		int threadsRan = runThreads(TGDSThreads);
+		bool waitForVblank = false;
+		int threadsRan = runThreads(TGDSThreads, waitForVblank);
 	}
 	return 0;
 }
