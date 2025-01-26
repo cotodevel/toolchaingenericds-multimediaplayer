@@ -32,6 +32,16 @@
 brrHash:
 .word 0
 
+.extern apuCacheSamples
+@required to remove audio cracks!
+.GLOBAL DecodeSampleBlockAsmUncached
+DecodeSampleBlockAsmUncached:
+    stmfd sp!, {r4-r12,r14}
+    @ Save the channel pointer
+    mov r14, r2
+	
+	b finishDecode1
+
 .GLOBAL DecodeSampleBlockAsm
 DecodeSampleBlockAsm:
     stmfd sp!, {r4-r12,r14}
@@ -71,8 +81,12 @@ DecodeSampleBlockAsm:
     b doneDecodeCached
 	
 doDecode:
+finishDecode1:
     stmfd sp!, {r3}
 
+	ldrh r4, [r14, #54]
+	strh r4, [r14, #22]
+	
     @ Load prev0 and prev1
     ldrsh PREV0, [r14, #62]
     ldrsh PREV1, [r14, #64]
@@ -387,7 +401,8 @@ clearLoop:
     stmia r2!, {r3-r6}
     stmia r2!, {r3-r6}
     subs r0, r0, #4
-    bne clearLoop
+    cmp r0, #0
+    bgt clearLoop
 
     @ Load the initial mix buffer and echo position
     ldr r1, =mixBuffer
@@ -582,14 +597,17 @@ noSampleUpdate:
     mov r12, SAMPLE_POS, lsr #12
     add r12, r0, r12, lsl #1
     
-    ldrsh r9, [r12, #DECODED_OFFSET - 8]   @base interpolation sample point
-    ldrsh r8, [r12, #DECODED_OFFSET - 2]	
-	ldrsh r14, [r12, #DECODED_OFFSET - 6]
-    mla r14,r9,r8,r14	@r8 (s16) * r14 (s16) + r9 (s16) = r9 (s16 extended to s64)
-    
-    ldrsh r8, [r12, #DECODED_OFFSET]        @base sample
-	ldrsh r14, [r12, #DECODED_OFFSET - 4]
-	mla r14,r8,r9,r14	@r9 (s16) * r14 (s16) + r8 (s16) = r8 (s16 extended to s64)
+handleLoPassFilter:
+    @ interpolate
+	ldrsh r8, [r12, #DECODED_OFFSET]
+	ldrsh r14, [r12, #DECODED_OFFSET - 2]
+	ldrsh r12, [r12, #DECODED_OFFSET - 4]
+	
+    and r9, SAMPLE_POS, #0x1
+	rsb r9, r9, #0x1
+	smlal r14,r8,r14,r12
+	mul r14, r8, r9
+	mov r8, r14, asr #2
 
 branchLocation:
     @ DSP Echo Mixing

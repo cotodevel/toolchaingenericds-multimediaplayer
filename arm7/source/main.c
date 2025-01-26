@@ -63,19 +63,34 @@ void StopSoundSPC() {
 void LoadSpc(const uint8 *spc) {
     int i=0;
     
+	apuCacheSamples = 1; //SPCs are cached by default. //Set apuCacheSamples = 0; to titles having playback issues on cached samples.
     PocketSPCVersion = 9; //9 == default SPC timers. 10 == faster SPC timers
+	
     if(strncmpi((char*)&spc[0x4E], "Yoshi's Island", 14) == 0){
         PocketSPCVersion = 10;
     }
     else if(strncmpi((char*)&spc[0x4E], "Super Mario World", 17) == 0){
         PocketSPCVersion = 10;
-    }
+	}
     else if(strncmpi((char*)&spc[0x4E], "Earthbound", 10) == 0){
         PocketSPCVersion = 10;
     }
 	else if(strncmpi((char*)&spc[0x4E], "Kirby's Dream Land 3", 20) == 0){
         PocketSPCVersion = 10;
-    }
+	}
+	else if(strncmpi((char*)&spc[0x4E], "Rock 'n' Roll Racing", 20) == 0){
+        PocketSPCVersion = 9;
+	}
+	//MegamanX2 & MegamanX3 has cached samples. Megaman X1 has not.
+	else if(
+		(!(strncmpi((char*)&spc[0x4E], "Megaman X2", 10) == 0))
+		&&
+		(!(strncmpi((char*)&spc[0x4E], "Megaman X3", 10) == 0))
+		&&
+		(strncmpi((char*)&spc[0x4E], "Megaman X", 9) == 0)
+	){
+		apuCacheSamples = 0;
+	}
 	
     ApuReset();
     DspReset();
