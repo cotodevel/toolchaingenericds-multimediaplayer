@@ -89,7 +89,7 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 		case(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ):{
 			REG_DISPSTAT = (DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
 			REG_IE = REG_IE | (IRQ_VBLANK|IRQ_VCOUNT);
-
+			enableARM7TouchScreen();
 			uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
 			setValueSafe(&fifomsg[34], (uint32)0);
 		}
@@ -99,7 +99,7 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 		case(FIFO_TGDSAUDIOPLAYER_DISABLEIRQ):{
 			REG_DISPSTAT = 0;
 			REG_IE = REG_IE & ~(IRQ_VBLANK|IRQ_VCOUNT);
-
+			disableARM7TouchScreen();
 			uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
 			setValueSafe(&fifomsg[34], (uint32)0);
 		}
