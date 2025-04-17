@@ -736,7 +736,7 @@ void setupSoundTGDSVideoPlayerARM7() {
 	TIMERXDATA(1) = TIMER_FREQ(sndRate * multRate);
 	TIMERXCNT(1) = TIMER_DIV_1 | TIMER_ENABLE;
   
-	TIMERXDATA(2) =  (0x10000) - (sampleLen) ;
+	TIMERXDATA(2) =  (0x10000) - (sampleLen - 1) ;
 	TIMERXCNT(2) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
 	
 	int ch;

@@ -220,7 +220,7 @@ void playTVSFile(char * tvsFile){
 	if(parseTGDSVideoFile(&videoHandleFD, tvsFile) > 0){
 		disableScreenPowerTimeout();
 		ARM7LoadStreamCore();
-		disableFastMode(); //enable Vblank
+		enableFastMode(); //disable Vblank
 
 		GUI.GBAMacroMode = true;	//GUI console at top screen. Bottom screen is playback
 		TGDSLCDSwap();
@@ -253,6 +253,7 @@ void playTVSFile(char * tvsFile){
 	else{
 		TGDSVideoPlayback = false;
 		enableFastMode(); //disable Vblank
+		enableScreenPowerTimeout();
 
 		GUI.GBAMacroMode = false;	//GUI console at bottom screen. Handle error
 		TGDSLCDSwap();

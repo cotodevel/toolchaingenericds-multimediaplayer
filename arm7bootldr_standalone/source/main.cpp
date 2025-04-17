@@ -35,6 +35,7 @@ USA
 #include "dldi.h"
 #include "debugNocash.h"
 #include "TGDS_threads.h"
+#include "spitscTGDS.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////Custom ARM7 VRAM Core/////////////////////////////////////////////////////////////////////
@@ -168,7 +169,7 @@ int main(int argc, char **argv) {
 	SendFIFOWords(FIFO_ARM7_RELOAD, 0xFF); //ARM7 Reload OK -> acknowledge ARM9
 	struct task_Context * TGDSThreads = getTGDSThreadSystem();
     /*			TGDS 1.6 Standard ARM7 Init code end	*/
-	REG_IE|=(IRQ_VBLANK); //X button depends on this
+	disableARM7TouchScreen();
 	
 	while (1) {
 		bool waitForVblank = false;
