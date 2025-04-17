@@ -83,6 +83,8 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileIndex){	//MUST be same as the template one at "fileBrowse.h" but added some custom code
+	disableScreenPowerTimeout();
+
 	scanKeys();
 	while((keysDown() & KEY_START) || (keysDown() & KEY_A) || (keysDown() & KEY_B)){
 		bottomScreenIsLit = true; //input event triggered
@@ -337,6 +339,8 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 	
 	//Free TGDS Dir API context
 	//freeFileList(activePlayListRead);
+
+	enableScreenPowerTimeout();
 	return false;
 }
 
@@ -745,17 +749,13 @@ int main(int argc, char **argv) {
         
     }
 
-	int taskBTimeMS = 1; //Task execution requires at least 1ms
-    if(registerThread(TGDSThreads, (TaskFn)&taskB, (u32*)NULL, taskBTimeMS, (TaskFn)&onThreadOverflowUserCode, tUnitsMilliseconds) != THREAD_OVERFLOW){
-        
-    }
-
 	keypadLocked=false;
 	TGDSVideoPlayback = false;
 	menuShow();
 	playIntro();
 	enableFastMode();
-	
+	enableScreenPowerTimeout();
+
 	while (1){
 		if(TGDSVideoPlayback == true){
 			TGDSVideoRender();
@@ -778,6 +778,13 @@ __attribute__ ((optnone))
 #endif
 void enableScreenPowerTimeout(){
 	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+
+	//Add timeout thread here
+	struct task_Context * TGDSThreads = getTGDSThreadSystem();
+	int taskBTimeMS = 1; //Task execution requires at least 1ms
+	if(registerThread(TGDSThreads, (TaskFn)&taskB, (u32*)NULL, taskBTimeMS, (TaskFn)&onThreadOverflowUserCode, tUnitsMilliseconds) != THREAD_OVERFLOW){
+			
+	}
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -788,6 +795,12 @@ __attribute__ ((optnone))
 #endif
 void disableScreenPowerTimeout(){
 	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+
+	//Remove touchscreen thread here to prevent turning off the screen while other operations like:
+	//*.TVS playback takes place 
+	//file list navigation
+	struct task_Context * TGDSThreads = getTGDSThreadSystem();
+	removeThread(TGDSThreads, (TaskFn)&taskB);
 }
 
 bool bottomScreenIsLit = false;
