@@ -4,7 +4,7 @@ NTR/TWL SDK: TGDS1.65
 
 master: Development branch. Use TGDS1.65: branch for stable features.
 This is the ToolchainGenericDS-multimediaplayer project:
-Compile Toolchain: To compile this project you will need to follow the steps at https://bitbucket.org/Coto88/toolchaingenericds : Then simply extract the project somewhere.
+Compile Toolchain: To compile this project you will need to follow the steps at https://github.com/cotodevel/toolchaingenericds : Then simply extract the project somewhere.
 Compile this project: Open msys, through msys commands head to the directory your extracted this project. Then write: make clean make
 After compiling, run the example in NDS.
 
@@ -12,7 +12,7 @@ Project Specific description:
 
 TGDS Multimedia Player, supported formats are:
 -	IMA-ADPCM (Intel)/WAV/MP3/ (Up to 192K)AAC - M4A - M4B/Ogg/FLAC/NSF/SPC/GBS/+ others working.  Streaming mp3, ogg and acc is stripped since it´s 2019 and the DS does not support HTTPS (TLS1.2+)
--	.TVS video + audio file support: See https://bitbucket.org/Coto88/toolchaingenericds-multimediaplayer/src/master/ToolchainGenericDS-videoplayer/ for compatible multimedia files conversion 
+-	.TVS video + audio file support. *.TVS Converter (windows/linux/web) is available at: https://github.com/cotodevel/newlib-nds/blob/TGDS1.65/installer/shared/6.2_2016q4/bin/TVS-SCRIPT-EXPORT-README.MD
 
 NTR Mode Usage:
     - copy all files from /release/arm7dldi-ntr folder to SD:/ root . If it prompts for overwrite: Yes to All. 
@@ -38,7 +38,7 @@ Changelog:
 - Plays up to 10FPS videos (yeah slow I know), but the ARM7DLDI implementation causes some bottlenecks. Audio: IMA-PCM up to 22khz
 
 How to generate compatible .TVS video streams:
-https://bitbucket.org/Coto88/newlib-nds/src/master/installer/shared/6.2_2016q4/bin/TVS-SCRIPT-EXPORT-README.MD
+Read above.
 
 demo:
 misc/fma1.tvs
@@ -75,7 +75,7 @@ to take out the SD card repeteadly and thus, causing it to wear out and to break
 Usage:
 - Make sure the wifi settings in the NintendoDS are properly set up, so you're already able to connect to internet from it.
 
-- Get a copy of ToolchainGenericDS-multiboot: https://bitbucket.org/Coto88/ToolchainGenericDS-multiboot/get/TGDS1.65.zip
+- Get a copy of ToolchainGenericDS-multiboot: http://github.com/cotodevel/ToolchainGenericDS-multiboot/archive/TGDS1.65.zip
 Follow the instructions there and get either the TWL or NTR version. Make sure you update the computer IP address used to build TGDS Projects, 
 in the file: toolchaingenericds-multiboot-config.txt of said repository before moving it into SD card.
 
@@ -97,7 +97,7 @@ and toolchaingenericds-multiboot-config.txt (update here, the computer's IP you 
 
 
 Latest stable release:
-https://bitbucket.org/Coto88/toolchaingenericds-multimediaplayer/get/TGDS1.65.zip
+http://github.com/cotodevel/toolchaingenericds-multimediaplayer/archive/TGDS1.65.zip
 
 
 Coto
