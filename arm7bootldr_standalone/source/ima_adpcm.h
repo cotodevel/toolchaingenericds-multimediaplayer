@@ -6,7 +6,7 @@
 #include "soundTGDS.h"
 #include "petitfs-src/pff.h"
 
-#define ADPCM_SIZE (int)(2048)		//TGDS IMA-ADPCM buffer size
+#define ADPCM_SIZE (int)(32*1024)		//TGDS IMA-ADPCM buffer size
 typedef bool (*closeSoundHandle)();	//ret: true = closed sound stream. false = couldn't close sound stream
 
 enum
@@ -51,7 +51,7 @@ private:
 	IMA_Adpcm_Data		data;
 	IMA_Adpcm_Data		loop_data;
 	
-	u8		datacache[ADPCM_SIZE];	//Highest IMA-ADPCM block is 512 bytes but we add some overhead just in case
+	u8		datacache[2048];	//Highest IMA-ADPCM block is 512 bytes but we add some overhead just in case
 	u8*		loop_src;
 	int		loop_cblock;
 	int		loop_state;
@@ -117,7 +117,7 @@ public:
 	bool active;
 	IMA_Adpcm_Player();
 	wavFormatChunk headerChunk;
-	int play(bool loop_audio, bool automatic_updates, int buffer_length = ADPCM_SIZE / 8, closeSoundHandle = NULL, FATFS * inFatfsFILEHandle = NULL, int incomingStreamingMode = 0);
+	int play(bool loop_audio, bool automatic_updates, int buffer_length = 0 , closeSoundHandle = NULL, FATFS * inFatfsFILEHandle = NULL, int incomingStreamingMode = 0);
 	void pause();
 	void resume();
 	void stop();
@@ -147,8 +147,8 @@ extern bool player_loop;
 extern void soundPauseStart();
 extern void timerAudioCallback();
 extern void setupSoundTGDSVideoPlayerARM7();
-extern u8 adpcmWorkBuffer[ADPCM_SIZE*2];
-extern u8 streamBuffer[ADPCM_SIZE*2];
+extern s16 * adpcmWorkBuffer;
+extern s16 * streamBuffer;
 
 #ifdef __cplusplus
 }

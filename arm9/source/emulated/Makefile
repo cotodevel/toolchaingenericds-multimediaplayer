@@ -61,6 +61,7 @@ export DIRS_ARM9_SRCLIB = data/	\
 			../emulated/file68/	\
 			../emulated/io68/	\
 			../emulated/gbs/	\
+			../emulated/sega/	\
 			../tremor/	\
 			$(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_MAKEFILES_SRC)/templateCode/
 			
@@ -76,6 +77,7 @@ export DIRS_ARM9_HEADERLIB = ../../../templateCode/data/arm9/	\
 			../emulated/file68/	\
 			../emulated/io68/	\
 			../emulated/gbs/	\
+			../emulated/sega/	\
 			../aac/	\
 			../aac/pub/	\
 			../aac/real/	\

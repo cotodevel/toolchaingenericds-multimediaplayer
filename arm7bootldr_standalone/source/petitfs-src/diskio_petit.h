@@ -37,7 +37,7 @@ DRESULT disk_writep (const BYTE* buff, DWORD sc);
 
 
 //Coto- 18 Nov. 2024: Add cached sectors, to remove audio clicks!
-#define MAX_ENTRIES_BUFFERED ((int)12)
+#define MAX_ENTRIES_BUFFERED ((int)24)
 struct dldiCache {
 	unsigned char scratchPadSector[512];
 	DWORD sector;

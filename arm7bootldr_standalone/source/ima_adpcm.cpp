@@ -552,10 +552,10 @@ int IMA_Adpcm_Player::play(
 		
 		//ARM7 sound code
 		setupSoundTGDSVideoPlayerARM7();
-		strpcmL0 = (s16*)TGDS_ARM7_MALLOCSTART;
-		strpcmL1 = (strpcmL0 + (sampleLen ));
-		strpcmR0 = (strpcmL1 + (sampleLen ));
-		strpcmR1 = (strpcmR0 + (sampleLen ));		
+		strpcmL0 = (s16*)streamBuffer;
+		strpcmR0 = (strpcmL0 + (sampleLen ));
+		strpcmL1 = (strpcmR0 + (sampleLen ));
+		strpcmR1 = (strpcmL1 + (sampleLen ));		
 	}
 	else if(currentStreamingMode == FIFO_PLAYSOUNDEFFECT_FILE){
 		//file handle is opened, and decoding is realtime in small samples, then mixed into the final output audio buffer.
@@ -682,15 +682,10 @@ void IMA_Adpcm_Player::update()		{
 	
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-u8 adpcmWorkBuffer[ADPCM_SIZE*2];
 
-u8 streamBuffer[ADPCM_SIZE*2];
+s16 * adpcmWorkBuffer = (s16 *) (TGDS_ARM7_AUDIOBUFFER_STREAM_ADPCMCORE);
+s16 * streamBuffer = (s16 *) (TGDS_ARM7_AUDIOBUFFER_STREAM_ADPCMCORE + (ADPCM_SIZE * 4));
+
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -699,7 +694,7 @@ __attribute__ ((optnone))
 #endif
 __attribute__((section(".iwram64K")))
 void IMAADPCMDecode(s16 * lBuf, s16 * rBuf, IMA_Adpcm_Player * thisPlayer)	{
-	s16 * tmpData = (s16 *)&adpcmWorkBuffer[0];
+	s16 * tmpData = (s16 *)adpcmWorkBuffer;
 	thisPlayer->i_stream_request(ADPCM_SIZE, tmpData, WAV_FORMAT_IMA_ADPCM);
 	if(soundData.channels == 2)
 	{
@@ -733,7 +728,7 @@ void setupSoundTGDSVideoPlayerARM7() {
 
 	sndCursor = 1;
 	
-	TIMERXDATA(1) = TIMER_FREQ(sndRate * multRate);
+	TIMERXDATA(1) = TIMER_FREQ(sndRate);
 	TIMERXCNT(1) = TIMER_DIV_1 | TIMER_ENABLE;
   
 	TIMERXDATA(2) =  (0x10000) - (sampleLen - 1) ;
@@ -744,8 +739,8 @@ void setupSoundTGDSVideoPlayerARM7() {
 	for(ch=0;ch<4;++ch)
 	{
 		SCHANNEL_CR(ch) = 0;
-		SCHANNEL_TIMER(ch) = SOUND_FREQ((sndRate * multRate));
-		SCHANNEL_LENGTH(ch) = (sampleLen * multRate)>>1;
+		SCHANNEL_TIMER(ch) = SOUND_FREQ((sndRate));
+		SCHANNEL_LENGTH(ch) = (sampleLen)>>1;
 		SCHANNEL_REPEAT_POINT(ch) = 0;
 	}
 
@@ -763,10 +758,10 @@ void timerAudioCallback(){
 	s16 *bufL, *bufR;
 	if(sndCursor == 0){
 		bufL = strpcmL0;
-		bufR = strpcmL1;
+		bufR = strpcmR0;
 	}
 	else{
-		bufL = strpcmR0;
+		bufL = strpcmL1;
 		bufR = strpcmR1;
 	}
 
