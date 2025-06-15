@@ -135,7 +135,7 @@ extern struct TGDSVideoFrameContext * TGDSVideoFrameContextReference;
 
 extern u32 vblankCount;
 extern int parseTGDSVideoFile(struct fd * _VideoDecoderFileHandleFD, char * audioFname);
-extern u32 getVideoFrameOffsetFromIndexInFileHandle(int videoFrameIndexFromFileHandle);
+//extern u32 getVideoFrameOffsetFromIndexInFileHandle(int videoFrameIndexFromFileHandle); //unused, just for debugging purposes
 
 extern int TGDSVideoRender();
 extern u32 frameInterval;

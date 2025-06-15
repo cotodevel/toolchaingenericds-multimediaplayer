@@ -48,8 +48,6 @@ USA
 #include "gui_console_connector.h"
 #endif
 
-u8 decompBuf[256*192*2];
-
 //Format name: TVS (ToolchainGenericDS Videoplayer Stream)
 //Format Version: 1.3
 //Changelog:
@@ -96,6 +94,8 @@ __attribute__((section(".dtcm")))
 #endif
 u32 frameCount=1;
 
+u8 decompBuf[256*192*2];
+static bool gotFrame = false;
 
 //Returns: Total videoFrames found in File handle
 
@@ -129,6 +129,7 @@ int parseTGDSVideoFile(struct fd * _VideoDecoderFileHandleFD, char * audioFname)
 		#endif
 		
 		frameInterval = 1;	//(vblankMaxFrame / TGDSVideoFrameContextReference->framesPerSecond); //tick 60/4 times = 15 FPS. //////////2; 
+		gotFrame = false;
 		TGDSARM9Free(readTGDSVideoFrameContext);
 		
 		return TGDSVideoFrameContextReference->videoFramesTotalCount;
@@ -136,6 +137,8 @@ int parseTGDSVideoFile(struct fd * _VideoDecoderFileHandleFD, char * audioFname)
 	return -1;
 }
 
+/*
+//unused, just for debugging purposes
 //returns: physical struct videoFrame * offset from source FILE handle
 #ifdef ARM9
 __attribute__((section(".itcm")))
@@ -150,6 +153,7 @@ u32 getVideoFrameOffsetFromIndexInFileHandle(int videoFrameIndexFromFileHandle){
 	return -1;
 }
 #endif
+*/
 
 #ifdef ARM9
 __attribute__((section(".dtcm")))
@@ -171,11 +175,17 @@ int TGDSVideoRender(){
 		if(TGDSVideoPlayback == true){
 			UINT nbytes_read;
 			int frameDescSize = sizeof(struct videoFrame);
-			f_lseek(&videoHandleFD.fil, nextVideoFrameOffset);
-			f_read(&videoHandleFD.fil, (u8*)decodedBuf, nextVideoFrameFileSize + frameDescSize, &nbytes_read);
+			#define dlt_time ((int)700*2)
+			int curTime = ((int)getTimerCounter()-dlt_time);
+			//Read frame once  
+			if(gotFrame == false){
+				f_lseek(&videoHandleFD.fil, nextVideoFrameOffset);
+				f_read(&videoHandleFD.fil, (u8*)decodedBuf, nextVideoFrameFileSize + frameDescSize, &nbytes_read);
+				gotFrame = true;
+			}
+
 			struct videoFrame * frameRendered = (struct videoFrame *)decodedBuf;
-			
-			if(frameRendered->elapsedTimeStampInMilliseconds < (getTimerCounter()+700)  ){ //0.7s seek time ahead to sync better
+			if( ( (frameRendered->elapsedTimeStampInMilliseconds-dlt_time) < curTime) || (curTime <= 0) ){ //0.7s seek ahead time to sync better
 				nextVideoFrameOffset = frameRendered->nextVideoFrameOffsetInFile;
 				nextVideoFrameFileSize = frameRendered->nextVideoFrameFileSize;
 				int decompSize = lzssDecompress((u8*)decodedBuf + frameDescSize, (u8*)decompBufUncached);
@@ -184,6 +194,7 @@ int TGDSVideoRender(){
 				DMA0_CR = DMAENABLED | DMAINCR_SRC | DMAINCR_DEST | DMA32BIT | (decompSize>>2);
 				
 				if(frameCount < TGDSVideoFrameContextReference->videoFramesTotalCount){
+					gotFrame = false;
 					frameCount++;
 				}
 				else{
@@ -196,6 +207,7 @@ int TGDSVideoRender(){
 					
 					stopTimerCounter();	//Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
 					ARM7LoadDefaultCore();
+					enableFastMode(); //disable Vblank
 					enableScreenPowerTimeout();
 					
 					GUI.GBAMacroMode = false;	//GUI console at bottom screen. 
@@ -220,7 +232,6 @@ void playTVSFile(char * tvsFile){
 	if(parseTGDSVideoFile(&videoHandleFD, tvsFile) > 0){
 		disableScreenPowerTimeout();
 		ARM7LoadStreamCore();
-		enableFastMode(); //disable Vblank
 
 		GUI.GBAMacroMode = true;	//GUI console at top screen. Bottom screen is playback
 		TGDSLCDSwap();
@@ -234,6 +245,20 @@ void playTVSFile(char * tvsFile){
 		//ARM7 ADPCM playback 
 		BgMusic(tvsFile);
 		
+		//wait 2 seconds
+		/*
+		disableFastMode(); //enable Vblank
+		int DSFrame = 0;
+		while(DSFrame < 110){
+			if(vblankCount == 1){
+				DSFrame++;
+			}
+			IRQVBlankWait();
+		}
+		*/
+
+		enableFastMode(); //disable Vblank
+
 		if(GUI.GBAMacroMode == false){
 			setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
 		}
