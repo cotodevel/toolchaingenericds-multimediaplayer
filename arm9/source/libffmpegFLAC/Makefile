@@ -121,7 +121,7 @@ OBJDIR 	=	./$(BUILD)
 VPATH 	=	$(DIR_SRC)
 OBJPROG = 	$(addprefix $(OBJDIR)/, $(TARGET_LIBRARY_FILE_9))
 
-all: $(OBJDIR)|forceDelete	$(OBJPROG)
+all: forceDelete	$(OBJDIR)	$(OBJPROG)
 #all: debug
 
 forceDelete:
