@@ -688,7 +688,7 @@ int main(int argc, char **argv) {
 	GUI_init(project_specific_console);
 	GUI_clear();
 	
-	bool isCustomTGDSMalloc = true; //default newlib-nds's malloc
+	bool isCustomTGDSMalloc = false; //default newlib-nds's malloc
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
