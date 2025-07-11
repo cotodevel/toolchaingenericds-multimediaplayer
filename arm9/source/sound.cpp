@@ -29,7 +29,7 @@
 #include "mikmod/include/mikmod_build.h"
 #include "emulated/sid.h"
 #include "emulated/nsf.h"
-#include "emulated/gbs/gme.h"
+#include "gme.h"
 #include "emulated/api68/mixer68.h"
 #include "mp4ff/mp4ff.h"
 #include "misc.h"
@@ -135,6 +135,11 @@ static Music_Emu* emu;
 static track_info_t info;
 static int gbsTrack;
 static int gbsOldTrack;
+
+//vgm
+static Music_Emu * vgmEmu = NULL;
+static int vgmTrack;
+static int vgmOldTrack;
 
 int internalCodecType = SRC_NONE;//Internal because WAV raw decompressed buffers are used if Uncompressed WAV or ADPCM
 
@@ -516,6 +521,15 @@ void updateStreamCustomDecoder(u32 srcFrmt){
 			//checkKeys();
 		}
 		break;
+
+		case SRC_VGM:{
+			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 	
+			TGDSIPC->soundIPC.channels = 2;
+			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
+				
+			vgmDecode();
+		}
+		break;
 	}
 }
 
@@ -726,6 +740,10 @@ void freeSoundCustomDecoder(u32 srcFrmt){
 			break;
 		case SRC_GBS:
 			gme_delete(emu);
+			break;
+		
+		case SRC_VGM:
+			gme_delete(vgmEmu);
 			break;
 	}
 }
@@ -960,6 +978,24 @@ void gbsDecode()
 		gme_track_info(emu, &info, gbsTrack);
 		
 		gbsOldTrack = gbsTrack;
+	}	
+}
+
+
+
+void vgmDecode()
+{
+	gme_play(vgmEmu, VGM_OUT_SIZE, lBuffer);
+	gme_play(vgmEmu, VGM_OUT_SIZE, lBuffer + VGM_OUT_SIZE);
+	
+	// check for change track
+	if(vgmTrack != vgmOldTrack)
+	{
+		//checkKeys();
+		gme_start_track(vgmEmu, vgmTrack);
+		gme_track_info(vgmEmu, &info, vgmTrack);
+		
+		vgmOldTrack = vgmTrack;
 	}	
 }
 
@@ -2303,6 +2339,44 @@ bool initSoundStreamUser(char * fName, char * ext){
 		return true;
 	}
 	
+	if(strcmp(ext, ".vgm") == 0)
+	{
+		//VGM / Sega Genesis audio file
+		
+		internalCodecType = soundData.sourceFmt = SRC_VGM;
+		soundData.bufLoc = 0;
+		
+		FILE *df = fopen(fName,"r");
+		int size = flength(df);
+		
+		char *data = (char *)safeMalloc(size);
+		fread(data, 1, size, df);
+		fclose(df);
+		
+		gme_open_file( fName, &vgmEmu, VGM_FREQ );
+
+		safeFree(data);
+		
+		vgmTrack = 0;
+		vgmOldTrack = 0;
+		
+		gme_track_info(vgmEmu, &info, vgmTrack);
+		
+		gme_start_track(vgmEmu, vgmTrack);
+		
+		soundData.channels = 2;
+		setSoundInterpolation(1);
+		setSoundFrequency(VGM_FREQ);	
+		setSoundLength(VGM_OUT_SIZE);		
+		mallocData(VGM_OUT_SIZE);
+		
+		vgmDecode();
+		
+		startSound9(TGDS_ARM7_AUDIOBUFFER_STREAM);
+		
+		return true;
+	}
+	
 	return false;
 }
 
@@ -2419,6 +2493,19 @@ void soundPrevTrack(int x, int y)
 			gbsTrack--;
 		}
 		break;
+		
+		//VGM tracks are standalone binaries, like SPCs
+		/*
+		case SRC_VGM:
+		{
+			if(getVGMTrack() - 1 < 1){
+				return;
+			}
+			vgmTrack--;
+		}
+		break;
+		*/
+		
 		default:{
 			curFileIndex--;
 			if(curFileIndex < 0){
@@ -2511,6 +2598,7 @@ void soundNextTrack(int x, int y)
 			
 		}
 		break;
+		
 		case SRC_GBS:
 		{
 			if(getGBSTrack()+1 > getGBSTotalTracks())
@@ -2520,6 +2608,18 @@ void soundNextTrack(int x, int y)
 		}
 		break;
 
+		//VGM tracks are standalone binaries, like SPCs
+		/*
+		case SRC_VGM:
+		{
+			if(getVGMTrack()+1 > getVGMTotalTracks())
+				return;
+			
+			vgmTrack++;
+		}
+		break;
+		*/
+		
 		default:{
 			int lstSize = getCurrentDirectoryCount(activePlayListRead);
 			curFileIndex++;
@@ -3194,10 +3294,26 @@ int getGBSTrack()
 	return gbsTrack + 1;
 }
 
+//VGM tracks are standalone binaries, like SPCs
+/*
+int getVGMTrack()
+{
+	return vgmTrack + 1;
+}
+*/
+
 int getGBSTotalTracks()
 {
 	return info.track_count;
 }
+
+//VGM tracks are standalone binaries, like SPCs
+/*
+int getVGMTotalTracks()
+{
+	return getGBSTotalTracks();
+}
+*/
 
 char *gbsMeta(int which)
 {
@@ -3215,7 +3331,6 @@ char *gbsMeta(int which)
 	
 	return 0;
 }
-
 
 void checkEndSound()
 {

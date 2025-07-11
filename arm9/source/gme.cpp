@@ -1,6 +1,9 @@
 // Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
-
+#include "Vgm_Emu.h"
 #include "Music_Emu.h"
+
+#include "soundTGDS.h"
+#include "utilsTGDS.h"
 
 #if !GME_DISABLE_STEREO_DEPTH
 #include "Effects_Buffer.h"
@@ -115,9 +118,9 @@ gme_err_t gme_open_data( void const* data, long size, Music_Emu** out, long samp
 	gme_type_t file_type = 0;
 	if ( size >= 4 )
 		file_type = gme_identify_extension( gme_identify_header( data ) );
-	if ( !file_type )
+	if ( !file_type ){
 		return gme_wrong_file_type;
-	
+	}
 	Music_Emu* emu = gme_new_emu( file_type, sample_rate );
 	CHECK_ALLOC( emu );
 	
@@ -139,6 +142,8 @@ gme_err_t gme_open_file( const char* path, Music_Emu** out, long sample_rate )
 	GME_FILE_READER in;
 	RETURN_ERR( in.open( path ) );
 	
+	//so far ok
+
 	char header [4];
 	int header_size = 0;
 	
@@ -149,8 +154,14 @@ gme_err_t gme_open_file( const char* path, Music_Emu** out, long sample_rate )
 		RETURN_ERR( in.read( header, sizeof header ) );
 		file_type = gme_identify_extension( gme_identify_header( header ) );
 	}
-	if ( !file_type )
+
+	//ok so far
+
+	if (  (!file_type) && (soundData.sourceFmt != SRC_VGM) ){
 		return gme_wrong_file_type;
+	}
+
+	//ok so far
 	
 	Music_Emu* emu = gme_new_emu( file_type, sample_rate );
 	CHECK_ALLOC( emu );
@@ -170,12 +181,21 @@ gme_err_t gme_open_file( const char* path, Music_Emu** out, long sample_rate )
 
 Music_Emu* gme_new_emu( gme_type_t type, long rate )
 {
-	if ( type )
+	//if ( type )
 	{
-		if ( rate == gme_info_only )
+		if ( rate == gme_info_only ){
 			return type->new_info();
+		}
+
+		Music_Emu* me = NULL;
 		
-		Music_Emu* me = type->new_emu();
+		if(soundData.sourceFmt != SRC_VGM){
+			me = type->new_emu();
+		}
+		else{
+			me = new_vgm_emu ();
+		}
+		
 		if ( me )
 		{
 		#if !GME_DISABLE_STEREO_DEPTH
