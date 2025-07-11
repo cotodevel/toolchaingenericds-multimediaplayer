@@ -81,4 +81,8 @@ private:
 	blargg_err_t setup_fm();
 };
 
+extern Music_Emu* new_vgm_emu ();
+extern Music_Emu* new_vgm_file();
+
+
 #endif

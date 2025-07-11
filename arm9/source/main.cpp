@@ -103,7 +103,7 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 	//Generate an active playlist
 	readDirectoryIntoFileClass(Path, playListRead);
 	cleanFileList(activePlayListRead);
-	int itemsFound = buildFileClassByExtensionFromList(playListRead, activePlayListRead, (char**)ARM7_PAYLOAD, (char*)"/ima/tvs/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs");
+	int itemsFound = buildFileClassByExtensionFromList(playListRead, activePlayListRead, (char**)ARM7_PAYLOAD, (char*)"/ima/tvs/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs/vgm");
 	activePlayListRead->FileDirCount--; //skipping the first item pushed before
 	
 	//Sort list alphabetically
@@ -573,10 +573,12 @@ void menuShow(){
 	clrscr();
 	printf("                              ");
 	printf("%s >%d", TGDSPROJECTNAME, TGDSPrintfColor_Yellow);
-	printf("Free Mem : %d KB ", ( (int)TGDSARM9MallocFreeMemory()/1024) );
+	//printf("Free Mem : %d KB ", ( (int)TGDSARM9MallocFreeMemory()/1024) );
 	printf("Formats: ");
 	printf("IMA-ADPCM (Intel)/WAV/MP3/AAC/Ogg >%d", TGDSPrintfColor_Yellow);
 	printf("/FLAC/NSF/SPC/GBS/.TVS VideoStream >%d", TGDSPrintfColor_Yellow);
+	printf("/.VGM (Sega Genesis) >%d", TGDSPrintfColor_Yellow);
+	
 	printf("(Start): File Browser -> (A) to play audio file");
 	printf("(L): Recent Playlist ");
 	printf("(R): Random audio file playback ");
@@ -893,21 +895,27 @@ __attribute__ ((optnone))
 #endif
 void taskA(u32 * args){
 	//Audio playback here....
-	updateStream();
-	updateStream();
-	updateStream();
-	updateStream();
-	updateStream();
-	updateStream();
-	updateStream();
-	updateStream();
-	updateStream();
-	updateStream();
-	updateStream();
-	updateStream();
-	updateStream();
-	updateStream();
-	updateStream();
+
+	if(!(soundData.sourceFmt == SRC_VGM)){
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+		updateStream();
+	}
+	else{
+		updateStream();
+	}
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))

@@ -71,6 +71,9 @@
 #define GBS_FREQ 32000
 #define GBS_OUT_SIZE 2048
 
+#define VGM_FREQ 32000
+#define VGM_OUT_SIZE 2048
+
 // streaming stuff
 #define STREAM_DISCONNECTED 0
 #define STREAM_CONNECTING 1
@@ -183,6 +186,11 @@ extern void checkEndSound();
 extern u32 getSoundChannels();
 extern int internalCodecType;
 extern void copyData();
+
+//VGM 
+//extern int getVGMTrack();
+extern void vgmDecode();
+//extern int getVGMTotalTracks();
 
 #ifdef __cplusplus
 }

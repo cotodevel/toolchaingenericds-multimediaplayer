@@ -140,6 +140,7 @@ export DIRS_ARM9_HEADER = data/	\
 			source/emulated/file68/	\
 			source/emulated/io68/	\
 			source/emulated/gbs/	\
+			source/emulated/sega/	\
 			source/tremor/	\
 			../common/	\
 			../common/templateCode/source/	\
