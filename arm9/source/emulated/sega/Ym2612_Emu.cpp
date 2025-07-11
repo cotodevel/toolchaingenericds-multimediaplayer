@@ -1256,8 +1256,9 @@ void Ym2612_Impl::run( int pair_count, Ym2612_Emu::sample_t* out )
 		run_timer( pair_count );
 	
 	// Mise � jour des pas des compteurs-frequences s'ils ont ete modifies
-	
-	for ( int chi = 0; chi < channel_count; chi++ )
+	int chCount = 2; //NDS stutters too much if 6 channels are enabled
+
+	for ( int chi = 0; chi < chCount; chi++ )
 	{
 		channel_t& ch = YM2612.CHANNEL [chi];
 		if ( ch.SLOT [0].Finc != -1 )
@@ -1307,7 +1308,7 @@ void Ym2612_Impl::run( int pair_count, Ym2612_Emu::sample_t* out )
 		}
 	}
 	
-	for ( int i = 0; i < channel_count; i++ )
+	for ( int i = 0; i < chCount; i++ )
 	{
 		if ( !(mute_mask & (1 << i)) && (i != 5 || !YM2612.DAC) )
 			UPDATE_CHAN [YM2612.CHANNEL [i].ALGO]( g, YM2612.CHANNEL [i], out, pair_count );
