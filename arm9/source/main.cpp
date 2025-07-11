@@ -746,7 +746,7 @@ int main(int argc, char **argv) {
 	
 	//Register threads.
 	struct task_Context * TGDSThreads = getTGDSThreadSystem();
-	int taskATimeMS = 35; //Task execution requires at least 35ms, also, thread in milliseconds will run too slow, give it the highest priority.
+	int taskATimeMS = 80; //Task execution requires at least 35ms, also, thread in milliseconds will run too slow, give it the highest priority.
     if(registerThread(TGDSThreads, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode, tUnitsMicroseconds) != THREAD_OVERFLOW){
         
     }
