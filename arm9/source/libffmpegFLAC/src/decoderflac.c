@@ -31,14 +31,9 @@
  * by data starting with the 0xFFF8 marker.
  */
 
-#include <stdint.h>
-#ifdef BUILD_STANDALONE
-#include "codec.h"
-#endif
- 
+#include <stdint.h> 
 #include "bitstreamflac.h"
 #include "golomb.h"
-
 #include "decoderflac.h"
 
 #define CPU_ARM

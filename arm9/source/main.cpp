@@ -895,26 +895,29 @@ __attribute__ ((optnone))
 #endif
 void taskA(u32 * args){
 	//Audio playback here....
+	
+	switch(soundData.sourceFmt){
+		case(SRC_VGM):{
+			updateStream();
+		}break;
 
-	if(!(soundData.sourceFmt == SRC_VGM)){
-		updateStream();
-		updateStream();
-		updateStream();
-		updateStream();
-		updateStream();
-		updateStream();
-		updateStream();
-		updateStream();
-		updateStream();
-		updateStream();
-		updateStream();
-		updateStream();
-		updateStream();
-		updateStream();
-		updateStream();
-	}
-	else{
-		updateStream();
+		default:{
+			updateStream();
+			updateStream();
+			updateStream();
+			updateStream();
+			updateStream();
+			updateStream();
+			updateStream();
+			updateStream();
+			updateStream();
+			updateStream();
+			updateStream();
+			updateStream();
+			updateStream();
+			updateStream();
+			updateStream();
+		}break;
 	}
 }
 
