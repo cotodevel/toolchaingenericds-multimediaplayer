@@ -8,16 +8,10 @@
 
 #include <stdint.h>
 #include "typedefsTGDS.h"
-
-#ifdef BUILD_STANDALONE
-  #include <config.h>
-  #include <system.h>
-#else
-  #include <stdio.h>
-  #define IBSS_ATTR
-  #define ICONST_ATTR
-  #define ICODE_ATTR
-#endif
+#include <stdio.h>
+#define IBSS_ATTR
+#define ICONST_ATTR
+#define ICODE_ATTR
 
 #ifndef ICODE_ATTR_FLAC
 #define ICODE_ATTR_FLAC ICODE_ATTR
@@ -29,7 +23,7 @@
 
 /* Endian conversion routines for standalone compilation */
 
-#ifndef BUILD_STANDALONE
+
     #ifdef BUILD_BIGENDIAN
         #define betoh32(x) (x)
         #define letoh32(x) swap32(x)
@@ -61,7 +55,7 @@
         unsigned long lo = swap16(value & 0xffff);
         return (lo << 16) | hi;
     }
-#endif
+
 
 /* FLAC files are big-endian */
 #define ALT_BITSTREAM_READER_BE
