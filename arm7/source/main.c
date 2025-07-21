@@ -49,6 +49,9 @@ void SetupSoundSPC() {
 //    *((vu16*)0x04000514) = (MIXBUFSIZE * 2) >> 1;
 //    *((vu16*)0x04000508) = 0x83;
 	SPCExecute=true;
+	
+	// prevent accidentally reading garbage from buffer 0, by waiting for buffer 1 instead
+	swiDelay((0x10000 - MIXBUFSIZE) >> 1);
 }
 
 void StopSoundSPC() {
