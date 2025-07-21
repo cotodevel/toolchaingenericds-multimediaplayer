@@ -10,6 +10,7 @@
 #include "main.h"
 #include "ipcfifoTGDSUser.h"
 #include "timerTGDS.h"
+#include "biosTGDS.h"
 
 int ADPCMchannels = 0;
 
@@ -745,6 +746,9 @@ void setupSoundTGDSVideoPlayerARM7() {
 	}
 
 	REG_IE |= IRQ_TIMER2;
+	
+	// prevent accidentally reading garbage from buffer 0, by waiting for buffer 1 instead
+	swiDelay((0x10000 - (sampleLen - 1)) >> 1);
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))

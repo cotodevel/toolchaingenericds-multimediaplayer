@@ -59,7 +59,10 @@ Buttons:
 Notes:
  - NTR Mode: DLDI patch the file manually if it isn't detected by the loader. TWL Mode doesn't need it.
  - Be careful to NOT to set the volume too high! Prevent hearing loss!
-
+ - AAC/M4A decoder supports up to 32bit files
+ - FLAC decoder supports up to 16bit files
+ - WAV decoder supports up to 16bit files
+ 
 Authors:
 Many thanks to DSOrganize and it's author(s), since the audio player code was taken from there... except there is no memory issues this time to play audio files at all!!!!
 
