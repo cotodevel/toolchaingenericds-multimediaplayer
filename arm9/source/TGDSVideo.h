@@ -55,12 +55,12 @@ USA
 #include "fatfslayerTGDS.h"
 #include "posixHandleTGDS.h"
 #include "utilsTGDS.h"
+#include "ipcfifoTGDSUser.h"
 #endif
 
 #define vblankMaxFrame (int)(60)
 #define mainBufferDraw (u32)(0x06800000)
 #define decodedBuf (u32)(0x06880000)
-#define decompBufUncached (u32)(((int)&decompBuf[0] + 0x400000))
 
 #define videoFramesToCache (int)(30)
 #define minimumVideoFramesBeforeCaching (int)(videoFramesToCache/2)
@@ -151,10 +151,8 @@ extern int nextVideoFrameFileSize;
 extern u32 frameCount;
 extern bool TGDSVideoPlayback;
 
-extern u8 decompBuf[256*192*2];
 extern void playTVSFile(char * tvsFile);
 
-extern u8 savedDefaultCore[96*1024];
 extern void ARM7LoadStreamCore();
 extern void ARM7LoadDefaultCore();
 #endif

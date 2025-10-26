@@ -196,8 +196,7 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/Makefile
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
-	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl	$(CURDIR)/common/templateCode/	$(DIR_ARM9)/data/arm7bootldr_standalone.bin	$(DIR_ARM9)/data/arm7bootldr_standalone_twl.bin
-	-@rm -rf ToolchainGenericDS-videoplayer/$(DIR_ARM9)/data/arm7bootldr.bin	ToolchainGenericDS-videoplayer/$(DIR_ARM9)/data/arm7bootldr_twl.bin
+	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl	$(CURDIR)/common/templateCode/	$(DIR_ARM9)/data/arm7bootldr_standalone.binlzss	$(DIR_ARM9)/data/arm7bootldr_standalone_twl.binlzss
 	
 rebase:
 	git reset --hard HEAD

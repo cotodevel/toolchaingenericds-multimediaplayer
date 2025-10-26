@@ -31,12 +31,13 @@ file_arm9_src_s=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_P
 file_arm9_src_SUPP=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.S))  )
 file_arm9_src_cpp=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.cpp))  )
 file_arm9_src_bin=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.bin))  )
+file_arm9_src_binlzss=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.binlzss))  )
 file_arm9_src_tga=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.tga))  )
 file_arm9_src_pcx=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.pcx))  )
 file_arm9_src_bmp=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.bmp))  )
 
 # Object Target
-objs_arm9:=		${file_arm9_src_bmp:.bmp=.o}	${file_arm9_src_pcx:.pcx=.o}	${file_arm9_src_tga:.tga=.o}	${file_arm9_src_bin:.bin=.o}	${file_arm9_src_c:.c=.o}	${file_arm9_src_s:.s=.o}	${file_arm9_src_SUPP:.S=.o}		${file_arm9_src_cpp:.cpp=.o}
+objs_arm9:=		${file_arm9_src_bmp:.bmp=.o}	${file_arm9_src_pcx:.pcx=.o}	${file_arm9_src_tga:.tga=.o}	${file_arm9_src_bin:.bin=.o}	${file_arm9_src_binlzss:.binlzss=.o}	${file_arm9_src_c:.c=.o}	${file_arm9_src_s:.s=.o}	${file_arm9_src_SUPP:.S=.o}		${file_arm9_src_cpp:.cpp=.o}
 d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_SUPP:.S=.d}	${file_arm9_src_cpp:.cpp=.d}
 
 #ARM9 specific definitions.	-fno-common so we force initialized data to rodata
@@ -82,12 +83,22 @@ makebuild:
 $(OBJDIR)/%.o : %.tga
 	-$(GRITTOOL) ${<:.o=.c} -ftc -o $@ -gu32 -gb -gB16
 	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o $@ -c ${@:.o=.c}
-	
+
 #rule for reading *.bin in /data folder, converts to .C source code, which then gets compiled as object so it can be linked later
 $(OBJDIR)/%.o : %.bin
 	-@echo 'trying to convert .BIN ($<) -> .C output: ${@:.o=.c} : arrayName: $(subst build/,,${@:.o=})'
 	$(BIN2C)	$<	${@:.o=.c}	$(subst build/,,${@:.o=})
 	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_PROHIBITED)	-o $@ -c ${@:.o=.c}
+
+#rule for creating LZSS compressed *.bin from /data folder, converts to .C source code, which then gets compiled as object so it can be linked later
+$(OBJDIR)/%.o : %.binlzss
+	-@echo 'LZSS Compressing .BIN (${<:.binlzss=.lzss}) -> .C output: ${@:.o=.c} : arrayName: $(subst build/,,${@:.o=})'
+	-cp	$<	${<:.binlzss=.lzss}
+	$(BIN2LZSS)	-ewo	${<:.binlzss=.lzss}
+	$(BIN2C)	${<:.binlzss=.lzss}	${@:.o=.c}	$(subst build/,,${@:.o=})
+	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_PROHIBITED)	-o $@ -c ${@:.o=.c}
+	-@rm -fr	${<:.binlzss=.lzss}
+	
 
 #BMP format: BMP24/16/8 to PCX texture, which will be converted on-the-fly to native texture (Format 7: Direct Color Texture mode)
 $(OBJDIR)/%.o : %.bmp	
