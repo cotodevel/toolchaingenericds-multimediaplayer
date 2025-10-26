@@ -35,7 +35,6 @@ USA
 #include "soundTGDS.h"
 #include "ima_adpcm.h"
 #include "main.h"
-#include "lz77.h"
 #include "posixHandleTGDS.h"
 #include "timerTGDS.h"
 #include "loader.h"
@@ -94,7 +93,6 @@ __attribute__((section(".dtcm")))
 #endif
 u32 frameCount=1;
 
-u8 decompBuf[256*192*2];
 static bool gotFrame = false;
 
 //Returns: Total videoFrames found in File handle
@@ -188,7 +186,8 @@ int TGDSVideoRender(){
 			if( ( (frameRendered->elapsedTimeStampInMilliseconds-dlt_time) < curTime) || (curTime <= 0) ){ //0.7s seek ahead time to sync better
 				nextVideoFrameOffset = frameRendered->nextVideoFrameOffsetInFile;
 				nextVideoFrameFileSize = frameRendered->nextVideoFrameFileSize;
-				int decompSize = lzssDecompress((u8*)decodedBuf + frameDescSize, (u8*)decompBufUncached);
+				int decompSize = *(unsigned int *)(decodedBuf + frameDescSize) >> 8;
+				swiDecompressLZSSWram((u8*)decodedBuf + frameDescSize, (u8*)decompBufUncached);
 				DMA0_SRC = (uint32)(decompBufUncached);
 				DMA0_DEST = (uint32)mainBufferDraw;
 				DMA0_CR = DMAENABLED | DMAINCR_SRC | DMAINCR_DEST | DMA32BIT | (decompSize>>2);
@@ -300,8 +299,6 @@ void playTVSFile(char * tvsFile){
 		menuShow();
 	}
 }
-
-u8 savedDefaultCore[96*1024];
 
 void ARM7LoadStreamCore(){
 	//Playback:

@@ -102,7 +102,13 @@ typedef sint16 int16;
 #define FIFO_PLAYSOUNDEFFECT_FILE (u32)(0xFFFFABCD)
 #define FIFO_STOP_ARM7_VRAM_CORE (u32)(0xFFFFABCE)
 
-#define ARM7_PAYLOAD ((u32)0x023E8000)
+//allocate them statically to save memory 
+#define savedDefaultCore ((u8*) ((int)0x02400000) - (128*1024) )	//ARM7: Custom Core / SPC-Default Core
+
+#define decompBuf ((u8*) ((int)savedDefaultCore) - (96*1024) )	//*.TVS Video buffer
+
+#define decompBufUncached (u32)(((int)decompBuf + 0x400000))
+
 
 #endif
 

@@ -68,9 +68,6 @@ Many thanks to DSOrganize and it's author(s), since the audio player code was ta
 
 IMA-ADPCM Decoder: Discostew
 
-LZSS decompressor: RocketRobz
-https://github.com/RocketRobz/RocketVideoPlayer
-
 ____Remoteboot____
 Also, it's recommended to use the remoteboot feature. It allows to send the current TGDS Project over wifi removing the necessity
 to take out the SD card repeteadly and thus, causing it to wear out and to break the SD slot of your unit.

@@ -28,6 +28,7 @@ USA
 #include "sound.h"
 #include "soundTGDS.h"
 #include "keypadTGDS.h"
+#include "biosTGDS.h"
 #include "dmaTGDS.h"
 #include "TGDSLogoLZSSCompressed.h"
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
@@ -53,11 +54,12 @@ USA
 
 u32 * getTGDSMBV3ARM7AudioCore(){
 	if(__dsimode == false){
-		return (u32*)&arm7bootldr_standalone[0];	
+		swiDecompressLZSSWram((u8*)&arm7bootldr_standalone[0], (u8*)decompBufUncached);
 	}
 	else{
-		return (u32*)&arm7bootldr_standalone_twl[0];
+		swiDecompressLZSSWram((u8*)&arm7bootldr_standalone_twl[0], (u8*)decompBufUncached);
 	}
+	return (u32*)decompBufUncached;
 }
 
 //TGDS Dir API: Directory Iterator(s)
@@ -103,12 +105,12 @@ bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileI
 	//Generate an active playlist
 	readDirectoryIntoFileClass(Path, playListRead);
 	cleanFileList(activePlayListRead);
-	int itemsFound = buildFileClassByExtensionFromList(playListRead, activePlayListRead, (char**)ARM7_PAYLOAD, (char*)"/ima/tvs/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs/vgm");
+	int itemsFound = buildFileClassByExtensionFromList(playListRead, activePlayListRead, (char*)"/ima/tvs/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs/vgm");
 	activePlayListRead->FileDirCount--; //skipping the first item pushed before
 	
 	//Sort list alphabetically
 	bool ignoreFirstFileClass = true;
-	sortFileClassListAsc(playListRead, (char**)ARM7_PAYLOAD, ignoreFirstFileClass);
+	sortFileClassListAsc(playListRead, ignoreFirstFileClass);
 	
 	//actual file lister
 	clrscr();
@@ -626,10 +628,15 @@ void menuShow(){
 void playIntro(){
 	char * introFilename = "0:/tgds_intro.m4a";
 	FILE * fh = fopen(introFilename, "w+");
-	int written = fwrite((u8*)&tgds_intro_m4a[0], 1, tgds_intro_m4a_size, fh);
+	struct LZSSContext LZSSCtx = LZS_DecodeFromBuffer((u8*)&tgds_intro_m4a[0], (unsigned int)tgds_intro_m4a_size);
+	//Prevent Cache problems.
+	coherent_user_range_by_size((uint32)LZSSCtx.bufferSource, (int)LZSSCtx.bufferSize);
+	int written = fwrite((u8*)LZSSCtx.bufferSource, 1, LZSSCtx.bufferSize, fh);
 	fclose(fh);
-	
-	if(written == tgds_intro_m4a_size){
+	//used? discard
+	TGDSARM9Free(LZSSCtx.bufferSource);
+
+	if(written == LZSSCtx.bufferSize){
 		//Create TGDS Dir API context
 		cleanFileList(playListRead);
 		cleanFileList(activePlayListRead);

@@ -19,7 +19,7 @@
 
 #put here the custom stage_2 vram loader bits
 #for 0x02380000 -> 0x06000000 arm7vram payload
-export BINSTRIP_RULE_arm7vram =	arm7bootldr_standalone.bin
+export BINSTRIP_RULE_arm7vram =	arm7bootldr_standalone.binlzss
 #for 0x02380000 -> 0x06000000 arm7vram payload
 export TARGET_LIBRARY_CRT0_FILE_7custom = nds_arm_ld_crt0
 export TARGET_LIBRARY_LINKER_FILE_7custom = ../$(TARGET_LIBRARY_CRT0_FILE_7custom).S
@@ -138,13 +138,13 @@ $(ELF_ARM7): $(OBJPROG)
 $(BINSTRIP_RULE_arm7vram): $(ELF_ARM7)
 	-@echo 'STRIP End: Remove ELF header and build baremetal Binary executable: $<	->	$@ !'
 	$(OBJCOPY) 	-S -O binary	$<	$@
-	$(OBJCOPY) 	-S -O binary	${<:.elf=-nonstripped_dsi.elf}	${@:.bin=_twl.bin}
+	$(OBJCOPY) 	-S -O binary	${<:.elf=-nonstripped_dsi.elf}	${@:.binlzss=_twl.binlzss}
 	-rm	$<
 	-mv $@	../arm9/data/
-	-mv ${@:.bin=_twl.bin}	../arm9/data/
+	-mv ${@:.binlzss=_twl.binlzss}	../arm9/data/
 ################################################################################################
 	
 clean:
 	-@echo 'cleanup $(DIR_ARM7)'
-	-@rm -fr $(BINSTRIP_RULE_arm7vram)	$(MAPFILE)	${BINSTRIP_RULE_arm7vram:.bin=_twl.bin}	$(BUILD)	$(CURDIR)/arm7-nonstripped_dsi.elf $(CURDIR)/arm7-nonstripped_dsi.map
+	-@rm -fr $(BINSTRIP_RULE_arm7vram)	$(MAPFILE)	${BINSTRIP_RULE_arm7vram:.binlzss=_twl.binlzss}	$(BUILD)	$(CURDIR)/arm7-nonstripped_dsi.elf $(CURDIR)/arm7-nonstripped_dsi.map
 
