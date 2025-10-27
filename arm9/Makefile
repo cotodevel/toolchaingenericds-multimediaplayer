@@ -181,4 +181,4 @@ clean:
 	$(MAKE)	clean	-C	source/mikmod
 	$(MAKE)	clean	-C	source/mp4ff
 	$(MAKE)	clean	-C	source/tremor
-	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE)	${BINSTRIP_RULE_9:.bin=_twl.bin}	$(CURDIR)/nds_arm9_ld.specs	$(CURDIR)/nds_arm9_ld.ld	$(CURDIR)/arm9-nonstripped_dsi.elf $(CURDIR)/arm9-nonstripped_dsi.map	$(CURDIR)/data/tgds_multiboot_payload.bin	$(CURDIR)/data/tgds_multiboot_payload_twl.bin
+	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE)	${BINSTRIP_RULE_9:.bin=_twl.bin}	$(CURDIR)/nds_arm9_ld.specs	$(CURDIR)/nds_arm9_ld.ld	$(CURDIR)/arm9-nonstripped_dsi.elf $(CURDIR)/arm9-nonstripped_dsi.map
