@@ -45,6 +45,7 @@
 #include "aac/pub/aacdec.h"
 #include "../include/main.h"
 #include "soundTGDS.h"
+#include "WoopsiTemplate.h"
 
 ID3V1_TYPE id3Data;
 extern ID3V1_TYPE id3Data;
@@ -2391,23 +2392,15 @@ bool loadSound(char *fName){
 	if(!(FAT_FileExists(fName) == FT_FILE)){
 		return false;
 	}
-	enableFastMode();
 	int srcFormat = playSoundStream(fName, _FileHandleVideo, _FileHandleAudio, TGDS_ARM7_AUDIOBUFFER_STREAM);
-	if((srcFormat != SRC_WAV) || (srcFormat != SRC_WAVADPCM)){		
+	soundData.sourceFmt = srcFormat;
+	if(srcFormat == SRC_NONE){			
 		char tmpName[256];
 		char ext[256];
 		strcpy(tmpName, fName);	
 		separateExtension(tmpName, ext);
 		strlwr(ext);
 		bool ret = initSoundStreamUser(fName, ext);
-		if(ret == false){
-			//Invalid sound stream? disable fast mode
-			disableFastMode();
-		}
-		else{
-			//Otherwise enable
-			enableFastMode();
-		}
 		return ret;
 	}
 	return true;
@@ -2436,7 +2429,6 @@ void closeSoundUser(){
 	if(isWIFIConnected()){
 		disconnectWifi();
 	}
-	disableFastMode();
 	SendFIFOWords(POCKETSPC_ARM7COMMAND_STOP_SPC, 0xFF);
 }
 
@@ -2507,13 +2499,16 @@ void soundPrevTrack(int x, int y)
 		*/
 		
 		default:{
-			curFileIndex--;
-			if(curFileIndex < 0){
-				curFileIndex = 0;
-			}
-			struct FileClass * curList = getFileClassFromList(curFileIndex, activePlayListRead);
-			if(curList != NULL){
-				strcpy(curChosenBrowseFile, (const char *)curList->fd_namefullPath);		
+			
+			if(WoopsiTemplateProc != NULL){
+				WoopsiTemplateProc->currentFileRequesterIndex--;
+				if(WoopsiTemplateProc->currentFileRequesterIndex < 0){
+					WoopsiTemplateProc->currentFileRequesterIndex = 0;
+				}
+
+				FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+				FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+				freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
 				
 				//Let decoder close context so we can start again
 				closeSound();
@@ -2538,16 +2533,9 @@ void soundPrevTrack(int x, int y)
 				updateStream();
 				updateStream();
 
-				if(FAT_FileExists(curChosenBrowseFile) == FT_FILE){
-					pendingPlay = true;
-				}
-				else{
-					pendingPlay = false;
-				}
+				playAudioFile();
 			}
-			else{
-				pendingPlay = false;
-			}
+
 		}break;
 	}	
 }
@@ -2621,14 +2609,17 @@ void soundNextTrack(int x, int y)
 		*/
 		
 		default:{
-			int lstSize = getCurrentDirectoryCount(activePlayListRead);
-			curFileIndex++;
-			if(curFileIndex >= lstSize){
-				curFileIndex = lstSize;
-			}
-			struct FileClass * curList = getFileClassFromList(curFileIndex, activePlayListRead);
-			if(curList != NULL){
-				strcpy(curChosenBrowseFile, (const char *)curList->fd_namefullPath);		
+			
+			if(WoopsiTemplateProc != NULL){
+
+				FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+				FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+				int lstSize = (freqListBox->getOptionCount() - 1);
+				WoopsiTemplateProc->currentFileRequesterIndex++;
+				if(WoopsiTemplateProc->currentFileRequesterIndex >= lstSize){
+					WoopsiTemplateProc->currentFileRequesterIndex = lstSize;
+				}
+				freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
 				
 				//Let decoder close context so we can start again
 				closeSound();
@@ -2653,15 +2644,7 @@ void soundNextTrack(int x, int y)
 				updateStream();
 				updateStream();
 
-				if(FAT_FileExists(curChosenBrowseFile) == FT_FILE){
-					pendingPlay = true;
-				}
-				else{
-					pendingPlay = false;
-				}
-			}
-			else{
-				pendingPlay = false;
+				playAudioFile();
 			}
 		}break;
 	}
@@ -3335,72 +3318,4 @@ char *gbsMeta(int which)
 void checkEndSound()
 {
 	
-	if(soundLoaded == false)
-	{
-		/*
-		char ext[256];
-		char tmp[256];
-		
-		strcpy(tmp,getFileName());
-		separateExtension(tmp,ext);
-		strlwr(ext);
-		
-		if(strcmp(ext,".pls") == 0 || strcmp(ext,".m3u") == 0)
-		{	
-			sndMode = TYPE_PLS;
-			if(loadPlaylist(getFileName(), &curPlaylist))
-			{
-				loadSound(curPlaylist.urlEntry[0].data);
-				plsPos = 0;
-			}
-			else
-			{
-				destroyRandomList();
-				exitSound(0,0);
-				return;
-			}
-		}
-		else
-		{
-		*/
-			//sndMode = TYPE_NORMAL;
-			
-		//}
-		
-		//sampleWidth = (getSoundLength() / 236);
-	}
-	
-	/*
-	firstTime = false;
-	
-	if(getState() == STATE_STOPPED || getState() == STATE_UNLOADED)
-	{
-		if(sndMode == TYPE_NORMAL)
-		{
-			if(soundMode == SOUND_ONESHOT)
-			{
-				exitSound(0,0);
-			}
-			else
-			{
-				getNextSoundInternal(true);
-			}
-		}
-		if(sndMode == TYPE_PLS)
-		{
-			if(!queued)
-			{
-				if(plsPos == curPlaylist.numEntries - 1)
-					plsPos = 0;
-				else
-					plsPos++;
-			}
-			
-			loadSound(curPlaylist.urlEntry[plsPos].data);
-
-			queued = false;
-		}		
-	}
-	*/
-
 }

@@ -38,6 +38,10 @@ USA
 #include "posixHandleTGDS.h"
 #include "timerTGDS.h"
 #include "loader.h"
+#include "WoopsiTemplate.h"
+#include "videoTGDS.h"
+#include "consoleTGDS.h"
+#include "TGDSLogoLZSSCompressed.h"
 #endif
 #include "lzss9.h"
 #if defined (MSDOS) || defined(WIN32)
@@ -206,13 +210,16 @@ int TGDSVideoRender(){
 					
 					stopTimerCounter();	//Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
 					ARM7LoadDefaultCore();
-					enableFastMode(); //disable Vblank
+					
+					if(WoopsiTemplateProc != NULL){
+						WoopsiTemplateProc->redraw();			// Draw initial state
+					}
+					
 					enableScreenPowerTimeout();
 					
 					GUI.GBAMacroMode = false;	//GUI console at bottom screen. 
 					TGDSLCDSwap();
 					setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
-					menuShow();
 				}
 			}
 		}
@@ -232,8 +239,8 @@ void playTVSFile(char * tvsFile){
 		disableScreenPowerTimeout();
 		ARM7LoadStreamCore();
 
-		GUI.GBAMacroMode = true;	//GUI console at top screen. Bottom screen is playback
-		TGDSLCDSwap();
+		//GUI.GBAMacroMode = true;	//GUI console at top screen. Bottom screen is playback
+		//TGDSLCDSwap();
 		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 
 		int readFileSize = FS_getFileSizeFromOpenStructFD(&videoHandleFD);
@@ -246,7 +253,6 @@ void playTVSFile(char * tvsFile){
 		
 		//wait 2 seconds
 		/*
-		disableFastMode(); //enable Vblank
 		int DSFrame = 0;
 		while(DSFrame < 110){
 			if(vblankCount == 1){
@@ -256,33 +262,26 @@ void playTVSFile(char * tvsFile){
 		}
 		*/
 
-		enableFastMode(); //disable Vblank
-
 		if(GUI.GBAMacroMode == false){
-			setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
+			//setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
 		}
 		else{
-			setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+			//setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 		}
 
 		TGDSVideoPlayback = true;
-		strcpy(curChosenBrowseFile, tvsFile);
+		strcpy(currentFileChosen, tvsFile);
 		startTimerCounter(tUnitsMilliseconds, 1, IRQ_TIMER3); //tUnitsMilliseconds equals 1 millisecond/unit. A single unit (1) is the default value for normal timer count-up scenarios. 
-
-		clrscr();
-		printf("--");
-		printf("--");
-		printf(".TVS Playing OK: %s", (char*)tvsFile);
 	}
 	else{
 		TGDSVideoPlayback = false;
-		enableFastMode(); //disable Vblank
 		enableScreenPowerTimeout();
 
 		GUI.GBAMacroMode = false;	//GUI console at bottom screen. Handle error
 		TGDSLCDSwap();
 		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 		
+		/*
 		clrscr();
 		printf("--");
 		printf("--");
@@ -295,10 +294,11 @@ void playTVSFile(char * tvsFile){
 				break;
 			}
 			IRQVBlankWait();
-		}
-		menuShow();
+		}*/
 	}
 }
+
+static struct EngineContext2D EngineCtx2D;
 
 void ARM7LoadStreamCore(){
 	//Playback:
@@ -327,9 +327,51 @@ void ARM7LoadStreamCore(){
 	updateStream();
 	haltARM7(); //Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
 	
-	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
-	GUI_init(isTGDSCustomConsole);
-	GUI_clear();
+	//Set 2D *.TVS BG Format 
+	{
+		memset(&EngineCtx2D, 0, sizeof(struct EngineContext2D));
+
+		//save DISPCNT:
+		EngineCtx2D.savedREG_DISPCNT = REG_DISPCNT;
+
+		//save BG REGS
+		int i = 0;
+		for(i = 0; i < (int)backgroundsPerEngine; i++){
+			EngineCtx2D.savedREG_BGXCNT[i] = REG_BGXCNT(i);
+		}
+
+		//save BG 2D Matrix regs
+		EngineCtx2D.savedREG_BG3X = REG_BG3X;
+		EngineCtx2D.savedREG_BG3Y = REG_BG3Y;
+		EngineCtx2D.savedREG_BG3PA = REG_BG3PA;
+		EngineCtx2D.savedREG_BG3PB = REG_BG3PB;
+		EngineCtx2D.savedREG_BG3PC = REG_BG3PC;
+		EngineCtx2D.savedREG_BG3PD = REG_BG3PD;
+
+		//save VRAM settings
+		EngineCtx2D.savedVRAM_A_CR = VRAM_A_CR;
+		EngineCtx2D.savedVRAM_B_CR = VRAM_B_CR;
+		EngineCtx2D.savedVRAM_C_CR = VRAM_C_CR;
+		EngineCtx2D.savedVRAM_D_CR = VRAM_D_CR;
+		EngineCtx2D.savedVRAM_E_CR = VRAM_E_CR;
+		EngineCtx2D.savedVRAM_F_CR = VRAM_F_CR;
+		EngineCtx2D.savedVRAM_G_CR = VRAM_G_CR;
+		EngineCtx2D.savedVRAM_H_CR = VRAM_H_CR;
+		EngineCtx2D.savedVRAM_I_CR = VRAM_I_CR;
+
+		EngineCtx2D.SavedGUIGBAMacroMode = GUI.GBAMacroMode;
+		
+		RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
+
+		bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
+		GUI_init(isTGDSCustomConsole);
+		
+		GUI.GBAMacroMode = false;	//GUI console at top screen. Playback video at bottom screen
+		TGDSLCDSwap();
+		
+		bool mainEngine = true;
+		setOrientation(ORIENTATION_0, mainEngine);
+	}
 
 	WRAM_CR = WRAM_0KARM9_32KARM7;
 	
@@ -346,10 +388,41 @@ void ARM7LoadDefaultCore(){
 	BgMusicOff();
 	haltARM7(); //Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
 	
-	bool project_specific_console = false;	//set default console or custom console: custom console
-	GUI_init(project_specific_console);
-	GUI_clear();
-	
+	//Restore WoopsiSDK 2D BG Format 
+	{
+		//restore DISPCNT:
+		REG_DISPCNT = EngineCtx2D.savedREG_DISPCNT;
+
+		//restore BG REGS
+		int i = 0;
+		for(i = 0; i < (int)backgroundsPerEngine; i++){
+			REG_BGXCNT(i) = EngineCtx2D.savedREG_BGXCNT[i];
+		}
+
+		//restore BG 2D Matrix regs
+		REG_BG3X = EngineCtx2D.savedREG_BG3X;
+		REG_BG3Y = EngineCtx2D.savedREG_BG3Y;
+		REG_BG3PA = EngineCtx2D.savedREG_BG3PA;
+		REG_BG3PB = EngineCtx2D.savedREG_BG3PB;
+		REG_BG3PC = EngineCtx2D.savedREG_BG3PC;
+		REG_BG3PD = EngineCtx2D.savedREG_BG3PD;
+
+		//restore VRAM settings
+		VRAM_A_CR = EngineCtx2D.savedVRAM_A_CR;
+		VRAM_B_CR = EngineCtx2D.savedVRAM_B_CR;
+		VRAM_C_CR = EngineCtx2D.savedVRAM_C_CR;
+		VRAM_D_CR = EngineCtx2D.savedVRAM_D_CR;
+		VRAM_E_CR = EngineCtx2D.savedVRAM_E_CR;
+		VRAM_F_CR = EngineCtx2D.savedVRAM_F_CR;
+		VRAM_G_CR = EngineCtx2D.savedVRAM_G_CR;
+		VRAM_H_CR = EngineCtx2D.savedVRAM_H_CR;
+		VRAM_I_CR = EngineCtx2D.savedVRAM_I_CR;
+
+		
+		GUI.GBAMacroMode = EngineCtx2D.SavedGUIGBAMacroMode;
+		TGDSLCDSwap();
+	}
+
 	//Stop playback. Go back to IWRAM Core
 	REG_IME = 0;
 	executeARM7Payload((u32)0x02380000, 96*1024, (u32*)savedDefaultCore);

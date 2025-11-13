@@ -86,13 +86,10 @@ typedef sint16 int16;
 #define TGDS_ARM7_MALLOCSIZE (int)(4*1024)
 #define TGDSDLDI_ARM7_ADDRESS (u32)(TGDS_ARM7_MALLOCSTART + TGDS_ARM7_MALLOCSIZE)
 
-#define TGDS_ARM7_AUDIOBUFFER_STREAM_ADPCMCORE (u32)(((int)0x02400000 - (512*1024))) //only for *.TVS: ADPCM Core
-#define TGDS_ARM7_AUDIOBUFFER_STREAM (u32)(TGDSDLDI_ARM7_ADDRESS + (32*1024))
+#define TGDS_ARM7_AUDIOBUFFER_STREAM_ADPCMCORE (u32)(((int)0x02400000 - (768*1024))) //only for *.TVS: ADPCM Core
+#define TGDS_ARM7_AUDIOBUFFER_STREAM (u32)(TGDSDLDI_ARM7_ADDRESS + (32*1024)) //SPC Core: SPC play + Codec audio stream. //*.TVS Core: Unused
 #define APU_RAM_ADDRESS     ((volatile unsigned char*) ((int)TGDS_ARM7_AUDIOBUFFER_STREAM) + (8*1024) )	//64K APU WORK 
 #define APU_BRR_HASH_BUFFER	(volatile u32*)((int)0x023B8000)	//270K ~ worth of Hashed Samples from the APU core to remove stuttering : 0x02400000 - 0x48000 = 0x023B8000
-
-#define FIFO_TGDSAUDIOPLAYER_DISABLEIRQ (u32)(0xFFAACC00)
-#define FIFO_TGDSAUDIOPLAYER_ENABLEIRQ (u32)(0xFFAACC01)
 
 #define POCKETSPC_ARM7COMMAND_STOP_SPC (u32)(0xFFAACC02)
 #define POCKETSPC_ARM7COMMAND_LOAD_SPC (u32)(0xFFAACC03)
@@ -101,6 +98,9 @@ typedef sint16 int16;
 #define FIFO_STOPSOUNDSTREAM_FILE (u32)(0xFFFFABCC)
 #define FIFO_PLAYSOUNDEFFECT_FILE (u32)(0xFFFFABCD)
 #define FIFO_STOP_ARM7_VRAM_CORE (u32)(0xFFFFABCE)
+#define FIFO_DISABLE_ARM7_TouchScreen (u32)(0xFFFFABD1)
+#define FIFO_ENABLE_ARM7_TouchScreen (u32)(0xFFFFABD2)
+
 
 //allocate them statically to save memory 
 #define savedDefaultCore ((u8*) ((int)0x02400000) - (128*1024) )	//ARM7: Custom Core / SPC-Default Core
@@ -134,11 +134,6 @@ extern struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific();
 extern void update_spc_ports();
 
 //project specific stuff
-#ifdef ARM9
-extern void enableFastMode();
-extern void disableFastMode();
-#endif
-
 extern uint32 ADDRPORT_SPC_TO_SNES;
 extern uint32 ADDRPORT_SNES_TO_SPC;
 extern uint32 ADDR_APU_PROGRAM_COUNTER;
@@ -168,6 +163,10 @@ extern u32 playSoundStreamFromFile(char * videoStructFDFilename, bool loop, u32 
 extern void BgMusic(char * filename);
 extern void BgMusicOff();
 extern void haltARM7();
+
+extern void disableARM7TouchScreenFromARM9();
+extern void enableARM7TouchScreenFromARM9();
+
 #endif
 
 #ifdef __cplusplus

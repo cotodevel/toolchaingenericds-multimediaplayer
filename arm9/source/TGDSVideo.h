@@ -55,6 +55,8 @@ USA
 #include "fatfslayerTGDS.h"
 #include "posixHandleTGDS.h"
 #include "utilsTGDS.h"
+#include "videoTGDS.h"
+#include "consoleTGDS.h"
 #include "ipcfifoTGDSUser.h"
 #endif
 
@@ -119,6 +121,30 @@ struct TGDSVideoFrameContext{
 #define DMA0_SRC       (*(vuint32*)0x040000B0)
 #define DMA0_DEST      (*(vuint32*)0x040000B4)
 #define DMA0_CR        (*(vuint32*)0x040000B8)
+
+struct EngineContext2D {
+	u32 savedREG_DISPCNT;
+	u32 savedREG_BGXCNT[backgroundsPerEngine];
+
+	u32 savedREG_BG3X;
+	u32 savedREG_BG3Y;
+	u32 savedREG_BG3PA;
+	u32 savedREG_BG3PB;
+	u32 savedREG_BG3PC;
+	u32 savedREG_BG3PD;
+
+	u32 savedVRAM_A_CR;
+	u32 savedVRAM_B_CR;
+	u32 savedVRAM_C_CR;
+	u32 savedVRAM_D_CR;
+	u32 savedVRAM_E_CR;
+	u32 savedVRAM_F_CR;
+	u32 savedVRAM_G_CR;
+	u32 savedVRAM_H_CR;
+	u32 savedVRAM_I_CR;
+
+	bool SavedGUIGBAMacroMode;
+};
 
 #endif
 

@@ -47,6 +47,7 @@ USA
 #include "TGDSMemoryAllocator.h"
 #include "TGDSVideo.h"
 #include "TGDS_threads.h"
+#include "WoopsiTemplate.h"
 
 //ARM7 VRAM core: *.TVS IMA-ADPCM support
 #include "arm7bootldr_standalone.h"
@@ -62,307 +63,29 @@ u32 * getTGDSMBV3ARM7AudioCore(){
 	return (u32*)decompBufUncached;
 }
 
-//TGDS Dir API: Directory Iterator(s)
-struct FileClassList * playListRead = NULL;			//Menu Directory Iterator
-struct FileClassList * activePlayListRead = NULL;				//Playlist Directory Iterator
-
-//static vector<string> songLst;
-char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
-char globalPath[MAX_TGDSFILENAME_LENGTH+1];
-
-#define oldSongsToRemember (int)(10)
-
+char currentFileChosen[MAX_TGDSFILENAME_LENGTH+1];
 bool keypadLocked=false;
-static bool drawMandelbrt = false;
-bool pendingPlay = false;
-int curFileIndex = 0;
-int lastRand = 0;
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileIndex){	//MUST be same as the template one at "fileBrowse.h" but added some custom code
-	disableScreenPowerTimeout();
-
-	scanKeys();
-	while((keysDown() & KEY_START) || (keysDown() & KEY_A) || (keysDown() & KEY_B)){
-		bottomScreenIsLit = true; //input event triggered
-		scanKeys();
-	}
-	
-	//Create TGDS Dir API context
-	cleanFileList(playListRead);
-	
-	//Use TGDS Dir API context
-	int pressed = 0;
-	int j = 0;
-	int startFromIndex = 1;
-	*curFileIndex = startFromIndex;
-	
-	//Generate an active playlist
-	readDirectoryIntoFileClass(Path, playListRead);
-	cleanFileList(activePlayListRead);
-	int itemsFound = buildFileClassByExtensionFromList(playListRead, activePlayListRead, (char*)"/ima/tvs/wav/it/mod/s3m/xm/mp3/mp2/mpa/ogg/aac/m4a/m4b/flac/sid/nsf/spc/sndh/snd/sc68/gbs/vgm");
-	activePlayListRead->FileDirCount--; //skipping the first item pushed before
-	
-	//Sort list alphabetically
-	bool ignoreFirstFileClass = true;
-	sortFileClassListAsc(playListRead, ignoreFirstFileClass);
-	
-	//actual file lister
-	clrscr();
-	
-	int lastVal = 0;
-	bool reloadDirA = false;
-	bool reloadDirB = false;
-	char * newDir = NULL;
-	
-	#define itemsShown (int)(15)
-	int curjoffset = 0;
-	int itemRead=0;
-	int printYoffset = 1;
-	
-	while(1){
-		int fileClassListSize = getCurrentDirectoryCount(activePlayListRead) + 1;
-		int itemsToLoad = (fileClassListSize - curjoffset); 
-		
-		//check if remaining items are enough
-		if(itemsToLoad > itemsShown){
-			itemsToLoad = itemsShown;
-		}
-		
-		while(itemRead < itemsToLoad ){		
-			if(getFileClassFromList(itemRead+curjoffset, activePlayListRead)->type == FT_DIR){
-				printfCoords(0, itemRead + printYoffset, "--- %s >%d",getFileClassFromList(itemRead+curjoffset, activePlayListRead)->fd_namefullPath, TGDSPrintfColor_Yellow);
-			}
-			else if(getFileClassFromList(itemRead+curjoffset, activePlayListRead)->type == FT_FILE){
-				printfCoords(0, itemRead + printYoffset, "--- %s",getFileClassFromList(itemRead+curjoffset, activePlayListRead)->fd_namefullPath);
-			}
-			else{
-				//itemRead--;
-				//itemsToLoad--;
-			}
-			itemRead++;
-		}
-		
-		scanKeys();
-		pressed = keysDown();
-		if (pressed&KEY_DOWN && (j < (itemsToLoad - 1) ) ){
-			bottomScreenIsLit = true; //input event triggered
-			j++;
-			while(pressed&KEY_DOWN){
-				scanKeys();
-				pressed = keysDown();
-			}
-		}
-		
-		//downwards: means we need to reload new screen
-		else if(pressed&KEY_DOWN && (j >= (itemsToLoad - 1) ) && ((fileClassListSize - curjoffset - itemRead) > 0) ){
-			bottomScreenIsLit = true; //input event triggered
-			//list only the remaining items
-			clrscr();
-			
-			curjoffset = (curjoffset + itemsToLoad - 1 - printYoffset);
-			itemRead = 0;
-			j = 0;
-			
-			scanKeys();
-			pressed = keysDown();
-			while(pressed&KEY_DOWN){
-				scanKeys();
-				pressed = keysDown();
-			}
-		}
-		
-		//LEFT, reload new screen
-		else if(pressed&KEY_LEFT && ((curjoffset - itemsToLoad) > 0) ){
-			bottomScreenIsLit = true; //input event triggered
-			//list only the remaining items
-			clrscr();
-			
-			curjoffset = (curjoffset - itemsToLoad - 1 - printYoffset);
-			itemRead = 0;
-			j = 0;
-			
-			scanKeys();
-			pressed = keysDown();
-			while(pressed&KEY_LEFT){
-				scanKeys();
-				pressed = keysDown();
-			}
-		}
-		
-		//RIGHT, reload new screen
-		else if(pressed&KEY_RIGHT && ((fileClassListSize - curjoffset - itemsToLoad) > 0) ){
-			bottomScreenIsLit = true; //input event triggered
-			//list only the remaining items
-			clrscr();
-			
-			curjoffset = (curjoffset + itemsToLoad - 1 - printYoffset);
-			itemRead = 0;
-			j = 0;
-			
-			scanKeys();
-			pressed = keysDown();
-			while(pressed&KEY_RIGHT){
-				scanKeys();
-				pressed = keysDown();
-			}
-		}
-		
-		else if (pressed&KEY_UP && (j >= 1)) {
-			bottomScreenIsLit = true; //input event triggered
-			j--;
-			while(pressed&KEY_UP){
-				scanKeys();
-				pressed = keysDown();
-			}
-		}
-		
-		//upwards: means we need to reload new screen
-		else if (pressed&KEY_UP && (j <= 1) && (curjoffset > 0) ) {
-			bottomScreenIsLit = true; //input event triggered
-			//list only the remaining items
-			clrscr();
-			
-			curjoffset--;
-			itemRead = 0;
-			j = 0;
-			
-			scanKeys();
-			pressed = keysDown();
-			while(pressed&KEY_UP){
-				scanKeys();
-				pressed = keysDown();
-			}
-		}
-		
-		//reload DIR (forward)
-		else if( (pressed&KEY_A) && (getFileClassFromList(j+curjoffset, activePlayListRead)->type == FT_DIR) ){
-			struct FileClass * fileClassChosen = getFileClassFromList(j+curjoffset, activePlayListRead);
-			newDir = fileClassChosen->fd_namefullPath;
-			reloadDirA = true;
-			break;
-		}
-		
-		//file chosen
-		else if( (pressed&KEY_A) && (getFileClassFromList(j+curjoffset, activePlayListRead)->type == FT_FILE) ){
-			break;
-		}
-		
-		//reload DIR (backward)
-		else if(pressed&KEY_B){
-			reloadDirB = true;
-			break;
-		}
-		
-		//Handle normal input to turn back on bottom screen 
-		if(
-			(pressed&KEY_TOUCH)
-			||
-			(pressed&KEY_A)
-			||
-			(pressed&KEY_B)
-			||
-			(pressed&KEY_X)
-			||
-			(pressed&KEY_Y)
-			||
-			(pressed&KEY_UP)
-			||
-			(pressed&KEY_DOWN)
-			||
-			(pressed&KEY_LEFT)
-			||
-			(pressed&KEY_RIGHT)
-			||
-			(pressed&KEY_L)
-			||
-			(pressed&KEY_R)
-			||
-			(pressed&KEY_SELECT)
-			||
-			(pressed&KEY_START)
-			){
-			bottomScreenIsLit = true; //input event triggered
-		}
-
-		// Show cursor
-		printfCoords(0, j + printYoffset, "*");
-		if(lastVal != j){
-			
-			//clean old
-			if(getFileClassFromList(j+curjoffset, activePlayListRead)->type == FT_FILE){
-				printfCoords(0, lastVal, "---");	
-			}
-			else if(getFileClassFromList(j+curjoffset, activePlayListRead)->type == FT_DIR){
-				printfCoords(0, lastVal, "--->%d", TGDSPrintfColor_Yellow);
-			}
-			else if(getFileClassFromList(j+curjoffset, activePlayListRead)->type == FT_NONE){
-				printfCoords(0, lastVal, "   ");
-			}
-			
-		}
-		lastVal = j + printYoffset;
-	}
-	
-	//enter a dir
-	if(reloadDirA == true){
-		//Free TGDS Dir API context
-		//freeFileList(activePlayListRead);	//can't because we keep the activePlayListRead handle across folders
-		
-		enterDir((char*)newDir, Path);
-		return true;
-	}
-	
-	//leave a dir
-	if(reloadDirB == true){
-		//Free TGDS Dir API context
-		//freeFileList(activePlayListRead);	//can't because we keep the activePlayListRead handle across folders
-		
-		//rewind to preceding dir in TGDSCurrentWorkingDirectory
-		leaveDir(Path);
-		return true;
-	}
-	
-	strcpy((char*)outBuf, getFileClassFromList(j+curjoffset, activePlayListRead)->fd_namefullPath);
-	clrscr();
-	printf("                                   ");
-	if(getFileClassFromList(j+curjoffset, activePlayListRead)->type == FT_DIR){
-		//printf("you chose Dir:%s",outBuf);
-	}
-	else if(getFileClassFromList(j+curjoffset, activePlayListRead)->type == FT_FILE){
-		*curFileIndex = (j+curjoffset);	//Update Current index in the playlist
-		*pendingPlay = true;
-	}
-	
-	//Free TGDS Dir API context
-	//freeFileList(activePlayListRead);
-
-	enableScreenPowerTimeout();
-	return false;
-}
 
 void handleInput(){
-	if(pendingPlay == true){
-		soundLoaded = loadSound((char*)curChosenBrowseFile);
-		pendingPlay = false;
-		menuShow();
-		drawMandelbrt = false;
-	}
-	
 	scanKeys();
+	/*
 	if (keysDown() & KEY_A){
 		bottomScreenIsLit = true; //input event triggered
 		keypadLocked=!keypadLocked;
-		menuShow();
 		while(keysDown() & KEY_A){
 			scanKeys();
 		}
 	}
+	*/
+
+	if(keysDown() & KEY_TOUCH){
+		bottomScreenIsLit = true; //input event triggered
+	}
+	
+	if (keysDown() & KEY_B){
+		stopAudioFile();
+	}
+	
 
 	if(keypadLocked == false){
 		if (keysDown() & KEY_UP){
@@ -370,7 +93,6 @@ void handleInput(){
 			struct touchPosition touchPos;
 			XYReadScrPosUser(&touchPos);
 			volumeUp(touchPos.px, touchPos.py);
-			menuShow();
 			scanKeys();
 			while(keysDown() & KEY_UP){
 				scanKeys();
@@ -382,20 +104,8 @@ void handleInput(){
 			struct touchPosition touchPos;
 			XYReadScrPosUser(&touchPos);
 			volumeDown(touchPos.px, touchPos.py);
-			menuShow();
 			scanKeys();
 			while(keysDown() & KEY_DOWN){
-				scanKeys();
-			}
-		}
-		
-		
-		if (keysDown() & KEY_TOUCH){
-			bottomScreenIsLit = true; //input event triggered
-			u8 channel = 0;	//-1 == auto allocate any channel in the 0--15 range
-			//setSoundSampleContext(11025, (u32*)&click_raw[0], click_raw_size, channel, 40, 63, 1);	//PCM16 sample //todo: use writeARM7SoundChannelFromSource() instead
-			scanKeys();
-			while(keysDown() & KEY_TOUCH){
 				scanKeys();
 			}
 		}
@@ -407,7 +117,6 @@ void handleInput(){
 			while(keysHeld() & KEY_L){
 				scanKeys();
 			}
-			menuShow();
 		}
 		
 		if (keysDown() & KEY_R){
@@ -417,99 +126,8 @@ void handleInput(){
 			while(keysHeld() & KEY_R){
 				scanKeys();
 			}
-			menuShow();
 		}
 		
-		if (keysDown() & KEY_START){
-			bottomScreenIsLit = true; //input event triggered
-			if(soundLoaded == false){
-				while( ShowBrowserC((char *)globalPath, curChosenBrowseFile, &pendingPlay, &curFileIndex) == true ){	//as long you keep using directories ShowBrowser will be true
-					//navigating DIRs here...
-				}
-				scanKeys();
-				while(keysDown() & KEY_START){
-					scanKeys();
-				}
-				
-				//handle TVS files only when pressing Start
-				char tmpName[256];
-				char ext[256];
-				char bootldr[256];
-				strcpy(tmpName, curChosenBrowseFile);
-				separateExtension(tmpName, ext);
-				strlwr(ext);
-				
-				//TGDS-MB + TGDS-videoplayer TVS file
-				if(strncmp(ext,".tvs", 4) == 0){
-					playTVSFile(curChosenBrowseFile);
-				}
-			}
-			else{
-				clrscr();
-				printfCoords(0, 6, "Please stop audio playback before listing files. ");
-				
-				scanKeys();
-				while(keysDown() & KEY_START){
-					scanKeys();
-				}
-				menuShow();
-			}
-			
-		}
-		
-		if (keysDown() & KEY_B){
-			bottomScreenIsLit = true; //input event triggered
-			//Audio stop here
-			closeSound();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			pendingPlay = false;
-
-			menuShow();
-			
-			scanKeys();
-			while(keysDown() & KEY_B){
-				scanKeys();
-			}
-		}
-		
-		//Coto: this piece of art is magic, truth.
-		/*
-		if (keysDown() & KEY_X){
-			bottomScreenIsLit = true; //input event triggered
-			if(drawMandelbrt == false){
-				drawMandelbrt = true;
-				double factor = 1.0; 
-				drawMandel(factor);
-				//render TGDSLogo from a LZSS compressed file
-				RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
-			}
-			
-			scanKeys();
-			while(keysDown() & KEY_X){
-				scanKeys();
-			}
-		}
-		*/
-
 		if (keysDown() & KEY_SELECT){
 			bottomScreenIsLit = true; //input event triggered
 			//0 = playlist / 1 = repeat
@@ -519,7 +137,6 @@ void handleInput(){
 			else{
 				playbackMode = 1;
 			}
-			menuShow();
 			scanKeys();
 			while(keysDown() & KEY_SELECT){
 				scanKeys();
@@ -529,101 +146,29 @@ void handleInput(){
 	}
 
 	//Audio track ended? Play next audio file
-	if((pendingPlay == false) && (cutOff == true)){ 
+	if((pendPlay == 0) && (cutOff == true)){ 
 		
-		if(playbackMode == 0){
-			curFileIndex++;
-		}
+		if(WoopsiTemplateProc != NULL){
+			if(playbackMode == 0){
+				WoopsiTemplateProc->currentFileRequesterIndex++;
+			}
 
-		if(curFileIndex >= getCurrentDirectoryCount(activePlayListRead)){
-			curFileIndex = 0;
-		}
-		struct FileClass * Inst = getFileClassFromList(curFileIndex, activePlayListRead);
-		if(Inst != NULL){
-			strcpy(curChosenBrowseFile, (const char *)Inst->fd_namefullPath);
+			FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+			FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+			if(WoopsiTemplateProc->currentFileRequesterIndex >= (freqListBox->getOptionCount()) ){
+				WoopsiTemplateProc->currentFileRequesterIndex = 0;
+			}
+			freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
 			
 			//Let decoder close context so we can start again
-			closeSound();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			
-			updateStream();	
-			updateStream();
-			updateStream();
-			updateStream();
-			pendingPlay = true;
+			stopAudioStreamUser();
+
+			playAudioFile();
 		}
 	}
 }
 
 int playbackMode = 0; //0 = playlist / 1 = repeat
-
-void menuShow(){
-	clrscr();
-	printf("                              ");
-	printf("%s >%d", TGDSPROJECTNAME, TGDSPrintfColor_Yellow);
-	//printf("Free Mem : %d KB ", ( (int)TGDSARM9MallocFreeMemory()/1024) );
-	printf("Formats: ");
-	printf("IMA-ADPCM (Intel)/WAV/MP3/AAC/Ogg >%d", TGDSPrintfColor_Yellow);
-	printf("/FLAC/NSF/SPC/GBS/.TVS VideoStream >%d", TGDSPrintfColor_Yellow);
-	printf("/.VGM (Sega Genesis) >%d", TGDSPrintfColor_Yellow);
-	
-	printf("(Start): File Browser -> (A) to play audio file");
-	printf("(L): Recent Playlist ");
-	printf("(R): Random audio file playback ");
-	
-	if(keypadLocked == false){
-		printf("(A): Keys [Unlocked] >%d", TGDSPrintfColor_Green);
-	}
-	else{
-		printf("(A): Keys [Locked] >%d", TGDSPrintfColor_Red);
-	}
-
-	printf("(B): Stop audio playback ");
-	//printf("(X): Mandelbrot demo ");
-	printf("(D-PAD: Down): Volume - ");
-	printf("(D-PAD: Up): Volume + ");
-	printf("(Select): Playback Mode");
-	if(soundLoaded == false){
-		printf("Playback: Stopped.");
-	}
-	else{
-		
-		if(soundData.sourceFmt == SRC_GBS){
-			printf("Playing: %s[%d/%d]", gbsMeta(0), getGBSTrack(), getGBSTotalTracks());
-		}
-		else if(soundData.sourceFmt == SRC_NSF){
-			printf("Playing: %s[%d/%d]", getNSFMeta(0), getNSFTrack(), getNSFTotalTracks());
-		}
-		else{
-			printf("Playing: %s", curChosenBrowseFile);
-		}
-	}
-	printf("Current Volume: %d", (int)getVolume());
-
-	if(playbackMode == 0){
-		printf("Playback mode: Playlist");
-	}
-	else if(playbackMode == 1){
-		printf("Playback mode: Repeat ");
-	}
-	else{
-		printf("Unhandled Playback mode");
-	}
-}
 
 void playIntro(){
 	char * introFilename = "0:/tgds_intro.m4a";
@@ -637,45 +182,55 @@ void playIntro(){
 	TGDSARM9Free(LZSSCtx.bufferSource);
 
 	if(written == LZSSCtx.bufferSize){
-		//Create TGDS Dir API context
-		cleanFileList(playListRead);
-		cleanFileList(activePlayListRead);
+		if(WoopsiTemplateProc != NULL){
+			WoopsiTemplateProc->currentFileRequesterIndex = -1;
+			FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+			FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+			freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
+		}
+		strcpy(currentFileChosen, (const char *)introFilename);
 		
-		readDirectoryIntoFileClass("/", activePlayListRead);
-		readDirectoryIntoFileClass("/", playListRead);
-		curFileIndex = -1;
-		strcpy(curChosenBrowseFile, (const char *)introFilename);
+		stopAudioFile();
 		
-		//Let decoder close context so we can start again
-		closeSound();
-
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		updateStream();	
-		updateStream();
-		updateStream();
-		updateStream();
-		
-		pendingPlay = true;
+		pendPlay = 1;
 	}
 	else{
 		printf("couldn't play the intro.");
 	}
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void stopAudioStreamUser(){
+	bottomScreenIsLit = true; //input event triggered
+	//Audio stop here
+	closeSound();
+	
+	updateStream();	
+	updateStream();
+	updateStream();
+	updateStream();
+	
+	updateStream();	
+	updateStream();
+	updateStream();
+	updateStream();
+	
+	updateStream();	
+	updateStream();
+	updateStream();
+	updateStream();
+	
+	updateStream();	
+	updateStream();
+	updateStream();
+	updateStream();
+	pendPlay = 2; //stop filestream immediately
+}
 
 __attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -693,15 +248,26 @@ int main(int argc, char **argv) {
 	memcpy((void *)savedDefaultCore, (const void *)0x02380000, (int)(96*1024));
 	coherent_user_range_by_size((uint32)savedDefaultCore, (int)(96*1024));
 	
+	//Let dlmalloc handle memory management
+	extern void ds_malloc_abort(void);
+	u32 * fnPtr = (u32 *)&ds_malloc_abort;
+	mem_cpy((u8*)fnPtr, (u8*)&ds_malloc_abortSkip, 16);
+
 	bool project_specific_console = false;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
 	GUI_clear();
 	
-	bool isCustomTGDSMalloc = false; //default newlib-nds's malloc
+	//default newlib-nds's malloc
+	bool isCustomTGDSMalloc = false; 
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
+	
+	//WoopsiSDK's malloc (unused)
+	//bool isCustomTGDSMalloc = true; 
+	//setTGDSMemoryAllocator(getWoopsiSDKToolchainGenericDSMultibootMemoryAllocatorSetup(isCustomTGDSMalloc));
+	
 	sint32 fwlanguage = (sint32)getLanguage();
 	
-	project_specific_console = false;	//set default console or custom console: custom console
+	project_specific_console = true;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
 	GUI_clear();
 	
@@ -722,9 +288,6 @@ int main(int argc, char **argv) {
 	flush_dcache_all();
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
-	//render TGDSLogo from a LZSS compressed file
-	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
-	
 	REG_IME = 0;
 	MPUSet();
 	//TGDS-Projects -> legacy NTR TSC compatibility
@@ -736,20 +299,13 @@ int main(int argc, char **argv) {
 	powerOFF3DEngine(); //Power off ARM9 3D Engine to save power
 	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT); 
 	bottomScreenIsLit = true;
-
-	//Init TGDS FS Directory Iterator Context(s). Mandatory to init them like this!! Otherwise several functions won't work correctly.
-	playListRead = initFileList();
-	activePlayListRead = initFileList();
-	
-	memset(globalPath, 0, sizeof(globalPath));
-	strcpy(globalPath,"/");
 	
 	MikMod_RegisterAllDrivers();
 	MikMod_RegisterAllLoaders();
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-	REG_IE = REG_IE & ~(IRQ_TIMER3|IRQ_VCOUNT); //disable VCOUNT and WIFI timer
-	REG_IE = (REG_IE | IRQ_VBLANK);
+	REG_IE = REG_IE & ~(IRQ_TIMER3); //disable WIFI timer
+	REG_IE = (REG_IE | IRQ_VBLANK | IRQ_VCOUNT);
 	
 	//Register threads.
 	struct task_Context * TGDSThreads = getTGDSThreadSystem();
@@ -760,23 +316,18 @@ int main(int argc, char **argv) {
 
 	keypadLocked=false;
 	TGDSVideoPlayback = false;
-	menuShow();
 	playIntro();
-	enableFastMode();
 	enableScreenPowerTimeout();
 
-	while (1){
-		if(TGDSVideoPlayback == true){
-			TGDSVideoRender();
-		}
-		else{
-			handleInput();
-		}
-		bool waitForVblank = false;
-		int threadsRan = runThreads(TGDSThreads, waitForVblank);
-	}
+	// Create Woopsi UI
+	WoopsiTemplate WoopsiTemplateApp;
+	WoopsiTemplateProc = &WoopsiTemplateApp;
+	return WoopsiTemplateApp.main(argc, argv);
+}
+
+//Skip newlib-nds's dlmalloc abort handler and let dlmalloc memory manager handle gracefully invalid memory blocks, later to be re-assigned when fragmented memory gets re-arranged as valid memory blocks.
+void ds_malloc_abortSkip(void){
 	
-	return 0;
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))

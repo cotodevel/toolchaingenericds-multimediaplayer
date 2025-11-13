@@ -85,26 +85,6 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 		//NDS7: 
 		#ifdef ARM7
 		
-		//void disableFastMode();
-		case(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ):{
-			REG_DISPSTAT = (DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
-			REG_IE = REG_IE | (IRQ_VBLANK|IRQ_VCOUNT);
-			enableARM7TouchScreen();
-			uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
-			setValueSafe(&fifomsg[34], (uint32)0);
-		}
-		break;
-		
-		//void enableFastMode();
-		case(FIFO_TGDSAUDIOPLAYER_DISABLEIRQ):{
-			REG_DISPSTAT = 0;
-			REG_IE = REG_IE & ~(IRQ_VBLANK|IRQ_VCOUNT);
-			disableARM7TouchScreen();
-			uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
-			setValueSafe(&fifomsg[34], (uint32)0);
-		}
-		break;
-		
 		case(FIFO_STOP_ARM7_VRAM_CORE):{
 			#ifdef ARM7SPCCUSTOMCORE
 			StopSoundSPC();
@@ -137,7 +117,7 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 		}break;
 		case POCKETSPC_ARM7COMMAND_LOAD_SPC:{
 			REG_DISPSTAT = 0;
-			REG_IE = REG_IE & ~(IRQ_VBLANK|IRQ_VCOUNT|IRQ_HBLANK);
+			REG_IE = REG_IE & ~(IRQ_VBLANK|IRQ_HBLANK);
 			
 			struct sIPCSharedTGDSSpecific* sharedIPC = getsIPCSharedTGDSSpecific();
 			LoadSpc(sharedIPC->rawSpcShared);
@@ -145,6 +125,15 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 		}break;	
 		#endif
 		
+		case(FIFO_DISABLE_ARM7_TouchScreen):{
+			disableARM7TouchScreen();
+		}break;
+
+		case(FIFO_ENABLE_ARM7_TouchScreen):{
+			enableARM7TouchScreen();
+		}break;
+		
+
 		#endif
 		
 		//NDS9: 
@@ -282,23 +271,14 @@ u32 playSoundStreamFromFile(char * videoStructFDFilename, bool loop, u32 streamT
 	return fifomsg[33];
 }
 
-void enableFastMode(){
-	uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
-	setValueSafe(&fifomsg[34], (uint32)FIFO_TGDSAUDIOPLAYER_DISABLEIRQ);
-	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_DISABLEIRQ, 0xFF);
-	while( getValueSafe(&fifomsg[34]) == (uint32)FIFO_TGDSAUDIOPLAYER_DISABLEIRQ){
-		swiDelay(1);
-	}
+void disableARM7TouchScreenFromARM9(){
+	SendFIFOWords(FIFO_DISABLE_ARM7_TouchScreen, 0xFF);
 }
 
-void disableFastMode(){
-	uint32 * fifomsg = (uint32 *)NDS_UNCACHED_SCRATCHPAD;
-	setValueSafe(&fifomsg[34], (uint32)FIFO_TGDSAUDIOPLAYER_ENABLEIRQ);
-	SendFIFOWords(FIFO_TGDSAUDIOPLAYER_ENABLEIRQ, 0xFF);
-	while( getValueSafe(&fifomsg[34]) == (uint32)FIFO_TGDSAUDIOPLAYER_ENABLEIRQ){
-		swiDelay(1);
-	}
+void enableARM7TouchScreenFromARM9(){
+	SendFIFOWords(FIFO_ENABLE_ARM7_TouchScreen, 0xFF);
 }
+
 #endif
 
 uint32 ADDRPORT_SPC_TO_SNES=0;

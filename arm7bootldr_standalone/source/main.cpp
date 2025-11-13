@@ -30,6 +30,7 @@ USA
 #include "biosTGDS.h"
 #include "timerTGDS.h"
 #include "InterruptsARMCores_h.h"
+#include "exceptionTGDS.h"
 #include "loader.h"
 #include "ipcfifoTGDSUser.h"
 #include "dldi.h"
@@ -154,6 +155,8 @@ void bootfile(){
 ////////////////////////////////////////////////////TGDS-mb v3 end /////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool TSCKeyActive = false;
+
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -169,11 +172,85 @@ int main(int argc, char **argv) {
 	SendFIFOWords(FIFO_ARM7_RELOAD, 0xFF); //ARM7 Reload OK -> acknowledge ARM9
 	struct task_Context * TGDSThreads = getTGDSThreadSystem();
     /*			TGDS 1.6 Standard ARM7 Init code end	*/
-	disableARM7TouchScreen();
+	
+	//Add a timeout-based touchscreen thread 
+	{
+		keyPressTGDSProject7 = 0xFFFF;
+		keyPressTGDSProject7 = keyPressTGDSProject7 & (~(1 << 6));
+		TSCKeyActive = true;
+
+        int taskATimeMS = 1; //Task execution requires at least 1ms
+        if(registerThread(TGDSThreads, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode7, tUnitsMilliseconds) != THREAD_OVERFLOW){
+                
+        }
+    }
 	
 	while (1) {
 		bool waitForVblank = false;
 		int threadsRan = runThreads(TGDSThreads, waitForVblank);
 	}
 	return 0;
+}
+
+//4000136h - NDS7 - EXTKEYIN - Key X/Y Input (R)
+//Same as GBA, both ARM7 and ARM9 have keyboard input registers, and each its own keypad IRQ control register.
+#define REG_KEYXY 		(*(vuint16*)0x04000136)
+
+static int millisecondsElapsedTSCTimeout = 0;	
+u16 keyPressTGDSProject7 = 0;
+
+void taskA(u32 * args){
+	handleTurnOnTurnOffTouchscreenTimeout();
+}
+
+//called 50 times per second
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void handleTurnOnTurnOffTouchscreenTimeout(){
+	millisecondsElapsedTSCTimeout ++;
+	
+	//Handle touchscreen bottom screen timeout
+	if(!(keyPressTGDSProject7 & (1 << 6))){
+		//strcpy((char*)0x02000000, "                       ");
+		//strcpy((char*)0x02000000, "enabling TSC");
+
+		enableARM7TouchScreen();
+		millisecondsElapsedTSCTimeout = 0;
+		TSCKeyActive = true;
+	}
+
+	if(millisecondsElapsedTSCTimeout < 5){
+		millisecondsElapsedTSCTimeout++;
+	}
+	else{
+		//disable tsc here
+		if( (TSCKeyActive == true) && (keyPressTGDSProject7 & (1 << 6)) ){ //tsc release
+			//strcpy((char*)0x02000000, "                       ");
+			//strcpy((char*)0x02000000, "disabling TSC");
+
+			disableARM7TouchScreen();
+			millisecondsElapsedTSCTimeout = 0;
+			TSCKeyActive = false;
+		}
+	}
+	
+	keyPressTGDSProject7 = REG_KEYXY;
+}
+
+//////////////////////////////////////////////////////// Threading User code start : TGDS Project specific ////////////////////////////////////////////////////////
+//User callback when Task Overflows. Intended for debugging purposes only, as normal user code tasks won't overflow if a task is implemented properly.
+//	u32 * args = This Task context
+void onThreadOverflowUserCode7(u32 * args){
+	struct task_def * thisTask = (struct task_def *)args;
+	struct task_Context * parentTaskCtx = thisTask->parentTaskCtx;	//get parent Task Context node 
+	
+	//Thread overflow! Halt.
+
+	while(1==1){
+		HaltUntilIRQ();
+	}
 }
