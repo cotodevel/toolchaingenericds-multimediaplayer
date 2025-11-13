@@ -99,7 +99,19 @@ void VblankUser(){
 __attribute__((section(".itcm")))
 #endif
 void VcounterUser(){
-	
+	if(TSCKeyActive == true){
+		//TGDS Touchscreen handling X/Y/Touchscreen
+	}
+	else{
+		//If touchscreen disabled, still get X/Y/Touchscreen keys (but no TSC coords)
+		u16 keys= keyPressTGDSProject7;
+		struct sIPCSharedTGDS * sIPCSharedTGDSInst = (struct sIPCSharedTGDS *)TGDSIPCStartAddress;
+		struct touchPosition * sTouchPosition = (struct touchPosition *)&sIPCSharedTGDSInst->tscIPC;
+		
+		//ARM7 Keypad has access to X/Y/Hinge/Pen down bits
+		sIPCSharedTGDSInst->KEYINPUT7 = (uint16)REG_KEYINPUT;
+		sIPCSharedTGDSInst->buttons7	= keys;
+	}
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
