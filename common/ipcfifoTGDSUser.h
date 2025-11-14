@@ -82,13 +82,19 @@ typedef sint16 int16;
 #define SLEEPMODE_SECONDS (int)(15)
 
 //TGDS Memory Layout ARM7/ARM9 Cores
-#define TGDS_ARM7_MALLOCSTART (u32)(0x06004000)
-#define TGDS_ARM7_MALLOCSIZE (int)(4*1024)
-#define TGDSDLDI_ARM7_ADDRESS (u32)(TGDS_ARM7_MALLOCSTART + TGDS_ARM7_MALLOCSIZE)
+#define TGDS_ARM7_MALLOCSTART (u32)(0x06018000)
+#define TGDS_ARM7_MALLOCSIZE (int)(512)
+
+//normal core
+#define TGDSDLDI_ARM7_ADDRESS_NORMAL_CORE (u32)(((int)0x06004000) + TGDS_ARM7_MALLOCSIZE)
+
+//*.tvs core
+#define TGDSDLDI_ARM7_ADDRESS_TVS_CORE (u32)(((int)0x06018000) + TGDS_ARM7_MALLOCSIZE)
+
 
 #define TGDS_ARM7_AUDIOBUFFER_STREAM_ADPCMCORE (u32)(((int)0x02400000 - (768*1024))) //only for *.TVS: ADPCM Core
-#define TGDS_ARM7_AUDIOBUFFER_STREAM (u32)(TGDSDLDI_ARM7_ADDRESS + (32*1024)) //SPC Core: SPC play + Codec audio stream. //*.TVS Core: Unused
-#define APU_RAM_ADDRESS     ((volatile unsigned char*) ((int)TGDS_ARM7_AUDIOBUFFER_STREAM) + (8*1024) )	//64K APU WORK 
+#define TGDS_ARM7_AUDIOBUFFER_STREAM (u32)(((u32)TGDSDLDI_ARM7_ADDRESS_NORMAL_CORE + TGDS_ARM7_MALLOCSIZE) + (32*1024)) //SPC Core: SPC play + Codec audio stream. //*.TVS Core: Unused
+#define APU_RAM_ADDRESS     ((volatile unsigned char*) TGDSDLDI_ARM7_ADDRESS_NORMAL_CORE + (8*1024) )	//64K APU WORK 
 #define APU_BRR_HASH_BUFFER	(volatile u32*)((int)0x023B8000)	//270K ~ worth of Hashed Samples from the APU core to remove stuttering : 0x02400000 - 0x48000 = 0x023B8000
 
 #define POCKETSPC_ARM7COMMAND_STOP_SPC (u32)(0xFFAACC02)
@@ -96,7 +102,6 @@ typedef sint16 int16;
 
 #define FIFO_PLAYSOUNDSTREAM_FILE (u32)(0xFFFFABCB)
 #define FIFO_STOPSOUNDSTREAM_FILE (u32)(0xFFFFABCC)
-#define FIFO_PLAYSOUNDEFFECT_FILE (u32)(0xFFFFABCD)
 #define FIFO_STOP_ARM7_VRAM_CORE (u32)(0xFFFFABCE)
 #define FIFO_DISABLE_ARM7_TouchScreen (u32)(0xFFFFABD1)
 #define FIFO_ENABLE_ARM7_TouchScreen (u32)(0xFFFFABD2)
@@ -118,7 +123,6 @@ typedef sint16 int16;
 #if defined(ARM7VRAMCUSTOMCORE)
 	extern IMA_Adpcm_Player backgroundMusicPlayer;	//Sound stream Background music Instance
 	extern FATFS fileHandle; //Sound stream handle
-	extern FATFS FatfsFILESoundSample0; //Sound effect handle #0
 #endif
 #endif
 

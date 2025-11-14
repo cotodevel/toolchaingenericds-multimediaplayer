@@ -8,7 +8,7 @@ ENTRY(_start)
 MEMORY {
 	ewram  : ORIGIN = 0x02380000, LENGTH = 96K
 	rom    : ORIGIN = 0x08000000, LENGTH = 32M
-	iwram  : ORIGIN = 0x037f8000, LENGTH = 96K
+	iwram  : ORIGIN = 0x06000000, LENGTH = 96K
 	
 	twl_ewram : ORIGIN = 0x02e80000, LENGTH = 512K - 64K
 	twl_iwram : ORIGIN = 0x03000000, LENGTH = 256K
@@ -28,7 +28,7 @@ __arm7_start__ = __iwram_start;
 __arm7_end__ = __iwram_top;
 		
 /* ARM ABI says stacks are full decreasing */
-sp_SVC	= __iwram_top - 0x200; /* reset, swi exception*/
+sp_SVC	= 0x03810000 - 0x200; /* reset, swi exception*/
 sp_IRQ	= sp_SVC - 0x200;	/*irq exception*/
 sp_FIQ	= sp_IRQ - 0x200;	/* fiq exception */
 sp_ABT	= sp_FIQ - 0x200;	/* prefetch / data aborts exception */

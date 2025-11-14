@@ -298,8 +298,6 @@ void playTVSFile(char * tvsFile){
 	}
 }
 
-static struct EngineContext2D EngineCtx2D;
-
 void ARM7LoadStreamCore(){
 	//Playback:
 	//Let decoder close context so we can start again
@@ -329,38 +327,6 @@ void ARM7LoadStreamCore(){
 	
 	//Set 2D *.TVS BG Format 
 	{
-		memset(&EngineCtx2D, 0, sizeof(struct EngineContext2D));
-
-		//save DISPCNT:
-		EngineCtx2D.savedREG_DISPCNT = REG_DISPCNT;
-
-		//save BG REGS
-		int i = 0;
-		for(i = 0; i < (int)backgroundsPerEngine; i++){
-			EngineCtx2D.savedREG_BGXCNT[i] = REG_BGXCNT(i);
-		}
-
-		//save BG 2D Matrix regs
-		EngineCtx2D.savedREG_BG3X = REG_BG3X;
-		EngineCtx2D.savedREG_BG3Y = REG_BG3Y;
-		EngineCtx2D.savedREG_BG3PA = REG_BG3PA;
-		EngineCtx2D.savedREG_BG3PB = REG_BG3PB;
-		EngineCtx2D.savedREG_BG3PC = REG_BG3PC;
-		EngineCtx2D.savedREG_BG3PD = REG_BG3PD;
-
-		//save VRAM settings
-		EngineCtx2D.savedVRAM_A_CR = VRAM_A_CR;
-		EngineCtx2D.savedVRAM_B_CR = VRAM_B_CR;
-		EngineCtx2D.savedVRAM_C_CR = VRAM_C_CR;
-		EngineCtx2D.savedVRAM_D_CR = VRAM_D_CR;
-		EngineCtx2D.savedVRAM_E_CR = VRAM_E_CR;
-		EngineCtx2D.savedVRAM_F_CR = VRAM_F_CR;
-		EngineCtx2D.savedVRAM_G_CR = VRAM_G_CR;
-		EngineCtx2D.savedVRAM_H_CR = VRAM_H_CR;
-		EngineCtx2D.savedVRAM_I_CR = VRAM_I_CR;
-
-		EngineCtx2D.SavedGUIGBAMacroMode = GUI.GBAMacroMode;
-		
 		RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
 
 		bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
@@ -385,47 +351,31 @@ void ARM7LoadStreamCore(){
 }
 
 void ARM7LoadDefaultCore(){
+	//Stop playback. Launch TGDS Project again
 	BgMusicOff();
 	haltARM7(); //Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
 	
-	//Restore WoopsiSDK 2D BG Format 
-	{
-		//restore DISPCNT:
-		REG_DISPCNT = EngineCtx2D.savedREG_DISPCNT;
-
-		//restore BG REGS
-		int i = 0;
-		for(i = 0; i < (int)backgroundsPerEngine; i++){
-			REG_BGXCNT(i) = EngineCtx2D.savedREG_BGXCNT[i];
-		}
-
-		//restore BG 2D Matrix regs
-		REG_BG3X = EngineCtx2D.savedREG_BG3X;
-		REG_BG3Y = EngineCtx2D.savedREG_BG3Y;
-		REG_BG3PA = EngineCtx2D.savedREG_BG3PA;
-		REG_BG3PB = EngineCtx2D.savedREG_BG3PB;
-		REG_BG3PC = EngineCtx2D.savedREG_BG3PC;
-		REG_BG3PD = EngineCtx2D.savedREG_BG3PD;
-
-		//restore VRAM settings
-		VRAM_A_CR = EngineCtx2D.savedVRAM_A_CR;
-		VRAM_B_CR = EngineCtx2D.savedVRAM_B_CR;
-		VRAM_C_CR = EngineCtx2D.savedVRAM_C_CR;
-		VRAM_D_CR = EngineCtx2D.savedVRAM_D_CR;
-		VRAM_E_CR = EngineCtx2D.savedVRAM_E_CR;
-		VRAM_F_CR = EngineCtx2D.savedVRAM_F_CR;
-		VRAM_G_CR = EngineCtx2D.savedVRAM_G_CR;
-		VRAM_H_CR = EngineCtx2D.savedVRAM_H_CR;
-		VRAM_I_CR = EngineCtx2D.savedVRAM_I_CR;
-
-		
-		GUI.GBAMacroMode = EngineCtx2D.SavedGUIGBAMacroMode;
-		TGDSLCDSwap();
-	}
-
-	//Stop playback. Go back to IWRAM Core
 	REG_IME = 0;
-	executeARM7Payload((u32)0x02380000, 96*1024, (u32*)savedDefaultCore);
-	WRAM_CR = WRAM_32KARM9_0KARM7;
+	u32 * payload = (u32 *)savedDefaultCore;
+	executeARM7Payload((u32)0x02380000, 96*1024, payload);
+	BgMusicOff();
 	REG_IME = 1;
+	
+	char fileBuf[MAX_TGDSFILENAME_LENGTH];
+	strcpy(fileBuf, "0:/ToolchainGenericDS-multimediaplayer");
+	if(__dsimode == false){
+		strcat(fileBuf, ".nds");
+	}
+	else{
+		strcat(fileBuf, ".srl");
+	}
+	char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+	memset(thisArgv, 0, sizeof(thisArgv));
+	strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+	strcpy(&thisArgv[1][0], fileBuf);	//Arg1:	NDS Binary reloaded
+	strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
+	payload = getTGDSMBV3ARM7AudioCore();
+	if(TGDSMultibootRunNDSPayload(fileBuf, (u8*)payload, 3, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
+		
+	}
 }
