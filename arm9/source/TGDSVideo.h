@@ -154,7 +154,7 @@ extern u32 frameCount;
 extern bool TGDSVideoPlayback;
 
 extern void playTVSFile(char * tvsFile);
-
+extern void haltTVSVideoUsermode();
 extern void ARM7LoadStreamCore();
 extern void ARM7LoadDefaultCore();
 #endif

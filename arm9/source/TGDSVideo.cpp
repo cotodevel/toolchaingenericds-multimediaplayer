@@ -201,25 +201,7 @@ int TGDSVideoRender(){
 					frameCount++;
 				}
 				else{
-					DMA0_CR = 0;
-					dmaFillWord(0, 0, (uint32)mainBufferDraw, (uint32)256*192*2);	//clean render buffer
-					vblankCount = frameCount = 1;
-					nextVideoFrameOffset = TGDSVideoFrameContextReference->videoFrameStartFileOffset;
-					nextVideoFrameFileSize = TGDSVideoFrameContextReference->videoFrameStartFileSize;
-					TGDSVideoPlayback = false;
-					
-					stopTimerCounter();	//Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
-					ARM7LoadDefaultCore();
-					
-					if(WoopsiTemplateProc != NULL){
-						WoopsiTemplateProc->redraw();			// Draw initial state
-					}
-					
-					enableScreenPowerTimeout();
-					
-					GUI.GBAMacroMode = false;	//GUI console at bottom screen. 
-					TGDSLCDSwap();
-					setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+					haltTVSVideoUsermode();
 				}
 			}
 		}
@@ -378,4 +360,29 @@ void ARM7LoadDefaultCore(){
 	if(TGDSMultibootRunNDSPayload(fileBuf, (u8*)payload, 3, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
 		
 	}
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void haltTVSVideoUsermode(){
+	DMA0_CR = 0;
+	dmaFillWord(0, 0, (uint32)mainBufferDraw, (uint32)256*192*2);	//clean render buffer
+	vblankCount = frameCount = 1;
+	nextVideoFrameOffset = TGDSVideoFrameContextReference->videoFrameStartFileOffset;
+	nextVideoFrameFileSize = TGDSVideoFrameContextReference->videoFrameStartFileSize;
+	TGDSVideoPlayback = false;
+	
+	stopTimerCounter();	//Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
+	ARM7LoadDefaultCore();
+	
+	enableScreenPowerTimeout();
+	
+	GUI.GBAMacroMode = false;	//GUI console at bottom screen. 
+	TGDSLCDSwap();
+	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 }

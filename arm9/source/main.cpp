@@ -64,71 +64,103 @@ u32 * getTGDSMBV3ARM7AudioCore(){
 }
 
 char currentFileChosen[MAX_TGDSFILENAME_LENGTH+1];
-bool keypadLocked=false;
-
 void handleInput(){
-	scanKeys();
-	/*
-	if (keysDown() & KEY_A){
-		bottomScreenIsLit = true; //input event triggered
-		keypadLocked=!keypadLocked;
-		while(keysDown() & KEY_A){
-			scanKeys();
-		}
-	}
-	*/
-
-	if(keysDown() & KEY_TOUCH){
-		bottomScreenIsLit = true; //input event triggered
-	}
+	//scanKeys(); //if enabled, destroys key button presses from WoopsiSDK
+	u32 readKeys_ = keysDown();
 	
-	if (keysDown() & KEY_B){
-		stopAudioFile();
-	}
-	
-
-	if(keypadLocked == false){
-		if (keysDown() & KEY_UP){
+	switch(readKeys_){
+		case (KEY_TOUCH):{
 			bottomScreenIsLit = true; //input event triggered
-			struct touchPosition touchPos;
-			XYReadScrPosUser(&touchPos);
-			volumeUp(touchPos.px, touchPos.py);
-			scanKeys();
+		}break;
+
+		case (KEY_A):{
+			bottomScreenIsLit = true; //input event triggered
+			if(WoopsiTemplateProc != NULL){
+				WoopsiTemplateProc->_play->ClickButton();
+			}
+			while(keysHeld() & KEY_A){
+				scanKeys();
+			}	
+		}break;
+
+		case (KEY_B):{
+			bottomScreenIsLit = true; //input event triggered
+			if(WoopsiTemplateProc != NULL){
+				WoopsiTemplateProc->_stop->ClickButton();
+			}
+			while(keysHeld() & KEY_B){
+				scanKeys();
+			}	
+		}break;
+
+		case (KEY_UP):{
+			bottomScreenIsLit = true; //input event triggered
+			if(WoopsiTemplateProc != NULL){
+				WoopsiTemplateProc->currentFileRequesterIndex--;
+				FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+				FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+				
+				//Start scrolling up every nth items
+				if( (WoopsiTemplateProc->currentFileRequesterIndex >= 0) && ((WoopsiTemplateProc->currentFileRequesterIndex % 2) == 0) ){
+					freqListBox->getInternalScrollingListBoxObject()->getInternalScrollbarVerticalObject()->getInternalUpperArrowButtonObject()->ClickButton();
+				}
+
+				if(WoopsiTemplateProc->currentFileRequesterIndex < 0){
+					WoopsiTemplateProc->currentFileRequesterIndex = 0;
+				}
+				
+				freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
+				WoopsiTemplateProc->redraw();
+			}
 			while(keysDown() & KEY_UP){
 				scanKeys();
-			}
-		}
-		
-		if (keysDown() & KEY_DOWN){
+			}	
+		}break;
+
+		case (KEY_DOWN):{
 			bottomScreenIsLit = true; //input event triggered
-			struct touchPosition touchPos;
-			XYReadScrPosUser(&touchPos);
-			volumeDown(touchPos.px, touchPos.py);
-			scanKeys();
+			if(WoopsiTemplateProc != NULL){
+				FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+				FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+				int lstSize = (freqListBox->getOptionCount() - 1);
+				WoopsiTemplateProc->currentFileRequesterIndex++;
+				if(WoopsiTemplateProc->currentFileRequesterIndex >= lstSize){
+					WoopsiTemplateProc->currentFileRequesterIndex = lstSize;
+				}
+				freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
+				
+				//Start scrolling after 6th item
+				if( (WoopsiTemplateProc->currentFileRequesterIndex > 5) && ( WoopsiTemplateProc->currentFileRequesterIndex < (freqListBox->getOptionCount() - 1))){
+					freqListBox->getInternalScrollingListBoxObject()->getInternalScrollbarVerticalObject()->getInternalLowerArrowButtonObject()->ClickButton();
+				}
+				WoopsiTemplateProc->redraw();
+			}
 			while(keysDown() & KEY_DOWN){
 				scanKeys();
 			}
-		}
-		
-		if (keysDown() & KEY_L){
+		}break;
+
+		case (KEY_L):{
 			bottomScreenIsLit = true; //input event triggered
-			soundPrevTrack(0, 0);
-			scanKeys();
-			while(keysHeld() & KEY_L){
-				scanKeys();
+			if(WoopsiTemplateProc != NULL){
+				WoopsiTemplateProc->_lastFile->ClickButton();
 			}
-		}
-		
-		if (keysDown() & KEY_R){
+			while(keysDown() & KEY_L){
+				scanKeys();
+			}	
+		}break;
+
+		case (KEY_R):{
 			bottomScreenIsLit = true; //input event triggered
-			soundNextTrack(0, 0);
-			scanKeys();
-			while(keysHeld() & KEY_R){
-				scanKeys();
+			if(WoopsiTemplateProc != NULL){
+				WoopsiTemplateProc->_nextFile->ClickButton();
 			}
-		}
-		
-		if (keysDown() & KEY_SELECT){
+			while(keysDown() & KEY_R){
+				scanKeys();
+			}	
+		}break;
+
+		case (KEY_SELECT):{
 			bottomScreenIsLit = true; //input event triggered
 			//0 = playlist / 1 = repeat
 			if(playbackMode == 1){
@@ -137,17 +169,16 @@ void handleInput(){
 			else{
 				playbackMode = 1;
 			}
-			scanKeys();
+			
 			while(keysDown() & KEY_SELECT){
 				scanKeys();
 			}
-		}
+		}break;
 
 	}
-
+	
 	//Audio track ended? Play next audio file
-	if((pendPlay == 0) && (cutOff == true)){ 
-		
+	if((pendPlay == 0) && (cutOff == true)){
 		if(WoopsiTemplateProc != NULL){
 			if(playbackMode == 0){
 				WoopsiTemplateProc->currentFileRequesterIndex++;
@@ -162,7 +193,6 @@ void handleInput(){
 			
 			//Let decoder close context so we can start again
 			stopAudioStreamUser();
-
 			playAudioFile();
 		}
 	}
@@ -182,16 +212,8 @@ void playIntro(){
 	TGDSARM9Free(LZSSCtx.bufferSource);
 
 	if(written == LZSSCtx.bufferSize){
-		if(WoopsiTemplateProc != NULL){
-			WoopsiTemplateProc->currentFileRequesterIndex = -1;
-			FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
-			FileListBox* freqListBox = freqInst->getInternalListBoxObject();
-			freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
-		}
 		strcpy(currentFileChosen, (const char *)introFilename);
-		
 		stopAudioFile();
-		
 		pendPlay = 1;
 	}
 	else{
@@ -314,7 +336,6 @@ int main(int argc, char **argv) {
         
     }
 
-	keypadLocked=false;
 	TGDSVideoPlayback = false;
 	playIntro();
 	enableScreenPowerTimeout();

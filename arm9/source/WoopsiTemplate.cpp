@@ -107,8 +107,12 @@ void WoopsiTemplate::startup(int argc, char **argv) {
 	_fileReq->addGadgetEventHandler(this);
 	_fileScreen->addGadget(_fileReq);
 	
-	currentFileRequesterIndex = 0;
 	_MultiLineTextBoxLogger = NULL;	//destroyable TextBox
+	
+	//WoopsiSDK Initial state defaults
+	FileListBox* freqListBox = _fileReq->getInternalListBoxObject();
+	currentFileRequesterIndex = 0;
+	freqListBox->setSelectedIndex(currentFileRequesterIndex);
 	
 	ReportAvailableMem();
 	
@@ -262,6 +266,8 @@ void WoopsiTemplate::handleClickEvent(const GadgetEventArgs& e) {
 		
 		//_lastFile Event
 		case 3:{
+			FileRequester * freqInst = _fileReq;
+			FileListBox* freqListBox = freqInst->getInternalListBoxObject();
 			soundPrevTrack(0, 0);
 		}	
 		break;
@@ -281,6 +287,9 @@ void WoopsiTemplate::handleClickEvent(const GadgetEventArgs& e) {
 		//_stop Event
 		case 6:{
 			stopAudioFile();
+			if( (soundData.sourceFmt == SRC_NONE) && (TGDSVideoPlayback == true) ){
+				haltTVSVideoUsermode();
+			}
 		}	
 		break;
 		
@@ -349,15 +358,16 @@ void Woopsi::ApplicationMainLoop() {
 	
 	//Handle TGDS stuff...
 	switch(pendPlay){
+		//play 
 		case(1):{
 			soundLoaded = loadSound((char*)currentFileChosen);
 			
 			if(soundLoaded == false){
-				//stop right now
+				//stop file immediately
 				pendPlay = 2;
 			}
 			else{
-				//play
+				//play file immediately
 				pendPlay = 0;
 			}
 
@@ -365,6 +375,8 @@ void Woopsi::ApplicationMainLoop() {
 			WoopsiTemplateProc->ReportAvailableMem();
 		}
 		break;
+
+		//stop filestream immediately
 		case(2):{
 			pendPlay = 0;
 		}
@@ -374,10 +386,8 @@ void Woopsi::ApplicationMainLoop() {
 	if(TGDSVideoPlayback == true){
 		TGDSVideoRender();
 	}
-	else{
-		handleInput();
-	}
-	
+	handleInput();
+
 	bool waitForVblank = false; //= true; cause stutters during audio playback
 	struct task_Context * TGDSThreads = getTGDSThreadSystem();
 	int threadsRan = runThreads(TGDSThreads, waitForVblank);
@@ -396,8 +406,6 @@ void updateLayout(){
 		strcpy(tmpName, currentFileChosen);
 		separateExtension(tmpName, ext);
 		strlwr(ext);
-		
-		//TGDS-MB + TGDS-videoplayer TVS file
 		if(strncmp(ext,".tvs", 4) == 0){
 			playTVSFile(currentFileChosen);
 		}
