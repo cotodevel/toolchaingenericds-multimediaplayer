@@ -2432,7 +2432,7 @@ void closeSoundUser(){
 	SendFIFOWords(POCKETSPC_ARM7COMMAND_STOP_SPC, 0xFF);
 }
 
-void soundPrevTrack(int x, int y)
+void soundPrevTrack()
 {
 	switch(soundData.sourceFmt)
 	{
@@ -2490,10 +2490,7 @@ void soundPrevTrack(int x, int y)
 		/*
 		case SRC_VGM:
 		{
-			if(getVGMTrack() - 1 < 1){
-				return;
-			}
-			vgmTrack--;
+			
 		}
 		break;
 		*/
@@ -2537,10 +2534,28 @@ void soundPrevTrack(int x, int y)
 			}
 
 		}break;
-	}	
+	}
+
+	//Update playlist index
+	if(WoopsiTemplateProc != NULL){
+		switch(soundData.sourceFmt){
+			case(SRC_GBS):
+			case(SRC_NSF):
+			case(SRC_SNDH):
+			case(SRC_SID):{
+				FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+				FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+				int playListIndex = ((int)freqListBox->getSelectedIndex() - 1);
+				if(playListIndex > 0){
+					freqListBox->setSelectedIndex(playListIndex);
+					WoopsiTemplateProc->currentFileRequesterIndex = playListIndex;
+				}
+			}break;
+		}
+	}
 }
 
-void soundNextTrack(int x, int y)
+void soundNextTrack()
 {
 	switch(soundData.sourceFmt)
 	{
@@ -2600,10 +2615,7 @@ void soundNextTrack(int x, int y)
 		/*
 		case SRC_VGM:
 		{
-			if(getVGMTrack()+1 > getVGMTotalTracks())
-				return;
 			
-			vgmTrack++;
 		}
 		break;
 		*/
@@ -2646,6 +2658,97 @@ void soundNextTrack(int x, int y)
 
 				playAudioFile();
 			}
+		}break;
+	}
+
+	//Update playlist index
+	if(WoopsiTemplateProc != NULL){
+		switch(soundData.sourceFmt){
+			case(SRC_GBS):
+			case(SRC_NSF):
+			case(SRC_SNDH):
+			case(SRC_SID):{
+				FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+				FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+				int playListIndex = ((int)freqListBox->getSelectedIndex() + 1);
+				if(playListIndex < freqListBox->getOptionCount()){
+					freqListBox->setSelectedIndex(playListIndex);
+					WoopsiTemplateProc->currentFileRequesterIndex = playListIndex;
+				}
+			}break;
+		}
+	}
+}
+
+void soundSetTrackInPayload(int trackIndex)
+{
+	switch(soundData.sourceFmt)
+	{
+		case SRC_NSF:			
+		{
+			if(getNSFTrackIdx(trackIndex)+1 > getNSFTotalTracks())
+				return;
+			
+			int tTrack = getNSFTrackIdx(trackIndex);
+			
+			while(inTrack);
+			
+			isSwitching = true;
+			
+			NSFCore_Initialize();
+			RebuildOutputTables();
+			LoadFile(nsffile,nsfLength);
+			SetPlaybackOptions(NSF_FREQ);
+			LoadNSF(getnDataBufferSize());
+			SetTrack(tTrack);
+			
+			StopFade();
+			
+			isSwitching = false;
+			
+			nsfDecode();
+		}
+		break;
+		case SRC_SNDH:
+		{
+			if(trackIndex+1 > getSNDHTotalTracks())
+				return;
+			
+			api68_play(sc68, trackIndex + 1, 0);
+		}
+		break;
+		case SRC_SID:
+		{
+			if(trackIndex+1 > getSIDTotalTracks())
+				return;
+			
+			cpuJSR(sid_init_addr, ++sid_subSong);     // Start the song initialize
+			
+		}
+		break;
+		
+		case SRC_GBS:
+		{
+			if(trackIndex+1 > getGBSTotalTracks())
+				return;
+			
+			gbsTrack = trackIndex;
+		}
+		break;
+
+		//VGM tracks are standalone binaries, like SPCs
+		/*
+		case SRC_VGM:
+		{
+			
+		}
+		break;
+		*/
+		
+		default:{
+			//Embedded payloads with specified formats are supported only. 
+			//This case is either a standalone audio stream or embedded payload unsupported. 
+			
 		}break;
 	}
 }

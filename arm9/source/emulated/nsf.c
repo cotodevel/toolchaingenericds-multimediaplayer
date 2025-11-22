@@ -4139,3 +4139,8 @@ int getNSFTrack()
 	return nCurTrack+1;
 }
 
+int getNSFTrackIdx(int idx)
+{
+	return idx;
+}
+

@@ -181,23 +181,16 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 void WoopsiTemplate::handleValueChangeEvent(const GadgetEventArgs& e) {
-	
 	// Did a gadget fire this event?
 	if (e.getSource() != NULL) {
 		FileRequester * freqInst = ((FileRequester *)e.getSource());
-		//sprintf((char*)0x02000000, "handleValueChangeEvent:%d", freqInst->getRefcon());	//ok triggering when OK / Cancel is clicked. e.getSource()->getRefcon() == 1 (freqInst)
-		//sprintf((char*)0x02000000, "handleValueChangeEvent(OK):%d", freqInst->getInternalOKButtonObject()->getRefcon());	//9 
-		//sprintf((char*)0x02000000, "handleValueChangeEvent(Cancel):%d", freqInst->getInternalCancelButtonObject()->getRefcon());	//10
-		
 		if(freqInst->getInternalOKButtonObject()->hasFocus() == true){
 			//button pressed:[OK]
 			playAudioFile();
 		}
 		else if(freqInst->getInternalCancelButtonObject()->hasFocus() == true){
 			//button pressed:[Cancel]
-
-			//Reset layout here
-			resetLayout();
+			resetLayout();	//Reset layout here
 		}
 	}
 }
@@ -266,15 +259,13 @@ void WoopsiTemplate::handleClickEvent(const GadgetEventArgs& e) {
 		
 		//_lastFile Event
 		case 3:{
-			FileRequester * freqInst = _fileReq;
-			FileListBox* freqListBox = freqInst->getInternalListBoxObject();
-			soundPrevTrack(0, 0);
+			soundPrevTrack();
 		}	
 		break;
 		
 		//_nextFile Event
 		case 4:{
-			soundNextTrack(0, 0);
+			soundNextTrack();
 		}	
 		break;
 		
@@ -315,16 +306,56 @@ void WoopsiTemplate::handleClickEvent(const GadgetEventArgs& e) {
 
 void playAudioFile(){
 	if(WoopsiTemplateProc != NULL){
-		//Play WAV/ADPCM if selected from the FileRequester
-		WoopsiString strObj = WoopsiTemplateProc->_fileReq->getSelectedOption()->getText();
-		memset(currentFileChosen, 0, sizeof(currentFileChosen));
-		strObj.copyToCharArray(currentFileChosen);
 
-		if(FAT_FileExists(currentFileChosen) == FT_FILE){
-			pendPlay = 1; //play file immediately
+		//if ".." was selected through OK, go back / When B button is pressed
+		char isDirTGDSProj[MAX_TGDSFILENAME_LENGTH];
+		WoopsiString strObj = WoopsiTemplateProc->_fileReq->getSelectedOption()->getText();
+		memset(isDirTGDSProj, 0, sizeof(isDirTGDSProj));
+		strObj.copyToCharArray(isDirTGDSProj);
+
+		//Build FileRequester here
+		if(strcmpi((char*)&isDirTGDSProj[0], "..") == 0){
+			FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+			FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+			freqListBox->removeAllOptions();
+			freqListBox->readDirectory();
+			stopAudioFile();
+			pendPlay = 2; //stop filestream immediately
 		}
 		else{
-			pendPlay = 2; //stop filestream immediately
+		
+			switch(soundData.sourceFmt){
+				case(SRC_GBS):
+				case(SRC_NSF):
+				case(SRC_SNDH):
+				case(SRC_SID):
+				{
+					FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+					FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+					int playListIndex = ((int)freqListBox->getSelectedIndex() - 1);
+					
+					if(playListIndex >= 0){
+						soundSetTrackInPayload(playListIndex); 
+						pendPlay = 1; //Play file immediately from payload + Play file from filerequester here if payload was already loaded and play button was pressed.
+					}
+
+				}break;
+
+				default:{
+					//Play WAV/ADPCM if selected from the FileRequester
+					WoopsiString strObj = WoopsiTemplateProc->_fileReq->getSelectedOption()->getText();
+					memset(currentFileChosen, 0, sizeof(currentFileChosen));
+					strObj.copyToCharArray(currentFileChosen);
+
+					if(FAT_FileExists(currentFileChosen) == FT_FILE){
+						pendPlay = 1; //play file immediately
+					}
+					else{
+						pendPlay = 2; //stop filestream immediately
+					}
+				}break;
+			}
+			
 		}
 	}
 }
@@ -360,15 +391,83 @@ void Woopsi::ApplicationMainLoop() {
 	switch(pendPlay){
 		//play 
 		case(1):{
-			soundLoaded = loadSound((char*)currentFileChosen);
+			switch(soundData.sourceFmt){
+
+				//play file immediately from payload
+				case(SRC_GBS):
+				case(SRC_NSF):
+				case(SRC_SNDH):
+				case(SRC_SID):{
+					FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+					FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+					int playListIndex = ((int)freqListBox->getSelectedIndex() - 1);
+					
+					if(playListIndex >= 0){
+						soundSetTrackInPayload(playListIndex); 
+						
+						//stop file immediately (prevent reloading the same payload)
+						pendPlay = 2;
+					}
+				}break;
+
+				//play standalone file immediately
+				default:{
+					soundLoaded = loadSound((char*)currentFileChosen);
 			
-			if(soundLoaded == false){
-				//stop file immediately
-				pendPlay = 2;
-			}
-			else{
-				//play file immediately
-				pendPlay = 0;
+					if(soundLoaded == false){
+						//stop file immediately
+						pendPlay = 2;
+					}
+					else{
+						//play file immediately
+						pendPlay = 0;
+
+						int fileCount = 0;
+						char * trackName = NULL;
+						if(soundData.sourceFmt == SRC_NSF){
+							trackName = getNSFMeta(0);
+							fileCount = getNSFTotalTracks();
+						}
+
+						else if(soundData.sourceFmt == SRC_GBS){
+							trackName = gbsMeta(0);
+							fileCount = getGBSTotalTracks();
+						}
+						
+						else if(soundData.sourceFmt == SRC_SID){
+							trackName = "Track-";
+							fileCount = getSIDTotalTracks();
+						}
+
+						else if(soundData.sourceFmt == SRC_SNDH){
+							trackName = "Track-";
+							fileCount = getSNDHTotalTracks();
+						}
+
+						//Build FileRequester here
+						switch(soundData.sourceFmt){
+							case(SRC_GBS):
+							case(SRC_NSF):
+							case(SRC_SNDH):
+							case(SRC_SID):
+							{
+								char trackNamePayload[MAX_TGDSFILENAME_LENGTH];
+								FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+								freqInst->removeAllOptions();
+								freqInst->addOption("..", 0);
+								int itemIndex = 1;
+								for(itemIndex = 1; itemIndex < (fileCount + 1); itemIndex++){
+									sprintf(trackNamePayload, "%s [%d/%d]", trackName, itemIndex, fileCount);
+									freqInst->addOption(trackNamePayload, itemIndex);
+								}
+								
+								WoopsiTemplateProc->currentFileRequesterIndex = 1; //force the user through index 0 to abandon the loaded payload 
+								FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+								freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
+							}break;
+						}
+					}
+				}break;
 			}
 
 			updateLayout();
