@@ -216,7 +216,7 @@ int TGDSVideoRender(){
 void playTVSFile(char * tvsFile){
 	//Process TVS file
 	int tgdsfd = -1;
-	int res = fatfs_open_fileIntoTargetStructFD(tvsFile, "r", &tgdsfd, &videoHandleFD);
+	int res = fatfs_open_fileIntoTargetStructFD(tvsFile, "r", &videoHandleFD);
 	if(parseTGDSVideoFile(&videoHandleFD, tvsFile) > 0){
 		disableScreenPowerTimeout();
 		ARM7LoadStreamCore();

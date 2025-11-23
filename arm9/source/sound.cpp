@@ -2225,6 +2225,10 @@ bool initSoundStreamUser(char * fName, char * ext){
 	{
 		
 		// SNES audio file
+		if(spcfile != NULL){
+			trackFree(spcfile);
+		}
+		
 		lastSNDState = internalCodecType = soundData.sourceFmt = SRC_SPC;
 		
 		struct sIPCSharedTGDSSpecific* sharedIPC = getsIPCSharedTGDSSpecific();
@@ -2392,16 +2396,14 @@ bool loadSound(char *fName){
 	if(!(FAT_FileExists(fName) == FT_FILE)){
 		return false;
 	}
-	int srcFormat = playSoundStream(fName, _FileHandleVideo, _FileHandleAudio, TGDS_ARM7_AUDIOBUFFER_STREAM);
-	soundData.sourceFmt = srcFormat;
-	if(srcFormat == SRC_NONE){			
+	if(playSoundStream(fName, _FileHandleVideo, _FileHandleAudio, TGDS_ARM7_AUDIOBUFFER_STREAM) == SRC_NONE){
+
 		char tmpName[256];
 		char ext[256];
 		strcpy(tmpName, fName);	
 		separateExtension(tmpName, ext);
 		strlwr(ext);
-		bool ret = initSoundStreamUser(fName, ext);
-		return ret;
+		return initSoundStreamUser(fName, ext);
 	}
 	return true;
 }
