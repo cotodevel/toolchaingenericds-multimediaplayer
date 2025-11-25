@@ -60,6 +60,8 @@ extern void playAudioFile();
 extern void stopAudioFile();
 extern void resetLayout();
 extern void updateLayout();
+extern int getFirstFileIndexFromFileRequester(FileRequester * freqInst);
+extern int getLastFileIndexFromFileRequester(FileRequester * freqInst);
 
 #ifdef __cplusplus
 }

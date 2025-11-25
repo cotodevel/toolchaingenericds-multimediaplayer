@@ -170,6 +170,10 @@ void handleInput(){
 				playbackMode = 1;
 			}
 			
+			if(WoopsiTemplateProc != NULL){
+				WoopsiTemplateProc->ReportAvailableMem();
+			}
+
 			while(keysDown() & KEY_SELECT){
 				scanKeys();
 			}
@@ -179,28 +183,14 @@ void handleInput(){
 	
 	//Audio track ended? Play next audio file
 	if((pendPlay == 0) && (cutOff == true)){
-		if(WoopsiTemplateProc != NULL){
-			if(playbackMode == 0){
-				WoopsiTemplateProc->currentFileRequesterIndex++;
-			}
-
-			FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
-			FileListBox* freqListBox = freqInst->getInternalListBoxObject();
-			if(WoopsiTemplateProc->currentFileRequesterIndex >= (freqListBox->getOptionCount()) ){
-				WoopsiTemplateProc->currentFileRequesterIndex = 0;
-			}
-			freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
-			
-			//Let decoder close context so we can start again
-			stopAudioStreamUser();
-			playAudioFile();
-		}
+		//Let decoder close context so we can start again
+		soundNextTrack();
 	}
 }
 
 int playbackMode = 0; //0 = playlist / 1 = repeat
 
-void playIntro(){
+char * playIntro(){
 	char * introFilename = "0:/tgds_intro.m4a";
 	FILE * fh = fopen(introFilename, "w+");
 	struct LZSSContext LZSSCtx = LZS_DecodeFromBuffer((u8*)&tgds_intro_m4a[0], (unsigned int)tgds_intro_m4a_size);
@@ -219,6 +209,7 @@ void playIntro(){
 	else{
 		printf("couldn't play the intro.");
 	}
+	return introFilename;
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -251,7 +242,6 @@ void stopAudioStreamUser(){
 	updateStream();
 	updateStream();
 	updateStream();
-	pendPlay = 2; //stop filestream immediately
 }
 
 __attribute__((section(".itcm")))
@@ -335,10 +325,6 @@ int main(int argc, char **argv) {
     if(registerThread(TGDSThreads, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode, tUnitsMicroseconds) != THREAD_OVERFLOW){
         
     }
-
-	TGDSVideoPlayback = false;
-	playIntro();
-	enableScreenPowerTimeout();
 
 	// Create Woopsi UI
 	WoopsiTemplate WoopsiTemplateApp;

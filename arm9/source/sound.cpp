@@ -2500,15 +2500,29 @@ void soundPrevTrack()
 		default:{
 			
 			if(WoopsiTemplateProc != NULL){
-				WoopsiTemplateProc->currentFileRequesterIndex--;
-				if(WoopsiTemplateProc->currentFileRequesterIndex < 0){
-					WoopsiTemplateProc->currentFileRequesterIndex = 0;
-				}
-
 				FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
 				FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+				int FirstFileIndex = getFirstFileIndexFromFileRequester(freqInst);
+				int lstSize = 0;
+				int foundItemIndex = 0;
+				if(playbackMode == 0){
+					WoopsiTemplateProc->currentFileRequesterIndex--;
+				}
+				lstSize = freqListBox->getOptionCount();
+				if(WoopsiTemplateProc->currentFileRequesterIndex >= 0){
+					if(FirstFileIndex > WoopsiTemplateProc->currentFileRequesterIndex){
+						//Means we need to point to last file
+						foundItemIndex = getLastFileIndexFromFileRequester(freqInst);
+					}
+					else{
+						foundItemIndex = WoopsiTemplateProc->currentFileRequesterIndex;
+					}
+				}
+
+				WoopsiTemplateProc->currentFileRequesterIndex = foundItemIndex;
 				freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
-				
+				freqListBox->redraw();
+
 				//Let decoder close context so we can start again
 				closeSound();
 				
@@ -2625,16 +2639,22 @@ void soundNextTrack()
 		default:{
 			
 			if(WoopsiTemplateProc != NULL){
-
 				FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
 				FileListBox* freqListBox = freqInst->getInternalListBoxObject();
-				int lstSize = (freqListBox->getOptionCount() - 1);
-				WoopsiTemplateProc->currentFileRequesterIndex++;
-				if(WoopsiTemplateProc->currentFileRequesterIndex >= lstSize){
-					WoopsiTemplateProc->currentFileRequesterIndex = lstSize;
+				if(playbackMode == 0){
+					WoopsiTemplateProc->currentFileRequesterIndex++;
 				}
+				int foundItemIndex = WoopsiTemplateProc->currentFileRequesterIndex;
+				if( (freqListBox->getOptionCount()-1) < foundItemIndex ){
+					//Means we need to point to last file
+					foundItemIndex = getFirstFileIndexFromFileRequester(freqInst);
+				}
+				WoopsiString strObj = freqListBox->getOptionByIndex(foundItemIndex)->getText();
+				strObj.copyToCharArray(currentFileChosen);
+				WoopsiTemplateProc->currentFileRequesterIndex = foundItemIndex;
 				freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
-				
+				freqListBox->redraw();
+
 				//Let decoder close context so we can start again
 				closeSound();
 				

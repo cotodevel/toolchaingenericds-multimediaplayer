@@ -109,11 +109,11 @@ void WoopsiTemplate::startup(int argc, char **argv) {
 	
 	_MultiLineTextBoxLogger = NULL;	//destroyable TextBox
 	
+	TGDSVideoPlayback = false;
+	char * fnameIntro = playIntro();
+	enableScreenPowerTimeout();
+
 	//WoopsiSDK Initial state defaults
-	FileListBox* freqListBox = _fileReq->getInternalListBoxObject();
-	currentFileRequesterIndex = 0;
-	freqListBox->setSelectedIndex(currentFileRequesterIndex);
-	
 	ReportAvailableMem();
 	
 	enableDrawing();	// Ensure Woopsi can now draw itself
@@ -130,17 +130,27 @@ __attribute__ ((optnone))
 void WoopsiTemplate::ReportAvailableMem() {
 	Rect rect;
 	_controlsScreen->getClientRect(rect);
-	_MultiLineTextBoxLogger = new MultiLineTextBox(rect.x, rect.y + 60, 200, 70, "DS Hardware status\n...", Gadget::GADGET_DRAGGABLE, 5);	// y + 60 px = move the rectangle vertically from parent obj
+	_MultiLineTextBoxLogger = new MultiLineTextBox(rect.x, rect.y + 60, 200, 70, "DS Hardware status\n...", Gadget::GADGET_DECORATION, 5);	// y + 60 px = move the rectangle vertically from parent obj
 	_controlsScreen->addGadget(_MultiLineTextBoxLogger);
 	
 	_MultiLineTextBoxLogger->removeText(0);
 	_MultiLineTextBoxLogger->moveCursorToPosition(0);
-	_MultiLineTextBoxLogger->appendText("Memory Status: ");
+	
+	//0 = playlist / 1 = repeat
+	if(playbackMode == 1){
+		_MultiLineTextBoxLogger->appendText("Audio Mode: Repeat File");
+	}
+	else{
+		_MultiLineTextBoxLogger->appendText("Audio Mode: Entire Playlist");
+	}
+	
 	_MultiLineTextBoxLogger->appendText("\n");
 	
 	char arrBuild[256+1];
 	sprintf(arrBuild, "Available heap memory: %d", TGDSARM9MallocFreeMemory());
 	_MultiLineTextBoxLogger->appendText(WoopsiString(arrBuild));
+
+	_MultiLineTextBoxLogger->redraw();
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -277,6 +287,7 @@ void WoopsiTemplate::handleClickEvent(const GadgetEventArgs& e) {
 		
 		//_stop Event
 		case 6:{
+			pendPlay = 2; //stop filestream immediately
 			stopAudioFile();
 			if( (soundData.sourceFmt == SRC_NONE) && (TGDSVideoPlayback == true) ){
 				haltTVSVideoUsermode();
@@ -320,7 +331,7 @@ void playAudioFile(){
 			freqListBox->removeAllOptions();
 			freqListBox->readDirectory();
 			stopAudioFile();
-			pendPlay = 2; //stop filestream immediately
+			pendPlay = 2; //stop filestream immediately & indefinitely
 		}
 		else{
 		
@@ -348,10 +359,10 @@ void playAudioFile(){
 					strObj.copyToCharArray(currentFileChosen);
 
 					if(FAT_FileExists(currentFileChosen) == FT_FILE){
-						pendPlay = 1; //play file immediately
+						pendPlay = 1; //play file immediately & indefinitely
 					}
 					else{
-						pendPlay = 2; //stop filestream immediately
+						pendPlay = 2; //stop filestream immediately & indefinitely
 					}
 				}break;
 			}
@@ -372,6 +383,10 @@ void resetLayout(){
 	}
 }
 
+
+//pendPlay status:
+//1 = play file immediately (turns into -> 0 = play next file or repeat file indefinitely)
+//2 = stop filestream immediately & indefinitely
 __attribute__((section(".dtcm")))
 u32 pendPlay = 0;
 
@@ -405,7 +420,7 @@ void Woopsi::ApplicationMainLoop() {
 					if(playListIndex >= 0){
 						soundSetTrackInPayload(playListIndex); 
 						
-						//stop file immediately (prevent reloading the same payload)
+						//stop file immediately & indefinitely (prevent reloading the same payload)
 						pendPlay = 2;
 					}
 				}break;
@@ -415,11 +430,11 @@ void Woopsi::ApplicationMainLoop() {
 					soundLoaded = loadSound((char*)currentFileChosen);
 			
 					if(soundLoaded == false){
-						//stop file immediately
+						//stop file immediately & indefinitely
 						pendPlay = 2;
 					}
 					else{
-						//play file immediately
+						//play file immediately 
 						pendPlay = 0;
 
 						int fileCount = 0;
@@ -465,6 +480,26 @@ void Woopsi::ApplicationMainLoop() {
 								FileListBox* freqListBox = freqInst->getInternalListBoxObject();
 								freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
 							}break;
+
+							default:{
+								//On play, find filename in the listbox, and point to it
+								FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+								FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+								int foundItemIndex = 0;
+								int fileIndex = 0;
+								for(fileIndex = 0; fileIndex < freqListBox->getOptionCount(); fileIndex++){
+									char curFileDirectoryRead[MAX_TGDSFILENAME_LENGTH];
+									memset(curFileDirectoryRead, 0, sizeof(curFileDirectoryRead));
+									WoopsiString strObj = freqListBox->getOptionByIndex(fileIndex)->getText();
+									strObj.copyToCharArray(curFileDirectoryRead);
+									if(strcmpi((char*)&curFileDirectoryRead[0], currentFileChosen) == 0){
+										foundItemIndex = fileIndex;
+										break;
+									}
+								}
+								WoopsiTemplateProc->currentFileRequesterIndex = foundItemIndex;
+								freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
+							}
 						}
 					}
 				}break;
@@ -477,7 +512,7 @@ void Woopsi::ApplicationMainLoop() {
 
 		//stop filestream immediately
 		case(2):{
-			pendPlay = 0;
+			//pendPlay = 0; //allow B button to halt current played file, enabling this will cause files to be played forcefully, and user needs to control playback.
 		}
 		break;
 	}
@@ -509,4 +544,48 @@ void updateLayout(){
 			playTVSFile(currentFileChosen);
 		}
 	}
+}
+
+//Find first file index from FileRequester object
+//Returns: File index (>= 0)
+//			-1 if no files in the directory
+int getFirstFileIndexFromFileRequester(FileRequester * freqInst){
+	FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+	int lstSize = freqListBox->getOptionCount();
+	int foundItemIndex = -1;
+	int fileIndex = 0;
+	for(fileIndex = 0; fileIndex < lstSize; fileIndex++){
+		char curFileDirectoryRead[MAX_TGDSFILENAME_LENGTH];
+		memset(curFileDirectoryRead, 0, sizeof(curFileDirectoryRead));
+		WoopsiString strObj = freqListBox->getOptionByIndex(fileIndex)->getText();
+		strObj.copyToCharArray(curFileDirectoryRead);
+		
+		if(FAT_FileExists((char*)&curFileDirectoryRead[0]) == FT_FILE){
+			foundItemIndex = fileIndex;
+			break;
+		}
+	}
+	return foundItemIndex;
+}
+
+//Find last file index from FileRequester object
+//Returns: File index (>= 0)
+//			-1 if no files in the directory
+int getLastFileIndexFromFileRequester(FileRequester * freqInst){
+	FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+	int lstSize = freqListBox->getOptionCount();
+	int foundItemIndex = -1;
+	int fileIndex = 0;
+	for(fileIndex = (lstSize - 1); fileIndex >= 0; fileIndex--){
+		char curFileDirectoryRead[MAX_TGDSFILENAME_LENGTH];
+		memset(curFileDirectoryRead, 0, sizeof(curFileDirectoryRead));
+		WoopsiString strObj = freqListBox->getOptionByIndex(fileIndex)->getText();
+		strObj.copyToCharArray(curFileDirectoryRead);
+		
+		if(FAT_FileExists((char*)&curFileDirectoryRead[0]) == FT_FILE){
+			foundItemIndex = fileIndex;
+			break;
+		}
+	}
+	return foundItemIndex;
 }
