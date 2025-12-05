@@ -45,6 +45,7 @@
 #include "aac/pub/aacdec.h"
 #include "../include/main.h"
 #include "soundTGDS.h"
+#include "WoopsiTemplate.h"
 
 ID3V1_TYPE id3Data;
 extern ID3V1_TYPE id3Data;
@@ -2224,6 +2225,10 @@ bool initSoundStreamUser(char * fName, char * ext){
 	{
 		
 		// SNES audio file
+		if(spcfile != NULL){
+			trackFree(spcfile);
+		}
+		
 		lastSNDState = internalCodecType = soundData.sourceFmt = SRC_SPC;
 		
 		struct sIPCSharedTGDSSpecific* sharedIPC = getsIPCSharedTGDSSpecific();
@@ -2391,24 +2396,14 @@ bool loadSound(char *fName){
 	if(!(FAT_FileExists(fName) == FT_FILE)){
 		return false;
 	}
-	enableFastMode();
-	int srcFormat = playSoundStream(fName, _FileHandleVideo, _FileHandleAudio, TGDS_ARM7_AUDIOBUFFER_STREAM);
-	if((srcFormat != SRC_WAV) || (srcFormat != SRC_WAVADPCM)){		
+	if(playSoundStream(fName, _FileHandleVideo, _FileHandleAudio, TGDS_ARM7_AUDIOBUFFER_STREAM) == SRC_NONE){
+
 		char tmpName[256];
 		char ext[256];
 		strcpy(tmpName, fName);	
 		separateExtension(tmpName, ext);
 		strlwr(ext);
-		bool ret = initSoundStreamUser(fName, ext);
-		if(ret == false){
-			//Invalid sound stream? disable fast mode
-			disableFastMode();
-		}
-		else{
-			//Otherwise enable
-			enableFastMode();
-		}
-		return ret;
+		return initSoundStreamUser(fName, ext);
 	}
 	return true;
 }
@@ -2436,11 +2431,10 @@ void closeSoundUser(){
 	if(isWIFIConnected()){
 		disconnectWifi();
 	}
-	disableFastMode();
 	SendFIFOWords(POCKETSPC_ARM7COMMAND_STOP_SPC, 0xFF);
 }
 
-void soundPrevTrack(int x, int y)
+void soundPrevTrack()
 {
 	switch(soundData.sourceFmt)
 	{
@@ -2498,23 +2492,37 @@ void soundPrevTrack(int x, int y)
 		/*
 		case SRC_VGM:
 		{
-			if(getVGMTrack() - 1 < 1){
-				return;
-			}
-			vgmTrack--;
+			
 		}
 		break;
 		*/
 		
 		default:{
-			curFileIndex--;
-			if(curFileIndex < 0){
-				curFileIndex = 0;
-			}
-			struct FileClass * curList = getFileClassFromList(curFileIndex, activePlayListRead);
-			if(curList != NULL){
-				strcpy(curChosenBrowseFile, (const char *)curList->fd_namefullPath);		
-				
+			
+			if(WoopsiTemplateProc != NULL){
+				FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+				FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+				int FirstFileIndex = getFirstFileIndexFromFileRequester(freqInst);
+				int lstSize = 0;
+				int foundItemIndex = 0;
+				if(playbackMode == 0){
+					WoopsiTemplateProc->currentFileRequesterIndex--;
+				}
+				lstSize = freqListBox->getOptionCount();
+				if(WoopsiTemplateProc->currentFileRequesterIndex >= 0){
+					if(FirstFileIndex > WoopsiTemplateProc->currentFileRequesterIndex){
+						//Means we need to point to last file
+						foundItemIndex = getLastFileIndexFromFileRequester(freqInst);
+					}
+					else{
+						foundItemIndex = WoopsiTemplateProc->currentFileRequesterIndex;
+					}
+				}
+
+				WoopsiTemplateProc->currentFileRequesterIndex = foundItemIndex;
+				freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
+				freqListBox->redraw();
+
 				//Let decoder close context so we can start again
 				closeSound();
 				
@@ -2538,21 +2546,32 @@ void soundPrevTrack(int x, int y)
 				updateStream();
 				updateStream();
 
-				if(FAT_FileExists(curChosenBrowseFile) == FT_FILE){
-					pendingPlay = true;
-				}
-				else{
-					pendingPlay = false;
-				}
+				playAudioFile();
 			}
-			else{
-				pendingPlay = false;
-			}
+
 		}break;
-	}	
+	}
+
+	//Update playlist index
+	if(WoopsiTemplateProc != NULL){
+		switch(soundData.sourceFmt){
+			case(SRC_GBS):
+			case(SRC_NSF):
+			case(SRC_SNDH):
+			case(SRC_SID):{
+				FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+				FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+				int playListIndex = ((int)freqListBox->getSelectedIndex() - 1);
+				if(playListIndex > 0){
+					freqListBox->setSelectedIndex(playListIndex);
+					WoopsiTemplateProc->currentFileRequesterIndex = playListIndex;
+				}
+			}break;
+		}
+	}
 }
 
-void soundNextTrack(int x, int y)
+void soundNextTrack()
 {
 	switch(soundData.sourceFmt)
 	{
@@ -2612,24 +2631,30 @@ void soundNextTrack(int x, int y)
 		/*
 		case SRC_VGM:
 		{
-			if(getVGMTrack()+1 > getVGMTotalTracks())
-				return;
 			
-			vgmTrack++;
 		}
 		break;
 		*/
 		
 		default:{
-			int lstSize = getCurrentDirectoryCount(activePlayListRead);
-			curFileIndex++;
-			if(curFileIndex >= lstSize){
-				curFileIndex = lstSize;
-			}
-			struct FileClass * curList = getFileClassFromList(curFileIndex, activePlayListRead);
-			if(curList != NULL){
-				strcpy(curChosenBrowseFile, (const char *)curList->fd_namefullPath);		
-				
+			
+			if(WoopsiTemplateProc != NULL){
+				FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+				FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+				if(playbackMode == 0){
+					WoopsiTemplateProc->currentFileRequesterIndex++;
+				}
+				int foundItemIndex = WoopsiTemplateProc->currentFileRequesterIndex;
+				if( (freqListBox->getOptionCount()-1) < foundItemIndex ){
+					//Means we need to point to last file
+					foundItemIndex = getFirstFileIndexFromFileRequester(freqInst);
+				}
+				WoopsiString strObj = freqListBox->getOptionByIndex(foundItemIndex)->getText();
+				strObj.copyToCharArray(currentFileChosen);
+				WoopsiTemplateProc->currentFileRequesterIndex = foundItemIndex;
+				freqListBox->setSelectedIndex(WoopsiTemplateProc->currentFileRequesterIndex);
+				freqListBox->redraw();
+
 				//Let decoder close context so we can start again
 				closeSound();
 				
@@ -2653,16 +2678,99 @@ void soundNextTrack(int x, int y)
 				updateStream();
 				updateStream();
 
-				if(FAT_FileExists(curChosenBrowseFile) == FT_FILE){
-					pendingPlay = true;
-				}
-				else{
-					pendingPlay = false;
-				}
+				playAudioFile();
 			}
-			else{
-				pendingPlay = false;
-			}
+		}break;
+	}
+
+	//Update playlist index
+	if(WoopsiTemplateProc != NULL){
+		switch(soundData.sourceFmt){
+			case(SRC_GBS):
+			case(SRC_NSF):
+			case(SRC_SNDH):
+			case(SRC_SID):{
+				FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+				FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+				int playListIndex = ((int)freqListBox->getSelectedIndex() + 1);
+				if(playListIndex < freqListBox->getOptionCount()){
+					freqListBox->setSelectedIndex(playListIndex);
+					WoopsiTemplateProc->currentFileRequesterIndex = playListIndex;
+				}
+			}break;
+		}
+	}
+}
+
+void soundSetTrackInPayload(int trackIndex)
+{
+	switch(soundData.sourceFmt)
+	{
+		case SRC_NSF:			
+		{
+			if(getNSFTrackIdx(trackIndex)+1 > getNSFTotalTracks())
+				return;
+			
+			int tTrack = getNSFTrackIdx(trackIndex);
+			
+			while(inTrack);
+			
+			isSwitching = true;
+			
+			NSFCore_Initialize();
+			RebuildOutputTables();
+			LoadFile(nsffile,nsfLength);
+			SetPlaybackOptions(NSF_FREQ);
+			LoadNSF(getnDataBufferSize());
+			SetTrack(tTrack);
+			
+			StopFade();
+			
+			isSwitching = false;
+			
+			nsfDecode();
+		}
+		break;
+		case SRC_SNDH:
+		{
+			if(trackIndex+1 > getSNDHTotalTracks())
+				return;
+			
+			api68_play(sc68, trackIndex + 1, 0);
+		}
+		break;
+		case SRC_SID:
+		{
+			if(trackIndex+1 > getSIDTotalTracks())
+				return;
+			
+			cpuJSR(sid_init_addr, ++sid_subSong);     // Start the song initialize
+			
+		}
+		break;
+		
+		case SRC_GBS:
+		{
+			if(trackIndex+1 > getGBSTotalTracks())
+				return;
+			
+			gbsTrack = trackIndex;
+		}
+		break;
+
+		//VGM tracks are standalone binaries, like SPCs
+		/*
+		case SRC_VGM:
+		{
+			
+		}
+		break;
+		*/
+		
+		default:{
+			//Embedded payloads with specified formats are supported only. 
+			//This case is either a standalone audio stream or embedded payload unsupported. 
+			
 		}break;
 	}
 }
@@ -3335,72 +3443,4 @@ char *gbsMeta(int which)
 void checkEndSound()
 {
 	
-	if(soundLoaded == false)
-	{
-		/*
-		char ext[256];
-		char tmp[256];
-		
-		strcpy(tmp,getFileName());
-		separateExtension(tmp,ext);
-		strlwr(ext);
-		
-		if(strcmp(ext,".pls") == 0 || strcmp(ext,".m3u") == 0)
-		{	
-			sndMode = TYPE_PLS;
-			if(loadPlaylist(getFileName(), &curPlaylist))
-			{
-				loadSound(curPlaylist.urlEntry[0].data);
-				plsPos = 0;
-			}
-			else
-			{
-				destroyRandomList();
-				exitSound(0,0);
-				return;
-			}
-		}
-		else
-		{
-		*/
-			//sndMode = TYPE_NORMAL;
-			
-		//}
-		
-		//sampleWidth = (getSoundLength() / 236);
-	}
-	
-	/*
-	firstTime = false;
-	
-	if(getState() == STATE_STOPPED || getState() == STATE_UNLOADED)
-	{
-		if(sndMode == TYPE_NORMAL)
-		{
-			if(soundMode == SOUND_ONESHOT)
-			{
-				exitSound(0,0);
-			}
-			else
-			{
-				getNextSoundInternal(true);
-			}
-		}
-		if(sndMode == TYPE_PLS)
-		{
-			if(!queued)
-			{
-				if(plsPos == curPlaylist.numEntries - 1)
-					plsPos = 0;
-				else
-					plsPos++;
-			}
-			
-			loadSound(curPlaylist.urlEntry[plsPos].data);
-
-			queued = false;
-		}		
-	}
-	*/
-
 }

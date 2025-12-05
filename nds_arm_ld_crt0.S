@@ -68,7 +68,7 @@ _start:
 	@Copy ARM7i sections from VMA to LMA
 	mov r0, pc
 	lsr    r0, r0, #24
-	cmp r0, #3
+	cmp r0, #6
 	ldrne                 r1,=__arm7_lma__                 /* point our source register to the start of the lma section*/
 	ldrne                 r2,=__arm7_start__                 /* point our destination register to the start of the physical section */
 	ldrne                 r3,=__arm7_end__                  /* point r3 after the last byte we will be writing of the physical section */
@@ -78,7 +78,7 @@ _start:
 	ldr r1,=__arm7_start__
 	mov r0, pc
 	lsr    r0, r0, #24
-	cmp r0, #3
+	cmp r0, #6
 	bxne r1	
 	#endif
 

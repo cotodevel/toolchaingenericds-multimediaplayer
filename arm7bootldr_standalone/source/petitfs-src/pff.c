@@ -318,14 +318,12 @@
 ---------------------------------------------------------------------------*/
 
 /* Fill memory */
-__attribute__((section(".iwram64K")))
 void mem_set (void* dst, int val, int cnt) {
 	char *d = (char*)dst;
 	while (cnt--) *d++ = (char)val;
 }
 
 /* Compare memory to memory */
-__attribute__((section(".iwram64K")))
 int mem_cmp (const void* dst, const void* src, int cnt) {
 	const char *d = (const char *)dst, *s = (const char *)src;
 	int r = 0;
@@ -336,8 +334,6 @@ int mem_cmp (const void* dst, const void* src, int cnt) {
 /*-----------------------------------------------------------------------*/
 /* FAT access - Read value of a FAT entry                                */
 /*-----------------------------------------------------------------------*/
-
-__attribute__((section(".iwram64K")))
 CLUST get_fat (	/* 1:IO error, Else:Cluster status */
 	CLUST clst,	/* Cluster# to get the link information */
 	FATFS *fs
@@ -386,8 +382,6 @@ CLUST get_fat (	/* 1:IO error, Else:Cluster status */
 /*-----------------------------------------------------------------------*/
 /* Get sector# from cluster# / Get cluster field from directory entry    */
 /*-----------------------------------------------------------------------*/
-
-__attribute__((section(".iwram64K")))
 DWORD clust2sect (	/* !=0: Sector number, 0: Failed - invalid cluster# */
 	CLUST clst,		/* Cluster# to be converted */
 	FATFS *fs
@@ -399,7 +393,6 @@ DWORD clust2sect (	/* !=0: Sector number, 0: Failed - invalid cluster# */
 }
 
 
-__attribute__((section(".iwram64K")))
 CLUST get_clust (
 	BYTE* dir,		/* Pointer to directory entry */
 	FATFS *fs
@@ -421,8 +414,6 @@ CLUST get_clust (
 /*-----------------------------------------------------------------------*/
 /* Directory handling - Rewind directory index                           */
 /*-----------------------------------------------------------------------*/
-
-__attribute__((section(".iwram64K")))
 FRESULT dir_rewind (
 	DIR *dj,			/* Pointer to directory object */
 	FATFS *fs
@@ -448,8 +439,6 @@ FRESULT dir_rewind (
 /*-----------------------------------------------------------------------*/
 /* Directory handling - Move directory index next                        */
 /*-----------------------------------------------------------------------*/
-
-__attribute__((section(".iwram64K")))
 FRESULT dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table */
 	DIR *dj,			/* Pointer to directory object */
 	FATFS *fs
@@ -492,8 +481,6 @@ FRESULT dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table */
 /*-----------------------------------------------------------------------*/
 /* Directory handling - Find an object in the directory                  */
 /*-----------------------------------------------------------------------*/
-
-__attribute__((section(".iwram64K")))
 FRESULT dir_find (
 	DIR *dj,		/* Pointer to the directory object linked to the file name */
 	BYTE *dir,		/* 32-byte working buffer */
@@ -528,7 +515,6 @@ FRESULT dir_find (
 /* Read an object from the directory                                     */
 /*-----------------------------------------------------------------------*/
 #if _USE_DIR
-__attribute__((section(".iwram64K")))
 FRESULT dir_read (
 	DIR *dj,		/* Pointer to the directory object to store read object name */
 	BYTE *dir		/* 32-byte working buffer */
@@ -563,9 +549,6 @@ FRESULT dir_read (
 /*-----------------------------------------------------------------------*/
 /* Pick a segment and create the object name in directory form           */
 /*-----------------------------------------------------------------------*/
-
-
-__attribute__((section(".iwram64K")))
 FRESULT create_name (
 	DIR *dj,			/* Pointer to the directory object */
 	const char **path	/* Pointer to pointer to the segment in the path string */
@@ -622,7 +605,6 @@ FRESULT create_name (
 /* Get file information from directory entry                             */
 /*-----------------------------------------------------------------------*/
 #if _USE_DIR
-__attribute__((section(".iwram64K")))
 void get_fileinfo (		/* No return code */
 	DIR *dj,			/* Pointer to the directory object */
 	BYTE *dir,			/* 32-byte working buffer */
@@ -663,7 +645,6 @@ void get_fileinfo (		/* No return code */
 /*-----------------------------------------------------------------------*/
 /* Follow a file path                                                    */
 /*-----------------------------------------------------------------------*/
-__attribute__((section(".iwram64K")))
 FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 	DIR *dj,			/* Directory object to return last directory and found object */
 	BYTE *dir,			/* 32-byte working buffer */
@@ -705,7 +686,6 @@ FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 /*-----------------------------------------------------------------------*/
 /* Check a sector if it is an FAT boot record                            */
 /*-----------------------------------------------------------------------*/
-__attribute__((section(".iwram64K")))
 BYTE check_fs (	/* 0:The FAT boot record, 1:Valid boot record but not an FAT, 2:Not a boot record, 3:Error */
 	BYTE *buf,	/* Working buffer */
 	DWORD sect	/* Sector# (lba) to check if it is an FAT boot record or not */
@@ -737,7 +717,6 @@ BYTE check_fs (	/* 0:The FAT boot record, 1:Valid boot record but not an FAT, 2:
 /*-----------------------------------------------------------------------*/
 /* Mount/Unmount a Locical Drive                                         */
 /*-----------------------------------------------------------------------*/
-__attribute__((section(".iwram64K")))
 FRESULT pf_mount (
 	FATFS *fs		/* Pointer to new file system object */
 )
@@ -808,7 +787,6 @@ FRESULT pf_mount (
 /*-----------------------------------------------------------------------*/
 /* Open or Create a File                                                 */
 /*-----------------------------------------------------------------------*/
-__attribute__((section(".iwram64K")))
 FRESULT pf_open (
 	const char *path,	/* Pointer to the file name */
 	FATFS *fs
@@ -842,7 +820,6 @@ FRESULT pf_open (
 /* Read File                                                             */
 /*-----------------------------------------------------------------------*/
 #if _USE_READ
-__attribute__((section(".iwram64K")))
 FRESULT pf_read (
 	void* buff,		/* Pointer to the read buffer (NULL:Forward data to the stream)*/
 	UINT btr,		/* Number of bytes to read */
@@ -898,7 +875,6 @@ FRESULT pf_read (
 /* Write File                                                            */
 /*-----------------------------------------------------------------------*/
 #if _USE_WRITE
-__attribute__((section(".iwram64K")))
 FRESULT pf_write (
 	const void* buff,	/* Pointer to the data to be written */
 	UINT btw,			/* Number of bytes to write (0:Finalize the current write operation) */
@@ -962,13 +938,11 @@ FRESULT pf_write (
 #endif
 
 /* Returns: Current File size */
-__attribute__((section(".iwram64K")))
 DWORD pf_size(FATFS *fs){
 	return fs->fsize;
 }
 
 /* Returns: Current File pointer */
-__attribute__((section(".iwram64K")))
 DWORD pf_tell (FATFS *fs){
 	return fs->fptr;
 }
@@ -978,7 +952,6 @@ DWORD pf_tell (FATFS *fs){
 /* Seek File R/W Pointer                                                 */
 /*-----------------------------------------------------------------------*/
 #if _USE_LSEEK
-__attribute__((section(".iwram64K")))
 FRESULT pf_lseek (
 	DWORD ofs,		/* File pointer from top of file */
 	FATFS *fs
@@ -1028,7 +1001,6 @@ FRESULT pf_lseek (
 /* Create a Directroy Object                                             */
 /*-----------------------------------------------------------------------*/
 #if _USE_DIR
-__attribute__((section(".iwram64K")))
 FRESULT pf_opendir (
 	DIR *dj,			/* Pointer to directory object to create */
 	const char *path,	/* Pointer to the directory path */
@@ -1065,7 +1037,6 @@ FRESULT pf_opendir (
 /*-----------------------------------------------------------------------*/
 /* Read Directory Entry in Sequense                                      */
 /*-----------------------------------------------------------------------*/
-__attribute__((section(".iwram64K")))
 FRESULT pf_readdir (
 	DIR *dj,			/* Pointer to the open directory object */
 	FILINFO *fno,		/* Pointer to file information to return */

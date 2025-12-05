@@ -40,34 +40,21 @@ extern "C" {
 
 extern u32 * getTGDSMBV3ARM7AudioCore();
 extern int main(int argc, char **argv);
-extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
-extern char globalPath[MAX_TGDSFILENAME_LENGTH+1];
 extern void drawMandel(double factor);
-extern void menuShow();
-
-//TGDS Dir API: Directory Iterator(s)
-extern struct FileClassList * playListRead;			//Internal playlist required by active playlist
-extern struct FileClassList * activePlayListRead;	//active playlist, actual playlist
-
-extern bool ShowBrowserC(char * Path, char * outBuf, bool * pendingPlay, int * curFileIndex);
 extern void handleInput();
 extern void setPixel(int row, int col, u16 color);
 extern struct rgbMandel mandelbrot(float real, float imag);
-extern bool keypadLocked;
-extern void playIntro();
-
-extern bool pendingPlay;
-extern int curFileIndex;
-extern int lastRand;
+extern char * playIntro();
 extern void handleTurnOnTurnOffScreenTimeout();
 extern bool bottomScreenIsLit;
 extern int playbackMode;
 extern void enableScreenPowerTimeout();
 extern void disableScreenPowerTimeout();
-
+extern void stopAudioStreamUser();
 extern void taskA(u32 * args);
 extern void taskB(u32 * args);
 extern void onThreadOverflowUserCode(u32 * args);
+extern void ds_malloc_abortSkip(void);
 
 #ifdef __cplusplus
 }

@@ -52,8 +52,8 @@ DIR_SRC			=	$(DIRS_ARM9_SRC)	$(DIRS_ARM9_HEADER)
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
 LDFLAGS	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm9_ld.specs	-Wl,--gc-sections,-Map,$(MAPFILE),-z,defs
 LDFLAGS_DSI	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm9_ld.specs	-Wl,--gc-sections,-Map,arm9-nonstripped_dsi.map,-z,defs
-LIBRARIES_NTR =	-laac	-lemulated	-ltremor	-lmikmod	-llibffmpegFLAC	-lmad	-lmp4ff	-ltgdsfilesystem9	-lutils9	-l$(TARGET_LIBRARY_TGDS_NTR_9)	-lhardware9		-lstdc++	-lcnano9	-lgcc
-LIBRARIES_TWL =	-laac	-lemulated	-ltremor	-lmikmod	-llibffmpegFLAC	-lmad	-lmp4ff	-ltgdsfilesystem9i	-lutils9i	-l$(TARGET_LIBRARY_TGDS_TWL_9)	-lhardware9i	-lstdc++	-lcnano9	-lgcc
+LIBRARIES_NTR =	-laac	-lemulated	-ltremor	-lmikmod	-llibffmpegFLAC	-lmad	-lmp4ff	-ltgdsfilesystem9	-lutils9	-l$(TARGET_LIBRARY_TGDS_NTR_9)	-lhardware9		-lwoopsi	-lstdc++	-lcnano9	-lgcc
+LIBRARIES_TWL =	-laac	-lemulated	-ltremor	-lmikmod	-llibffmpegFLAC	-lmad	-lmp4ff	-ltgdsfilesystem9i	-lutils9i	-l$(TARGET_LIBRARY_TGDS_TWL_9)	-lhardware9i	-lwoopsi	-lstdc++	-lcnano9	-lgcc
 
 ################################################################################################
 

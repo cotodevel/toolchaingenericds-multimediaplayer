@@ -11,6 +11,8 @@
 #include "dldi.h"
 #include "ipcfifoTGDSUser.h"
 #include "TGDS_threads.h"
+#include "exceptionTGDS.h"
+#include "loader.h"
 #include "spitscTGDS.h"
 
 bool SPCExecute=false;
@@ -22,7 +24,7 @@ void bootfile(){
 }
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
-uint16 playBuffer[MIXBUFSIZE * 2 * 2];
+uint16 * playBuffer = (uint16 *)TGDS_ARM7_AUDIOBUFFER_STREAM; //[MIXBUFSIZE * 2 * 2]
 volatile int soundCursor;
 bool paused = false;
 
@@ -119,6 +121,8 @@ void LoadSpc(const uint8 *spc) {
     DspPrepareStateAfterReload();
 }
 
+bool TSCKeyActive = false;
+
 //---------------------------------------------------------------------------------
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -130,12 +134,12 @@ int main(int _argc, char **_argv) {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.6 Standard ARM7 Init code start	*/
 	while(!(*(u8*)0x04000240 & 2) ){} //wait for VRAM_D block
-	ARM7InitDLDI(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, TGDSDLDI_ARM7_ADDRESS);
+	ARM7InitDLDI(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, TGDSDLDI_ARM7_ADDRESS_NORMAL_CORE);
 	struct task_Context * TGDSThreads = getTGDSThreadSystem();
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-	REG_IE &= ~(IRQ_VCOUNT|IRQ_VBLANK); //cause sound clicks
+	REG_IE &= ~(IRQ_VBLANK); //cause sound clicks
 	
 	update_spc_ports();
 	int i = 0; 
@@ -143,10 +147,19 @@ int main(int _argc, char **_argv) {
         playBuffer[i] = 0;
     }
 	    
-    //Remove touchscreen thread, causes stuttering during playback. 
-    removeThread(TGDSThreads, (TaskFn)&taskARM7TouchScreen);
+    //Add a timeout-based touchscreen thread 
+	{
+		keyPressTGDSProject7 = 0xFFFF;
+		keyPressTGDSProject7 = keyPressTGDSProject7 & (~(1 << 6));
+		TSCKeyActive = true;
 
-	SendFIFOWords(0xFF, 0xFF);
+        int taskATimeMS = 1; //Task execution requires at least 1ms
+        if(registerThread(TGDSThreads, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode7, tUnitsMilliseconds) != THREAD_OVERFLOW){
+                
+        }
+    }
+
+    SendFIFOWords(0xFF, 0xFF);
 
 	while(1){
 		bool waitForVblank = false;
@@ -154,6 +167,69 @@ int main(int _argc, char **_argv) {
 	}
 
 	return 0;
+}
+
+//4000136h - NDS7 - EXTKEYIN - Key X/Y Input (R)
+//Same as GBA, both ARM7 and ARM9 have keyboard input registers, and each its own keypad IRQ control register.
+#define REG_KEYXY 		(*(vuint16*)0x04000136)
+
+static int millisecondsElapsedTSCTimeout = 0;	
+u16 keyPressTGDSProject7 = 0;
+
+void taskA(u32 * args){
+	handleTurnOnTurnOffTouchscreenTimeout();
+}
+
+//called 50 times per second
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void handleTurnOnTurnOffTouchscreenTimeout(){
+	millisecondsElapsedTSCTimeout ++;
+	
+	//Handle touchscreen bottom screen timeout
+	if(!(keyPressTGDSProject7 & (1 << 6))){
+		//strcpy((char*)0x02000000, "                       ");
+		//strcpy((char*)0x02000000, "enabling TSC");
+
+		enableARM7TouchScreen();
+		millisecondsElapsedTSCTimeout = 0;
+		TSCKeyActive = true;
+	}
+
+	if(millisecondsElapsedTSCTimeout < 5){
+		millisecondsElapsedTSCTimeout++;
+	}
+	else{
+		//disable tsc here
+		if( (TSCKeyActive == true) && (keyPressTGDSProject7 & (1 << 6)) ){ //tsc release
+			//strcpy((char*)0x02000000, "                       ");
+			//strcpy((char*)0x02000000, "disabling TSC");
+
+			disableARM7TouchScreen();
+			millisecondsElapsedTSCTimeout = 0;
+			TSCKeyActive = false;
+		}
+	}
+	
+	keyPressTGDSProject7 = REG_KEYXY;
+}
+
+//////////////////////////////////////////////////////// Threading User code start : TGDS Project specific ////////////////////////////////////////////////////////
+//User callback when Task Overflows. Intended for debugging purposes only, as normal user code tasks won't overflow if a task is implemented properly.
+//	u32 * args = This Task context
+void onThreadOverflowUserCode7(u32 * args){
+	struct task_def * thisTask = (struct task_def *)args;
+	struct task_Context * parentTaskCtx = thisTask->parentTaskCtx;	//get parent Task Context node 
+	
+	//Thread overflow! Halt.
+
+	while(1==1){
+		HaltUntilIRQ();
+	}
 }
 
 //////////////////////////////////////////////////////////////////////

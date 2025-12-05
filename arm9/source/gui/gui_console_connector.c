@@ -56,6 +56,7 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 bool InitProjectSpecificConsole(){
+	/*
 	//TGDS Console defaults
 	DefaultSessionConsole = (ConsoleInstance *)(&DefaultConsole);
 	
@@ -91,23 +92,26 @@ bool InitProjectSpecificConsole(){
 		GUI.Palette[i + 0xc] = GUI.Palette[TGDSPrintfColor_White];
 	}
 	
+
 	InitializeConsole(DefaultSessionConsole);
-	
+
 	REG_BG3X_SUB = 0;
 	REG_BG3Y_SUB = 0;
 	REG_BG3PA_SUB = 1 << 8;
 	REG_BG3PB_SUB = 0;
 	REG_BG3PC_SUB = 0;
 	REG_BG3PD_SUB = 1 << 8;
-	
+*/
+
 	bool mainEngine = true;
 	setOrientation(ORIENTATION_0, mainEngine);
-	mainEngine = false;
-	setOrientation(ORIENTATION_0, mainEngine);
+	//mainEngine = false;
+	//setOrientation(ORIENTATION_0, mainEngine);
 	
+
 	//Main Engine Setup: 
 	REG_DISPCNT	= (0x00020000);	//VRAM_A in LCD mode //draw
-	GUI.GBAMacroMode = true;	//GUI console at top screen. Playback video at bottom screen
+	GUI.GBAMacroMode = false;	//GUI console at top screen. Playback video at bottom screen
 	TGDSLCDSwap();
 	return true;
 }

@@ -55,6 +55,8 @@ USA
 #include "fatfslayerTGDS.h"
 #include "posixHandleTGDS.h"
 #include "utilsTGDS.h"
+#include "videoTGDS.h"
+#include "consoleTGDS.h"
 #include "ipcfifoTGDSUser.h"
 #endif
 
@@ -152,7 +154,7 @@ extern u32 frameCount;
 extern bool TGDSVideoPlayback;
 
 extern void playTVSFile(char * tvsFile);
-
+extern void haltTVSVideoUsermode();
 extern void ARM7LoadStreamCore();
 extern void ARM7LoadDefaultCore();
 #endif

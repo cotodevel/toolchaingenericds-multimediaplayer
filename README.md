@@ -11,7 +11,7 @@ After compiling, run the example in NDS.
 Project Specific description: 
 
 TGDS Multimedia Player, supported formats are:
--	IMA-ADPCM (Intel)/WAV/MP3/ (Up to 192K)AAC - M4A - M4B/Ogg/FLAC/NSF/SPC/GBS/+ others working.  Streaming mp3, ogg and acc is stripped since it´s 2019 and the DS does not support HTTPS (TLS1.2+)
+-	IMA-ADPCM (Intel)/WAV/MP3/ (Up to 192K)AAC - M4A - M4B/Ogg/FLAC/NSF/SPC/GBS/+ others working.  Streaming mp3, ogg and acc is stripped since itï¿½s 2019 and the DS does not support HTTPS (TLS1.2+)
 -	.TVS video + audio file support. *.TVS Converter (windows/linux/web) is available at: https://github.com/cotodevel/newlib-nds/blob/TGDS1.65/installer/shared/6.2_2016q4/bin/TVS-SCRIPT-EXPORT-README.MD
 
 NTR Mode Usage:
@@ -47,14 +47,16 @@ misc/fma1.ima
 Intro of Full Metal Alchemist 1 Japanese intro converted into .TVS format (if the authors want me to take it down I will)
 
 Buttons:
-(Start): File Browser -> (A) to play multimedia files
-(L): Recent Playlist 
-(R): Random audio file playback
-(B): Stop audio playback 
-(X): Mandelbrot demo 
-(D-PAD: Down): Volume - 
-(D-PAD: Up): Volume + 
-(Select): this menu
+(L): Previous Audio File 
+(R): Next Audio File
+(A): Play Audio File 
+(B): Stop Audio File 
+(D-PAD: Down): Choose file 
+(D-PAD: Up): Choose file  
+(Select): Toggle Playlist / Repeat mode
+
+Touchscreen: 
+Controls the User Interface
 
 Notes:
  - NTR Mode: DLDI patch the file manually if it isn't detected by the loader. TWL Mode doesn't need it.

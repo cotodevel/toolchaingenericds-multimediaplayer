@@ -30,6 +30,8 @@ USA
 
 //User Handler Definitions
 #include "TGDSVideo.h"
+#include "woopsifuncs.h"
+#include "WoopsiTemplate.h"
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
@@ -88,6 +90,7 @@ void VblankUser(){
 			vblankCount = 1;
 		}
 	}
+	woopsiVblFunc();
 }
 
 #ifdef ARM9
@@ -101,6 +104,9 @@ void VcounterUser(){
 __attribute__((section(".itcm")))
 #endif
 void screenLidHasOpenedhandlerUser(){
+	if(WoopsiTemplateProc != NULL){
+		WoopsiTemplateProc->handleLidOpen();
+	}
 	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT); 
 }
 
@@ -109,5 +115,7 @@ void screenLidHasOpenedhandlerUser(){
 __attribute__((section(".itcm")))
 #endif
 void screenLidHasClosedhandlerUser(){
-	
+	if(WoopsiTemplateProc != NULL){
+		WoopsiTemplateProc->handleLidClosed();
+	}
 }

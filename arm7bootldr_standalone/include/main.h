@@ -65,6 +65,12 @@ extern void strrev(char *arr, int start, int end);
 
 #endif
 
+extern void taskA(u32 * args);
+extern void handleTurnOnTurnOffTouchscreenTimeout();
+extern void onThreadOverflowUserCode7(u32 * args);
+extern u16 keyPressTGDSProject7;
+extern bool TSCKeyActive;
+
 #ifdef __cplusplus
 }
 #endif

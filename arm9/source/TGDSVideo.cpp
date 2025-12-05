@@ -38,6 +38,10 @@ USA
 #include "posixHandleTGDS.h"
 #include "timerTGDS.h"
 #include "loader.h"
+#include "WoopsiTemplate.h"
+#include "videoTGDS.h"
+#include "consoleTGDS.h"
+#include "TGDSLogoLZSSCompressed.h"
 #endif
 #include "lzss9.h"
 #if defined (MSDOS) || defined(WIN32)
@@ -197,22 +201,7 @@ int TGDSVideoRender(){
 					frameCount++;
 				}
 				else{
-					DMA0_CR = 0;
-					dmaFillWord(0, 0, (uint32)mainBufferDraw, (uint32)256*192*2);	//clean render buffer
-					vblankCount = frameCount = 1;
-					nextVideoFrameOffset = TGDSVideoFrameContextReference->videoFrameStartFileOffset;
-					nextVideoFrameFileSize = TGDSVideoFrameContextReference->videoFrameStartFileSize;
-					TGDSVideoPlayback = false;
-					
-					stopTimerCounter();	//Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
-					ARM7LoadDefaultCore();
-					enableFastMode(); //disable Vblank
-					enableScreenPowerTimeout();
-					
-					GUI.GBAMacroMode = false;	//GUI console at bottom screen. 
-					TGDSLCDSwap();
-					setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
-					menuShow();
+					haltTVSVideoUsermode();
 				}
 			}
 		}
@@ -227,13 +216,13 @@ int TGDSVideoRender(){
 void playTVSFile(char * tvsFile){
 	//Process TVS file
 	int tgdsfd = -1;
-	int res = fatfs_open_fileIntoTargetStructFD(tvsFile, "r", &tgdsfd, &videoHandleFD);
+	int res = fatfs_open_fileIntoTargetStructFD(tvsFile, "r", &videoHandleFD);
 	if(parseTGDSVideoFile(&videoHandleFD, tvsFile) > 0){
 		disableScreenPowerTimeout();
 		ARM7LoadStreamCore();
 
-		GUI.GBAMacroMode = true;	//GUI console at top screen. Bottom screen is playback
-		TGDSLCDSwap();
+		//GUI.GBAMacroMode = true;	//GUI console at top screen. Bottom screen is playback
+		//TGDSLCDSwap();
 		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 
 		int readFileSize = FS_getFileSizeFromOpenStructFD(&videoHandleFD);
@@ -246,7 +235,6 @@ void playTVSFile(char * tvsFile){
 		
 		//wait 2 seconds
 		/*
-		disableFastMode(); //enable Vblank
 		int DSFrame = 0;
 		while(DSFrame < 110){
 			if(vblankCount == 1){
@@ -256,33 +244,26 @@ void playTVSFile(char * tvsFile){
 		}
 		*/
 
-		enableFastMode(); //disable Vblank
-
 		if(GUI.GBAMacroMode == false){
-			setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
+			//setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
 		}
 		else{
-			setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+			//setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 		}
 
 		TGDSVideoPlayback = true;
-		strcpy(curChosenBrowseFile, tvsFile);
+		strcpy(currentFileChosen, tvsFile);
 		startTimerCounter(tUnitsMilliseconds, 1, IRQ_TIMER3); //tUnitsMilliseconds equals 1 millisecond/unit. A single unit (1) is the default value for normal timer count-up scenarios. 
-
-		clrscr();
-		printf("--");
-		printf("--");
-		printf(".TVS Playing OK: %s", (char*)tvsFile);
 	}
 	else{
 		TGDSVideoPlayback = false;
-		enableFastMode(); //disable Vblank
 		enableScreenPowerTimeout();
 
 		GUI.GBAMacroMode = false;	//GUI console at bottom screen. Handle error
 		TGDSLCDSwap();
 		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 		
+		/*
 		clrscr();
 		printf("--");
 		printf("--");
@@ -295,8 +276,7 @@ void playTVSFile(char * tvsFile){
 				break;
 			}
 			IRQVBlankWait();
-		}
-		menuShow();
+		}*/
 	}
 }
 
@@ -327,9 +307,19 @@ void ARM7LoadStreamCore(){
 	updateStream();
 	haltARM7(); //Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
 	
-	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
-	GUI_init(isTGDSCustomConsole);
-	GUI_clear();
+	//Set 2D *.TVS BG Format 
+	{
+		RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
+
+		bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
+		GUI_init(isTGDSCustomConsole);
+		
+		GUI.GBAMacroMode = false;	//GUI console at top screen. Playback video at bottom screen
+		TGDSLCDSwap();
+		
+		bool mainEngine = true;
+		setOrientation(ORIENTATION_0, mainEngine);
+	}
 
 	WRAM_CR = WRAM_0KARM9_32KARM7;
 	
@@ -343,16 +333,56 @@ void ARM7LoadStreamCore(){
 }
 
 void ARM7LoadDefaultCore(){
+	//Stop playback. Launch TGDS Project again
 	BgMusicOff();
 	haltARM7(); //Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
 	
-	bool project_specific_console = false;	//set default console or custom console: custom console
-	GUI_init(project_specific_console);
-	GUI_clear();
-	
-	//Stop playback. Go back to IWRAM Core
 	REG_IME = 0;
-	executeARM7Payload((u32)0x02380000, 96*1024, (u32*)savedDefaultCore);
-	WRAM_CR = WRAM_32KARM9_0KARM7;
+	u32 * payload = (u32 *)savedDefaultCore;
+	executeARM7Payload((u32)0x02380000, 96*1024, payload);
+	BgMusicOff();
 	REG_IME = 1;
+	
+	char fileBuf[MAX_TGDSFILENAME_LENGTH];
+	strcpy(fileBuf, "0:/ToolchainGenericDS-multimediaplayer");
+	if(__dsimode == false){
+		strcat(fileBuf, ".nds");
+	}
+	else{
+		strcat(fileBuf, ".srl");
+	}
+	char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+	memset(thisArgv, 0, sizeof(thisArgv));
+	strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+	strcpy(&thisArgv[1][0], fileBuf);	//Arg1:	NDS Binary reloaded
+	strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
+	payload = getTGDSMBV3ARM7AudioCore();
+	if(TGDSMultibootRunNDSPayload(fileBuf, (u8*)payload, 3, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
+		
+	}
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void haltTVSVideoUsermode(){
+	DMA0_CR = 0;
+	dmaFillWord(0, 0, (uint32)mainBufferDraw, (uint32)256*192*2);	//clean render buffer
+	vblankCount = frameCount = 1;
+	nextVideoFrameOffset = TGDSVideoFrameContextReference->videoFrameStartFileOffset;
+	nextVideoFrameFileSize = TGDSVideoFrameContextReference->videoFrameStartFileSize;
+	TGDSVideoPlayback = false;
+	
+	stopTimerCounter();	//Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
+	ARM7LoadDefaultCore();
+	
+	enableScreenPowerTimeout();
+	
+	GUI.GBAMacroMode = false;	//GUI console at bottom screen. 
+	TGDSLCDSwap();
+	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 }
