@@ -50,6 +50,19 @@
 ID3V1_TYPE id3Data;
 extern ID3V1_TYPE id3Data;
 
+//TGDS Sound Context extended to custom codecs
+__attribute__((section(".dtcm")))
+s16 *bytesLeftBuf = NULL;
+
+__attribute__((section(".dtcm")))
+int bufCursor = 0;
+
+__attribute__((section(".dtcm")))
+int maxBytes = 0;
+
+__attribute__((section(".dtcm")))
+int bytesLeft = 0;
+
 // mikmod
 static MODULE *module = NULL;
 static bool madFinished = false;
