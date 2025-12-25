@@ -142,7 +142,11 @@ extern "C" {
 extern char *strlwr(char *str);
 extern ID3V1_TYPE id3Data;
 
-// playback
+//TGDS Sound Context extended to custom codecs + playback
+extern s16 *bytesLeftBuf;
+extern int bufCursor;
+extern int maxBytes;
+extern int bytesLeft;
 extern bool initSoundStreamUser(char * fName, char * ext);
 extern bool loadSound(char *fName);
 extern void loadSoundGeneric(u32 wPlugin, int rate, int multiplicity, int sampleLength);
