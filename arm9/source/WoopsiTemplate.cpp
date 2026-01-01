@@ -146,7 +146,10 @@ void WoopsiTemplate::ReportAvailableMem() {
 	
 	_MultiLineTextBoxLogger->appendText("\n");
 	
-	char arrBuild[256+1];
+	char arrBuild[MAX_TGDSFILENAME_LENGTH];
+	sprintf(arrBuild, "Volume Level: %d [%d-%d]\n", getVolume(), SoundSampleContext_min_volume, SoundSampleContext_max_volume);
+	_MultiLineTextBoxLogger->appendText(WoopsiString(arrBuild));
+	
 	sprintf(arrBuild, "Available heap memory: %d", TGDSARM9MallocFreeMemory());
 	_MultiLineTextBoxLogger->appendText(WoopsiString(arrBuild));
 
@@ -297,18 +300,15 @@ void WoopsiTemplate::handleClickEvent(const GadgetEventArgs& e) {
 		
 		//_upVolume Event
 		case 7:{
-			struct touchPosition touch;
-			XYReadScrPosUser(&touch);
-			volumeUp(touch.px, touch.py);
-			
+			volumeUp();
+			WoopsiTemplateProc->ReportAvailableMem();
 		}	
 		break;
 		
 		//_downVolume Event
 		case 8:{
-			struct touchPosition touch;
-			XYReadScrPosUser(&touch);
-			volumeDown(touch.px, touch.py);
+			volumeDown();
+			WoopsiTemplateProc->ReportAvailableMem();
 		}	
 		break;
 		
