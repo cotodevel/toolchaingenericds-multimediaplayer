@@ -82,15 +82,17 @@ void HblankUser(){
 __attribute__((section(".itcm")))
 #endif
 void VblankUser(){
-	if(TGDSVideoPlayback == true){
-		if(vblankCount < vblankMaxFrame){
-			vblankCount++;
+	if(WoopsiTemplateProc != NULL){
+		if(TGDSVideoPlayback == true){
+			if(vblankCount < vblankMaxFrame){
+				vblankCount++;
+			}
+			else{
+				vblankCount = 1;
+			}
 		}
-		else{
-			vblankCount = 1;
-		}
+		woopsiVblFunc();
 	}
-	woopsiVblFunc();
 }
 
 #ifdef ARM9
