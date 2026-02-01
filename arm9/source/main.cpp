@@ -287,12 +287,6 @@ int main(int argc, char **argv) {
 	printf("     ");
 	
 	int ret=FS_init();
-	if (ret != 0){
-		printf("%s: FS Init error: %d >%d", TGDSPROJECTNAME, ret, TGDSPrintfColor_Red);
-		while(1==1){
-			swiDelay(1);
-		}
-	}
 	
 	//switch_dswnifi_mode(dswifi_idlemode);
 	asm("mcr	p15, 0, r0, c7, c10, 4");
