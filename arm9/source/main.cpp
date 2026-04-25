@@ -191,7 +191,7 @@ void handleInput(){
 int playbackMode = 0; //0 = playlist / 1 = repeat
 
 char * playIntro(){
-	char * introFilename = "0:/tgds_intro.m4a";
+	char * introFilename = TGDS_INTRO_FILENAME;
 	FILE * fh = fopen(introFilename, "w+");
 	struct LZSSContext LZSSCtx = LZS_DecodeFromBuffer((u8*)&tgds_intro_m4a[0], (unsigned int)tgds_intro_m4a_size);
 	//Prevent Cache problems.
@@ -303,7 +303,7 @@ int main(int argc, char **argv) {
 	REG_IME = 1;
 	
 	powerOFF3DEngine(); //Power off ARM9 3D Engine to save power
-	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT); 
+	setBacklight( POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT); 
 	bottomScreenIsLit = true;
 	
 	MikMod_RegisterAllDrivers();
@@ -338,7 +338,7 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 void enableScreenPowerTimeout(){
-	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+	setBacklight( POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
 
 	//Add timeout thread here
 	struct task_Context * TGDSThreads = getTGDSThreadSystem();
@@ -355,7 +355,7 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 void disableScreenPowerTimeout(){
-	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+	setBacklight( POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
 
 	//Remove touchscreen thread here to prevent turning off the screen while other operations like:
 	//*.TVS playback takes place 
@@ -376,7 +376,7 @@ void handleTurnOnTurnOffScreenTimeout(){
 	}
 	//turn on bottom screen if input event
 	if(bottomScreenIsLit == true){
-		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+		setBacklight( POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
 		bottomScreenIsLit = false;
 		millisecondsElapsed = 0;
 	}

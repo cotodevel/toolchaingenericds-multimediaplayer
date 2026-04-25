@@ -2559,7 +2559,9 @@ void soundPrevTrack()
 				updateStream();
 				updateStream();
 
-				playAudioFile();
+				if(!strcmpi((char*)&currentFileChosen[0], TGDS_INTRO_FILENAME) == 0){
+					playAudioFile();
+				}
 			}
 
 		}break;
@@ -2691,7 +2693,9 @@ void soundNextTrack()
 				updateStream();
 				updateStream();
 
-				playAudioFile();
+				if(!strcmpi((char*)&currentFileChosen[0], TGDS_INTRO_FILENAME) == 0){
+					playAudioFile();
+				}
 			}
 		}break;
 	}

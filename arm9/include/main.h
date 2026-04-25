@@ -25,6 +25,8 @@ USA
 #include "dsregs.h"
 #include "limitsTGDS.h"
 
+
+#define TGDS_INTRO_FILENAME ((char*)"0:/tgds_intro.m4a")
 struct rgbMandel{
 	int r;
 	int g;
