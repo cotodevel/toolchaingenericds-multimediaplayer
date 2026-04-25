@@ -116,9 +116,6 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 			StopSoundSPC();
 		}break;
 		case POCKETSPC_ARM7COMMAND_LOAD_SPC:{
-			REG_DISPSTAT = 0;
-			REG_IE = REG_IE & ~(IRQ_VBLANK|IRQ_HBLANK);
-			
 			struct sIPCSharedTGDSSpecific* sharedIPC = getsIPCSharedTGDSSpecific();
 			LoadSpc(sharedIPC->rawSpcShared);
 			SetupSoundSPC();

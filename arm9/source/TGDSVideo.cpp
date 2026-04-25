@@ -220,10 +220,7 @@ void playTVSFile(char * tvsFile){
 	if(parseTGDSVideoFile(&videoHandleFD, tvsFile) > 0){
 		disableScreenPowerTimeout();
 		ARM7LoadStreamCore();
-
-		//GUI.GBAMacroMode = true;	//GUI console at top screen. Bottom screen is playback
-		//TGDSLCDSwap();
-		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+		setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
 
 		int readFileSize = FS_getFileSizeFromOpenStructFD(&videoHandleFD);
 		int predictedClusterCount = (readFileSize / (getDiskClusterSize() * getDiskSectorSize())) + 2;
@@ -244,13 +241,6 @@ void playTVSFile(char * tvsFile){
 		}
 		*/
 
-		if(GUI.GBAMacroMode == false){
-			//setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
-		}
-		else{
-			//setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
-		}
-
 		TGDSVideoPlayback = true;
 		strcpy(currentFileChosen, tvsFile);
 		startTimerCounter(tUnitsMilliseconds, 1, IRQ_TIMER3); //tUnitsMilliseconds equals 1 millisecond/unit. A single unit (1) is the default value for normal timer count-up scenarios. 
@@ -261,7 +251,7 @@ void playTVSFile(char * tvsFile){
 
 		GUI.GBAMacroMode = false;	//GUI console at bottom screen. Handle error
 		TGDSLCDSwap();
-		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+		setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
 		
 		/*
 		clrscr();
@@ -343,6 +333,8 @@ void ARM7LoadDefaultCore(){
 	BgMusicOff();
 	REG_IME = 1;
 	
+	//Todo: Find a way to restore WoopsiSDK 2D Video Context without reloading the application through TGDS-multiboot
+	/*
 	char fileBuf[MAX_TGDSFILENAME_LENGTH];
 	strcpy(fileBuf, "0:/ToolchainGenericDS-multimediaplayer");
 	if(__dsimode == false){
@@ -360,6 +352,7 @@ void ARM7LoadDefaultCore(){
 	if(TGDSMultibootRunNDSPayload(fileBuf, (u8*)payload, 3, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
 		
 	}
+	*/
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -384,5 +377,5 @@ void haltTVSVideoUsermode(){
 	
 	GUI.GBAMacroMode = false;	//GUI console at bottom screen. 
 	TGDSLCDSwap();
-	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+	setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
 }
