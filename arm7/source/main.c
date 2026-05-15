@@ -11,9 +11,7 @@
 #include "dldi.h"
 #include "ipcfifoTGDSUser.h"
 #include "TGDS_threads.h"
-#include "exceptionTGDS.h"
-#include "loader.h"
-#include "spitscTGDS.h"
+#include "spifwTGDS.h"
 
 bool SPCExecute=false;
 
@@ -23,12 +21,12 @@ int PocketSPCVersion = 0; //9 = pocketspcv0.9 / 10 = pocketspcv1.0
 void bootfile(){
 }
 
-// Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
-uint16 * playBuffer = (uint16 *)TGDS_ARM7_AUDIOBUFFER_STREAM; //[MIXBUFSIZE * 2 * 2]
+uint16 * playBuffer = (uint16 *)( ((int)TGDS_ARM7_AUDIOBUFFER_STREAM_ADPCMCORE) ); //[MIXBUFSIZE * 2 * 2]
 volatile int soundCursor;
 bool paused = false;
 
 void SetupSoundSPC() {
+	timer1PlaybackARM7SPCCore = false; //nope or buzzing occurs due to custom libutils7
     soundCursor = 0;
 
 	SoundPowerON(127);		//volume
@@ -38,7 +36,6 @@ void SetupSoundSPC() {
     TIMERXDATA(2) = 0x10000 - MIXBUFSIZE;
     TIMERXCNT(2) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
 	irqEnable(IRQ_TIMER2);
-	irqDisable(IRQ_TIMER1);
 	
     // Timing stuff
     //TIMER2_DATA = 0;
@@ -50,10 +47,10 @@ void SetupSoundSPC() {
 //    *((vu32*)0x04000510) = (uint32)capBuf;
 //    *((vu16*)0x04000514) = (MIXBUFSIZE * 2) >> 1;
 //    *((vu16*)0x04000508) = 0x83;
-	SPCExecute=true;
 	
 	// prevent accidentally reading garbage from buffer 0, by waiting for buffer 1 instead
 	swiDelay((0x10000 - MIXBUFSIZE) >> 1);
+	SPCExecute=true;
 }
 
 void StopSoundSPC() {
@@ -119,6 +116,7 @@ void LoadSpc(const uint8 *spc) {
 
     ApuPrepareStateAfterReload();
     DspPrepareStateAfterReload();
+	SPCExecute = true;
 }
 
 bool TSCKeyActive = false;
@@ -134,14 +132,18 @@ int main(int _argc, char **_argv) {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.6 Standard ARM7 Init code start	*/
 	while(!(*(u8*)0x04000240 & 2) ){} //wait for VRAM_D block
-	ARM7InitDLDI(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, TGDSDLDI_ARM7_ADDRESS_NORMAL_CORE);
+	ARM7InitDLDI(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, TGDSDLDI_ARM7_ADDRESS);
 	struct task_Context * TGDSThreads = getTGDSThreadSystem();
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-	REG_IE &= ~(IRQ_VBLANK); //cause sound clicks
 	
 	update_spc_ports();
+
+	setupSound(TGDS_ARM7_AUDIOBUFFER_STREAM);
+	stopSound();
+	StopSoundSPC();
+	
 	int i = 0; 
     for (i = 0; i < MIXBUFSIZE * 4; i++) {
         playBuffer[i] = 0;
@@ -241,5 +243,5 @@ void CustomInputMappingHandler(uint32 readKeys){
 
 //Project specific: ARM7 Setup for TGDS sound stream
 void initSoundStreamUser(u32 srcFmt){
-	//SPCExecute=false;
+	
 }

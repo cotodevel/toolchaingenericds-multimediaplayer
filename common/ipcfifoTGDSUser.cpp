@@ -39,6 +39,7 @@ USA
 #include "wifi_arm7.h"
 #include "spifwTGDS.h"
 #include "spitscTGDS.h"
+#include "interrupts.h"
 
 #ifdef ARM7SPCCUSTOMCORE
 #include "apu.h"
@@ -130,6 +131,17 @@ void HandleFifoNotEmptyWeakRef(u32 cmd1, uint32 cmd2){
 			enableARM7TouchScreen();
 		}break;
 		
+		#ifdef ARM7SPCCUSTOMCORE
+		case(FIFO_PLAYSOUNDSTREAM_FILE):{
+			timer1PlaybackARM7SPCCore = true;
+		}
+		break;
+
+		case(FIFO_STOPSOUNDSTREAM_FILE):{
+			timer1PlaybackARM7SPCCore = false;
+		}
+		break;
+		#endif
 
 		#endif
 		

@@ -383,6 +383,7 @@ void resetLayout(){
 	}
 }
 
+static int retryCount = 0;
 
 //pendPlay status:
 //1 = play file immediately (turns into -> 0 = play next file or repeat file indefinitely)
@@ -436,7 +437,15 @@ void Woopsi::ApplicationMainLoop() {
 					else{
 						//play file immediately 
 						pendPlay = 0;
-
+						
+						//Required for SPC Core to prevent timer audio playback from playing at boot
+						if(retryCount > 1){
+							SendFIFOWords(FIFO_PLAYSOUNDSTREAM_FILE, 0xFF);
+						}
+						else{
+							retryCount++;
+						}
+						
 						int fileCount = 0;
 						char * trackName = NULL;
 						if(soundData.sourceFmt == SRC_NSF){

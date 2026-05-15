@@ -82,19 +82,11 @@ typedef sint16 int16;
 #define SLEEPMODE_SECONDS (int)(15)
 
 //TGDS Memory Layout ARM7/ARM9 Cores
-#define TGDS_ARM7_MALLOCSTART (u32)(0x06018000)
+#define TGDS_ARM7_MALLOCSTART (u32)(0x06001000)
 #define TGDS_ARM7_MALLOCSIZE (int)(512)
-
-//normal core
-#define TGDSDLDI_ARM7_ADDRESS_NORMAL_CORE (u32)(((int)0x06004000) + TGDS_ARM7_MALLOCSIZE)
-
-//*.tvs core
-#define TGDSDLDI_ARM7_ADDRESS_TVS_CORE (u32)(((int)0x06018000) + TGDS_ARM7_MALLOCSIZE)
-
-
-#define TGDS_ARM7_AUDIOBUFFER_STREAM_ADPCMCORE (u32)(((int)0x02400000 - (768*1024))) //only for *.TVS: ADPCM Core
-#define TGDS_ARM7_AUDIOBUFFER_STREAM (u32)(((u32)TGDSDLDI_ARM7_ADDRESS_NORMAL_CORE + TGDS_ARM7_MALLOCSIZE) + (32*1024)) //SPC Core: SPC play + Codec audio stream. //*.TVS Core: Unused
-#define APU_RAM_ADDRESS     ((volatile unsigned char*) TGDSDLDI_ARM7_ADDRESS_NORMAL_CORE + (8*1024) )	//64K APU WORK 
+#define TGDSDLDI_ARM7_ADDRESS (u32)(TGDS_ARM7_MALLOCSTART + TGDS_ARM7_MALLOCSIZE)
+#define APU_RAM_ADDRESS     ((volatile unsigned char*) ( ((int)TGDSDLDI_ARM7_ADDRESS) + TGDS_ARM7_MALLOCSIZE) + (16*1024) )	//64K APU WORK 
+#define TGDS_ARM7_AUDIOBUFFER_STREAM (u32)( APU_RAM_ADDRESS )
 #define APU_BRR_HASH_BUFFER	(volatile u32*)((int)0x023B8000)	//270K ~ worth of Hashed Samples from the APU core to remove stuttering : 0x02400000 - 0x48000 = 0x023B8000
 
 #define POCKETSPC_ARM7COMMAND_STOP_SPC (u32)(0xFFAACC02)
@@ -106,28 +98,41 @@ typedef sint16 int16;
 #define FIFO_DISABLE_ARM7_TouchScreen (u32)(0xFFFFABD1)
 #define FIFO_ENABLE_ARM7_TouchScreen (u32)(0xFFFFABD2)
 
+//*.tvs core
+#define TGDSDLDI_ARM7_ADDRESS_TVS_CORE (u32)(((int)0x06018000) + TGDS_ARM7_MALLOCSIZE)
+#define TGDS_ARM7_AUDIOBUFFER_STREAM_ADPCMCORE (u32)(((int)0x02400000 - (768*1024))) //only for *.TVS: ADPCM Core
 
 //allocate them statically to save memory 
 #define savedDefaultCore ((u8*) ((int)0x02400000) - (128*1024) )	//ARM7: Custom Core / SPC-Default Core
-
 #define decompBuf ((u8*) ((int)savedDefaultCore) - (96*1024) )	//*.TVS Video buffer
-
 #define decompBufUncached (u32)(((int)decompBuf + 0x400000))
 
 
 #endif
 
 #ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifdef ARM7
+extern int main(int argc, char **argv);
+extern struct TGDSVideoFrameContext videoCtx;
+extern struct soundPlayerContext soundData;
+extern char fname[256];
+
+extern void playSoundStreamARM7();
+extern void handleARM7FSRender();
+
+extern bool stopSoundStreamUser();
+extern void playerStopARM7();
+
+#ifdef __cplusplus
 #if defined(ARM7VRAMCUSTOMCORE)
 	extern IMA_Adpcm_Player backgroundMusicPlayer;	//Sound stream Background music Instance
 	extern FATFS fileHandle; //Sound stream handle
 #endif
 #endif
 
-
-extern "C" {
 #endif
 
 //NOT weak symbols : the implementation of these is project-defined (here)
@@ -144,23 +149,6 @@ extern uint32 ADDR_APU_PROGRAM_COUNTER;
 extern uint32 ADDR_SNEMUL_CMD;				//APU_ADDR_CMD	//0x027FFFE8
 extern uint32 ADDR_SNEMUL_ANS;				//APU_ADDR_ANS	//0x027fffec
 extern uint32 ADDR_SNEMUL_BLK;				//APU_ADDR_BLK	//0x027fffe8
-
-#if defined(ARM7VRAMCUSTOMCORE)
-
-#ifdef ARM7
-extern int main(int argc, char **argv);
-extern struct TGDSVideoFrameContext videoCtx;
-extern struct soundPlayerContext soundData;
-extern char fname[256];
-
-extern void playSoundStreamARM7();
-extern void handleARM7FSRender();
-
-extern bool stopSoundStreamUser();
-extern void playerStopARM7();
-#endif
-
-#endif
 
 #ifdef ARM9
 extern u32 playSoundStreamFromFile(char * videoStructFDFilename, bool loop, u32 streamType);

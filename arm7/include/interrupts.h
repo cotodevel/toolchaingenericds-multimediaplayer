@@ -41,6 +41,7 @@ extern void VcounterUser();
 extern void screenLidHasOpenedhandlerUser();
 extern void screenLidHasClosedhandlerUser();
 
+extern bool timer1PlaybackARM7SPCCore;
 #ifdef __cplusplus
 }
 #endif

@@ -42,7 +42,7 @@ sp_IRQ	= sp_SVC - 0x100;
 sp_FIQ	= sp_IRQ - 0x100;
 sp_USR	= sp_FIQ - 0x100;
 sp_SYS	= sp_USR;
-sp_ABT = sp_SYS - 0x100;
+sp_ABT	= sp_SYS;
 sp_UND	= sp_ABT;
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm","elf32-littlearm")

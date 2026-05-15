@@ -8,6 +8,7 @@
 #include "dsp.h"
 #include "main.h"
 #include "biosTGDS.h"
+#include "timerTGDS.h"
 
 //User Handler Definitions
 
@@ -128,4 +129,112 @@ __attribute__((section(".itcm")))
 #endif
 void screenLidHasClosedhandlerUser(){
 	
+}
+
+bool timer1PlaybackARM7SPCCore = false;
+//TGDS SDK Code. Since the ARM7 Audio Stream + SPC Core has ran out of memory, just paste the bits required for the Audio Stream Code istead of linking the whole library which doesn't fit in the ARM7 IWRAM
+void TIMER1Handler(){
+	if(SPCExecute == false){
+		
+		if(timer1PlaybackARM7SPCCore == true){
+			setSwapChannel(); //causes buzz
+		}
+
+		SendFIFOWords(ARM9COMMAND_UPDATE_BUFFER, 0xFF);
+	}
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void setSwapChannel() 
+{
+	s16 *buf;
+  
+	if(!sndCursor)
+		buf = strpcmL0;
+	else
+		buf = strpcmL1;
+    
+	// Left channel
+	SCHANNEL_SOURCE((sndCursor << 1)) = (uint32)buf;
+	SCHANNEL_CR((sndCursor << 1)) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0) | SOUND_16BIT;
+    	
+	if(!sndCursor)
+		buf = strpcmR0;
+	else
+		buf = strpcmR1;
+	
+	// Right channel
+	SCHANNEL_SOURCE((sndCursor << 1) + 1) = (uint32)buf;
+	SCHANNEL_CR((sndCursor << 1) + 1) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0x3FF) | SOUND_16BIT;
+  
+	sndCursor = 1 - sndCursor;
+}
+
+void stopSound() {
+	TIMERXCNT(0) = 0;
+	TIMERXCNT(1) = 0;
+	
+	SCHANNEL_CR(0) = 0;
+	SCHANNEL_CR(1) = 0;
+	SCHANNEL_CR(2) = 0;
+	SCHANNEL_CR(3) = 0;
+	
+	REG_IE &= ~IRQ_TIMER1;
+	timer1PlaybackARM7SPCCore = false;
+}
+
+void setupSound(uint32 sourceBuf) {
+	
+	dmaFillHalfWord(0, 0, (uint32)APU_RAM_ADDRESS, (uint32)(64*1024) );
+
+	//Init SoundSampleContext
+	initSound();
+
+	sndCursor = 0;
+	if(multRate != 1 && multRate != 2 && multRate != 4){
+		multRate = 1;
+	}
+	
+	mallocDataARM7(sampleLen * 2 * multRate, (uint16*)sourceBuf);
+    
+	TIMERXDATA(0) = SOUND_FREQ((sndRate * multRate));
+	TIMERXCNT(0) = TIMER_DIV_1 | TIMER_ENABLE;
+  
+	TIMERXDATA(1) = 0x10000 - (sampleLen * 2 * multRate);
+	TIMERXCNT(1) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
+	
+	int ch;
+	for(ch=0;ch<4;++ch)
+	{
+		SCHANNEL_CR(ch) = 0;
+		SCHANNEL_TIMER(ch) = SOUND_FREQ(sndRate * multRate);
+		SCHANNEL_LENGTH(ch) = (sampleLen * multRate) >> 1;
+		SCHANNEL_REPEAT_POINT(ch) = 0;
+	}
+
+	REG_IE |= IRQ_TIMER1;
+	
+	// prevent accidentally reading garbage from buffer 0, by waiting for buffer 1 instead
+	swiDelay((0x10000 - (sampleLen * multRate)) >> 1);
+	
+	lastL = 0;
+	lastR = 0;
+}
+
+void mallocDataARM7(int size, uint16* sourceBuf)
+{
+    // this no longer uses malloc due to using dynamic memory.
+	strpcmL0 = (s16*)sourceBuf;
+	strpcmL1 = strpcmL0 + (size >> 1);
+	strpcmR0 = strpcmL1 + (size >> 1);
+	strpcmR1 = strpcmR0 + (size >> 1);
+	
+	// clear memory to not have sound leftover
+	dmaFillHalfWord(0, 0, (uint32)strpcmL0, (uint32)((size + 3) & ~3) );
+	dmaFillHalfWord(0, 0, (uint32)strpcmR0, (uint32)((size + 3) & ~3) );
 }
