@@ -19,7 +19,7 @@
 
 #put here the custom stage_2 vram loader bits
 #for 0x02380000 -> 0x06000000 arm7vram payload
-export BINSTRIP_RULE_arm7vram =	arm7bootldr_standalone.binlzss
+export BINSTRIP_RULE_arm7vram =	arm7tvs.binlzss
 #for 0x02380000 -> 0x06000000 arm7vram payload
 export TARGET_LIBRARY_CRT0_FILE_7custom = nds_arm_ld_crt0
 export TARGET_LIBRARY_LINKER_FILE_7custom = ../$(TARGET_LIBRARY_CRT0_FILE_7custom).S

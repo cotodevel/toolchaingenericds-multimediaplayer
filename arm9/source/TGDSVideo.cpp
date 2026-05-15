@@ -315,11 +315,19 @@ void ARM7LoadStreamCore(){
 	
 	//Reload VRAM Core here
 	REG_IME = 0;
-	u32 * payload = getTGDSMBV3ARM7AudioCore();
+	u32 * payload = getARM7TVSAudioCore();
 	executeARM7Payload((u32)0x02380000, 96*1024, payload);
 	BgMusicOff();
 	REG_IME = 1;
 	haltARM7(); //Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
+
+	//Restore touchscreen IPC coords
+	memcpy((void*)UserSettingsAddr, (void*)&savedUserSettings[0], sizeof(savedUserSettings));
+	coherent_user_range_by_size((uint32)UserSettingsAddr, (int)sizeof(savedUserSettings));	
+	enableARM7TouchScreenFromARM9(); 
+	if(__dsimode == true){
+		TWLSetTouchscreenTWLMode();
+	} 
 }
 
 void ARM7LoadDefaultCore(){
@@ -328,31 +336,17 @@ void ARM7LoadDefaultCore(){
 	haltARM7(); //Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
 	
 	REG_IME = 0;
-	u32 * payload = (u32 *)savedDefaultCore;
+	u32 * payload = getDefaultARM7AudioStreamCoreSPCCore();
 	executeARM7Payload((u32)0x02380000, 96*1024, payload);
 	BgMusicOff();
 	REG_IME = 1;
-	
-	//Todo: Find a way to restore WoopsiSDK 2D Video Context without reloading the application through TGDS-multiboot
-	/*
-	char fileBuf[MAX_TGDSFILENAME_LENGTH];
-	strcpy(fileBuf, "0:/ToolchainGenericDS-multimediaplayer");
-	if(__dsimode == false){
-		strcat(fileBuf, ".nds");
+	//Restore touchscreen IPC coords
+	memcpy((void*)UserSettingsAddr, (void*)&savedUserSettings[0], sizeof(savedUserSettings));
+	coherent_user_range_by_size((uint32)UserSettingsAddr, (int)sizeof(savedUserSettings));	
+	enableARM7TouchScreenFromARM9(); 
+	if(__dsimode == true){
+		TWLSetTouchscreenTWLMode();
 	}
-	else{
-		strcat(fileBuf, ".srl");
-	}
-	char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-	memset(thisArgv, 0, sizeof(thisArgv));
-	strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
-	strcpy(&thisArgv[1][0], fileBuf);	//Arg1:	NDS Binary reloaded
-	strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
-	payload = getTGDSMBV3ARM7AudioCore();
-	if(TGDSMultibootRunNDSPayload(fileBuf, (u8*)payload, 3, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
-		
-	}
-	*/
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))

@@ -25,6 +25,7 @@ USA
 #include "dsregs.h"
 #include "limitsTGDS.h"
 
+#define UserSettingsAddr (u8*)(0x023FF000)
 
 #define TGDS_INTRO_FILENAME ((char*)"0:/tgds_intro.m4a")
 struct rgbMandel{
@@ -40,7 +41,9 @@ struct rgbMandel{
 extern "C" {
 #endif
 
-extern u32 * getTGDSMBV3ARM7AudioCore();
+extern u32 * getTGDSMBV3ARM7Bootloader();
+extern u32 * getDefaultARM7AudioStreamCoreSPCCore();
+extern u32 * getARM7TVSAudioCore();
 extern int main(int argc, char **argv);
 extern void drawMandel(double factor);
 extern void handleInput();
@@ -57,7 +60,7 @@ extern void taskA(u32 * args);
 extern void taskB(u32 * args);
 extern void onThreadOverflowUserCode(u32 * args);
 extern void ds_malloc_abortSkip(void);
-
+extern u8 savedUserSettings[4096];
 #ifdef __cplusplus
 }
 #endif
