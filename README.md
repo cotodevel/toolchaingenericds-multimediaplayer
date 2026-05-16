@@ -50,7 +50,7 @@ Buttons:
 (L): Previous Audio File 
 (R): Next Audio File
 (A): Play Audio File 
-(B): Stop Audio File 
+(B): Stop Audio File / *.TVS Video playback cancel
 (D-PAD: Down): Choose file 
 (D-PAD: Up): Choose file  
 (Select): Toggle Playlist / Repeat mode

@@ -303,6 +303,10 @@ void stopAudioStreamUser(){
 	updateStream();
 	updateStream();
 	updateStream();
+
+	if( (soundData.sourceFmt == SRC_NONE) && (TGDSVideoPlayback == true) ){
+		haltTVSVideoUsermode();
+	}
 }
 
 __attribute__((section(".itcm")))

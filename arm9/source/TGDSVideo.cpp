@@ -42,6 +42,7 @@ USA
 #include "videoTGDS.h"
 #include "consoleTGDS.h"
 #include "TGDSLogoLZSSCompressed.h"
+#include "lz77.h"
 #endif
 #include "lzss9.h"
 #if defined (MSDOS) || defined(WIN32)
@@ -190,8 +191,7 @@ int TGDSVideoRender(){
 			if( ( (frameRendered->elapsedTimeStampInMilliseconds-dlt_time) < curTime) || (curTime <= 0) ){ //0.7s seek ahead time to sync better
 				nextVideoFrameOffset = frameRendered->nextVideoFrameOffsetInFile;
 				nextVideoFrameFileSize = frameRendered->nextVideoFrameFileSize;
-				int decompSize = *(unsigned int *)(decodedBuf + frameDescSize) >> 8;
-				swiDecompressLZSSWram((u8*)decodedBuf + frameDescSize, (u8*)decompBufUncached);
+				int decompSize = lzssDecompress((u8*)decodedBuf + frameDescSize, (u8*)decompBufUncached);
 				DMA0_SRC = (uint32)(decompBufUncached);
 				DMA0_DEST = (uint32)mainBufferDraw;
 				DMA0_CR = DMAENABLED | DMAINCR_SRC | DMAINCR_DEST | DMA32BIT | (decompSize>>2);
@@ -328,6 +328,8 @@ void ARM7LoadStreamCore(){
 	if(__dsimode == true){
 		TWLSetTouchscreenTWLMode();
 	} 
+
+	//disableWaitForVblankC(); //Disable: Update Woopsi SDK through Vblank. Nope, loses WoopsiSDK object control while *.TVS rendering
 }
 
 void ARM7LoadDefaultCore(){
@@ -347,6 +349,7 @@ void ARM7LoadDefaultCore(){
 	if(__dsimode == true){
 		TWLSetTouchscreenTWLMode();
 	}
+	//enableWaitForVblankC(); //Enable: Update Woopsi SDK through Vblank. Nope, loses WoopsiSDK object control while *.TVS rendering
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))

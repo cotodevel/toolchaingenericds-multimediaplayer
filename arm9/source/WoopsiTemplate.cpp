@@ -20,6 +20,28 @@
 #include "TGDS_threads.h"
 #include "TGDSVideo.h"
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void enableWaitForVblankC(){
+	WoopsiTemplateProc->enableWaitForVblank();
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void disableWaitForVblankC(){
+	WoopsiTemplateProc->disableWaitForVblank();
+}
+
 __attribute__((section(".dtcm")))
 WoopsiTemplate * WoopsiTemplateProc = NULL;
 
@@ -116,6 +138,8 @@ void WoopsiTemplate::startup(int argc, char **argv) {
 	//WoopsiSDK Initial state defaults
 	ReportAvailableMem();
 	
+	enableWaitForVblankC(); //Enable: Update Woopsi SDK through Vblank
+
 	enableDrawing();	// Ensure Woopsi can now draw itself
 	redraw();			// Draw initial state
 }
@@ -292,9 +316,6 @@ void WoopsiTemplate::handleClickEvent(const GadgetEventArgs& e) {
 		case 6:{
 			pendPlay = 2; //stop filestream immediately
 			stopAudioFile();
-			if( (soundData.sourceFmt == SRC_NONE) && (TGDSVideoPlayback == true) ){
-				haltTVSVideoUsermode();
-			}
 		}	
 		break;
 		
@@ -526,14 +547,16 @@ void Woopsi::ApplicationMainLoop() {
 		break;
 	}
 	
+	handleInput();
+
 	if(TGDSVideoPlayback == true){
 		TGDSVideoRender();
 	}
-	handleInput();
-
-	bool waitForVblank = false; //= true; cause stutters during audio playback
-	struct task_Context * TGDSThreads = getTGDSThreadSystem();
-	int threadsRan = runThreads(TGDSThreads, waitForVblank);
+	else{
+		bool waitForVblank = false; //= true; cause stutters during audio playback
+		struct task_Context * TGDSThreads = getTGDSThreadSystem();
+		int threadsRan = runThreads(TGDSThreads, waitForVblank);
+	}
 }
 
 void updateLayout(){
