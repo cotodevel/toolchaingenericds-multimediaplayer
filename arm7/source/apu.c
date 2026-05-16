@@ -107,7 +107,10 @@ void ApuReset() {
         memset(APU_MEM+i, 0, 0x20);
         memset(APU_MEM+i+0x20, 0xFF, 0x20);
     }
-
+	
+	memset(APU_MEM + 0xF0, 0, 0x10);
+    ApuSetShowRom();
+	
 	// Init the ROM
     for (i=0; i<=0x3F; i++) {
         APU_MEM[0xFFC0 + i] = iplRom[i];

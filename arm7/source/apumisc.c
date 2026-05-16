@@ -209,3 +209,7 @@ void ApuWriteUpperByte(uint8 byte, uint32 address) {
         APU_MEM[address] = iplRom[address - 0xFFC0];
 }
 
+void ApuSetShowRom()
+{
+	apuShowRom = 0;
+}

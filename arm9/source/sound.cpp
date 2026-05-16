@@ -2444,7 +2444,7 @@ void closeSoundUser(){
 	if(isWIFIConnected()){
 		disconnectWifi();
 	}
-	SendFIFOWords(POCKETSPC_ARM7COMMAND_STOP_SPC, 0xFF);
+	haltARM7();
 }
 
 void soundPrevTrack()

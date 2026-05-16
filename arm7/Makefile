@@ -38,7 +38,7 @@ d_objs_arm7:=	${file_arm7_src_c:.c=.d}	${file_arm7_src_s:.s=.d}	${file_arm7_src_
 #ARM7 specific definitions. -fno-common so we force initialized data to rodata
 MAPFILE = $(DIR_ARM7).map
 AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_7)	$(SPECIFIC_AS_COMPILER_FLAGS_7)		$(GLOBAL_AS_COMPILER_FLAGS)
-CC_ASFLAGS		=	-march=armv4t	-mthumb-interwork	-mfloat-abi=soft	-mcpu=arm7tdmi	-marm	-ffunction-sections -fdata-sections	-Wall -Os -fno-common	-DARM7	-fno-exceptions	-DNDS	-DARM7SPCCUSTOMCORE	-shared	
+CC_ASFLAGS		=	-march=armv4t	-Os	-mthumb-interwork	-mfloat-abi=soft	-mcpu=arm7tdmi	-marm	-ffunction-sections -fdata-sections	-Wall	-DARM7	-fno-exceptions	-DNDS	-DARM7SPCCUSTOMCORE
 CPP_FLAGS		=	$(CC_ASFLAGS) 
 BUILD			= 	$(BUILD_ARM7)
 DIR_SRC			= 	$(DIRS_ARM7_SRC)
@@ -47,8 +47,8 @@ DIR_SRC			= 	$(DIRS_ARM7_SRC)
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
 LDFLAGS	=	-specs=nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),--fix-v4bx,-z,defs
 LDFLAGS_DSI	:=	-specs=nds_arm7_ld.specs	-Wl,--gc-sections,-Map,arm7-nonstripped_dsi.map,--fix-v4bx,-z,defs
-LIBRARIES_NTR =	-lutils7	-l$(TARGET_LIBRARY_TGDS_NTR_7)	-lhardware7		-lcnano7
-LIBRARIES_TWL =	-lutils7i	-l$(TARGET_LIBRARY_TGDS_TWL_7)	-lhardware7i	-lcnano7
+LIBRARIES_NTR =	-l$(TARGET_LIBRARY_TGDS_NTR_7)	-lhardware7		-lcnano7
+LIBRARIES_TWL =	-l$(TARGET_LIBRARY_TGDS_TWL_7)	-lhardware7i	-lcnano7
 
 ################################################################################################
 

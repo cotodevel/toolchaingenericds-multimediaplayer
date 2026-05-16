@@ -62,7 +62,9 @@ extern void resetLayout();
 extern void updateLayout();
 extern int getFirstFileIndexFromFileRequester(FileRequester * freqInst);
 extern int getLastFileIndexFromFileRequester(FileRequester * freqInst);
-
+extern void disableWaitForVblankC();
+extern void enableWaitForVblankC();
+extern WoopsiTemplate * createNewWoopsiSDKInstance();
 #ifdef __cplusplus
 }
 #endif

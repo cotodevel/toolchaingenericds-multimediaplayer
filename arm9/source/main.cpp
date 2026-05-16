@@ -49,16 +49,34 @@ USA
 #include "TGDS_threads.h"
 #include "WoopsiTemplate.h"
 
-//ARM7 VRAM core: *.TVS IMA-ADPCM support
-#include "arm7bootldr_standalone.h"
-#include "arm7bootldr_standalone_twl.h"
+//TGDS-MB ARM7 Bootldr
+#include "arm7bootldr.h"
+#include "arm7bootldr_twl.h"
 
-u32 * getTGDSMBV3ARM7AudioCore(){
+u32 * getTGDSMBV3ARM7Bootloader(){	//Required by ToolchainGenericDS-multiboot v3
 	if(__dsimode == false){
-		swiDecompressLZSSWram((u8*)&arm7bootldr_standalone[0], (u8*)decompBufUncached);
+		swiDecompressLZSSWram((u8*)&arm7bootldr[0], (u8*)decompBufUncached);
 	}
 	else{
-		swiDecompressLZSSWram((u8*)&arm7bootldr_standalone_twl[0], (u8*)decompBufUncached);
+		swiDecompressLZSSWram((u8*)&arm7bootldr_twl[0], (u8*)decompBufUncached);
+	}
+	return (u32*)decompBufUncached;
+}
+
+u32 * getDefaultARM7AudioStreamCoreSPCCore(){
+	return (u32*)savedDefaultCore;
+}
+
+//TGDS Project's ARM7 VRAM Core ARM7 @ 0x06000000
+#include "arm7tvs.h"
+#include "arm7tvs_twl.h"
+
+u32 * getARM7TVSAudioCore(){
+	if(__dsimode == false){
+		swiDecompressLZSSWram((u8*)&arm7tvs[0], (u8*)decompBufUncached);
+	}
+	else{
+		swiDecompressLZSSWram((u8*)&arm7tvs_twl[0], (u8*)decompBufUncached);
 	}
 	return (u32*)decompBufUncached;
 }
@@ -181,6 +199,49 @@ void handleInput(){
 
 	}
 	
+	readKeys_ = keysHeld();
+	if( 
+		(readKeys_ & KEY_SELECT)
+		&&
+		(readKeys_ & KEY_START)
+		&&
+		(readKeys_ & KEY_X)
+		&&
+		(readKeys_ & KEY_Y)
+ 	){
+		//Stop playback. Launch TGDS Project again
+		BgMusicOff();
+		haltARM7(); //Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
+
+		REG_IME = 0;
+		char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+		memset(thisArgv, 0, sizeof(thisArgv));
+		strcpy(&thisArgv[0][0], "");	//Arg0:	This Binary loaded
+		strcpy(&thisArgv[1][0], "");	//Arg1:	NDS Binary to chainload through TGDS-MB
+		strcpy(&thisArgv[2][0], "");	//Arg2: NDS Binary loaded from TGDS-MB	
+		char * bootldr = NULL;
+		if(__dsimode == true){
+			bootldr = "0:/ToolchainGenericDS-multiboot.srl";
+		}
+		else{
+			bootldr = "0:/ToolchainGenericDS-multiboot.nds";
+		}
+		
+		//Execute Stage 2: VRAM ARM7 payload: NTR/TWL (0x06000000)
+		u32 * payload = getARM7TVSAudioCore(); 
+		executeARM7Payload((u32)0x02380000, 96*1024, payload);
+		REG_IME = 1;
+		
+		payload = getTGDSMBV3ARM7Bootloader();
+		
+		if(TGDSMultibootRunNDSPayload(bootldr, (u8*)payload, 0, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
+			
+		}
+		while(keysDown() & KEY_L){
+			scanKeys();
+		}
+	}
+
 	//Audio track ended? Play next audio file
 	if((pendPlay == 0) && (cutOff == true)){
 		//Let decoder close context so we can start again
@@ -242,6 +303,10 @@ void stopAudioStreamUser(){
 	updateStream();
 	updateStream();
 	updateStream();
+
+	if( (soundData.sourceFmt == SRC_NONE) && (TGDSVideoPlayback == true) ){
+		haltTVSVideoUsermode();
+	}
 }
 
 __attribute__((section(".itcm")))
@@ -254,9 +319,17 @@ __attribute__ ((optnone))
 int main(int argc, char **argv) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
+	
+	//Save touchscreen IPC coords
+	coherent_user_range_by_size((uint32)UserSettingsAddr, (int)sizeof(savedUserSettings));	
+	memcpy((void*)&savedUserSettings[0], (const void*)UserSettingsAddr, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
+	coherent_user_range_by_size((uint32)&savedUserSettings[0], (int)sizeof(savedUserSettings));	
+	
+	
 	//Save Stage 1: IWRAM ARM7 payload: NTR/TWL (0x03800000)
 	memcpy((void *)TGDS_MB_V3_ARM7_STAGE1_ADDR, (const void *)0x02380000, (int)(96*1024));
 	coherent_user_range_by_size((uint32)TGDS_MB_V3_ARM7_STAGE1_ADDR, (int)(96*1024));
+
 	memcpy((void *)savedDefaultCore, (const void *)0x02380000, (int)(96*1024));
 	coherent_user_range_by_size((uint32)savedDefaultCore, (int)(96*1024));
 	
@@ -321,9 +394,8 @@ int main(int argc, char **argv) {
     }
 
 	// Create Woopsi UI
-	WoopsiTemplate WoopsiTemplateApp;
-	WoopsiTemplateProc = &WoopsiTemplateApp;
-	return WoopsiTemplateApp.main(argc, argv);
+	WoopsiTemplateProc = createNewWoopsiSDKInstance();
+	return WoopsiTemplateProc->main(argc, argv);
 }
 
 //Skip newlib-nds's dlmalloc abort handler and let dlmalloc memory manager handle gracefully invalid memory blocks, later to be re-assigned when fragmented memory gets re-arranged as valid memory blocks.
@@ -490,3 +562,5 @@ __attribute__ ((optnone))
 void taskB(u32 * args){
 	handleTurnOnTurnOffScreenTimeout();
 }
+
+u8 savedUserSettings[4096];

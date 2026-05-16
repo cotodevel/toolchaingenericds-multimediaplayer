@@ -161,9 +161,14 @@ compile	:
 	-cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC9_FPIC)	$(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)
 	-$(MAKE)	-R	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/
 	-cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC7_NOFPIC)	$(CURDIR)/common/templateCode/stage1_7/
+	$(MAKE)	-R	-C	$(CURDIR)/common/templateCode/arm7bootldr/
+	-mv $(CURDIR)/common/templateCode/arm7bootldr/arm7vram.bin	$(DIR_ARM9)/data/arm7bootldr.binlzss
+	-mv $(CURDIR)/common/templateCode/arm7bootldr/arm7vram_twl.bin	$(DIR_ARM9)/data/arm7bootldr_twl.binlzss
 	$(MAKE)	-R	-C	$(DIR_ARM7)/
-	$(MAKE)	-R	-C	$(CURDIR)/arm7bootldr_standalone/
-	
+	$(MAKE)	-R	-C	arm7tvscore/
+	-mv $(CURDIR)/arm7tvscore/arm7.bin	$(DIR_ARM9)/data/arm7tvs.binlzss
+	-mv $(CURDIR)/arm7tvscore/arm7_twl.bin	$(DIR_ARM9)/data/arm7tvs_twl.binlzss
+
 ifeq ($(SOURCE_MAKEFILE9),default)
 	cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC9_NOFPIC)	$(CURDIR)/$(DIR_ARM9)
 endif
@@ -187,8 +192,8 @@ each_obj = $(foreach dirres,$(dir_read_arm9_files),$(dirres).)
 clean:
 	$(MAKE)	clean	-C	$(DIR_ARM7)/
 	$(MAKE) clean	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/
-	$(MAKE) clean	-C	$(CURDIR)/arm7bootldr_standalone/
 #--------------------------------------------------------------------
+	$(MAKE)	clean	-C	arm7tvscore/
 	$(MAKE)	clean	-C	$(DIR_ARM9)/
 	$(MAKE) clean	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/
 ifeq ($(SOURCE_MAKEFILE9),default)
@@ -196,7 +201,7 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/Makefile
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
-	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl	$(CURDIR)/common/templateCode/	$(DIR_ARM9)/data/arm7bootldr_standalone.binlzss	$(DIR_ARM9)/data/arm7bootldr_standalone_twl.binlzss
+	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl	$(CURDIR)/common/templateCode/	$(CURDIR)/$(DIR_ARM9)/data/arm7bootldr.binlzss	$(CURDIR)/$(DIR_ARM9)/data/arm7bootldr_twl.binlzss	$(CURDIR)/$(DIR_ARM9)/data/arm7tvs.binlzss	$(CURDIR)/$(DIR_ARM9)/data/arm7tvs_twl.binlzss
 	
 rebase:
 	git reset --hard HEAD
