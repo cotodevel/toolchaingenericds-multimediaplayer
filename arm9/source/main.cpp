@@ -394,9 +394,8 @@ int main(int argc, char **argv) {
     }
 
 	// Create Woopsi UI
-	WoopsiTemplate WoopsiTemplateApp;
-	WoopsiTemplateProc = &WoopsiTemplateApp;
-	return WoopsiTemplateApp.main(argc, argv);
+	WoopsiTemplateProc = createNewWoopsiSDKInstance();
+	return WoopsiTemplateProc->main(argc, argv);
 }
 
 //Skip newlib-nds's dlmalloc abort handler and let dlmalloc memory manager handle gracefully invalid memory blocks, later to be re-assigned when fragmented memory gets re-arranged as valid memory blocks.

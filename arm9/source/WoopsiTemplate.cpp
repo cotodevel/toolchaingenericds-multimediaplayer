@@ -27,6 +27,20 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+WoopsiTemplate * createNewWoopsiSDKInstance(){
+	if(WoopsiTemplateProc != NULL){
+		//delete WoopsiTemplateProc; //causes segfaults
+	}
+	return new WoopsiTemplate();
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void enableWaitForVblankC(){
 	WoopsiTemplateProc->enableWaitForVblank();
 }
