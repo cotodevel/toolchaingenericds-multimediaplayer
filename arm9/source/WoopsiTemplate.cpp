@@ -168,8 +168,11 @@ __attribute__ ((optnone))
 void WoopsiTemplate::ReportAvailableMem() {
 	Rect rect;
 	_controlsScreen->getClientRect(rect);
-	_MultiLineTextBoxLogger = new MultiLineTextBox(rect.x, rect.y + 60, 200, 70, "DS Hardware status\n...", Gadget::GADGET_DECORATION, 5);	// y + 60 px = move the rectangle vertically from parent obj
-	_controlsScreen->addGadget(_MultiLineTextBoxLogger);
+
+	if(_MultiLineTextBoxLogger == NULL){
+		_MultiLineTextBoxLogger = new MultiLineTextBox(rect.x, rect.y + 60, 200, 70, "DS Hardware status\n...", Gadget::GADGET_DECORATION, 5);	// y + 60 px = move the rectangle vertically from parent obj
+		_controlsScreen->addGadget(_MultiLineTextBoxLogger);
+	}
 	
 	_MultiLineTextBoxLogger->removeText(0);
 	_MultiLineTextBoxLogger->moveCursorToPosition(0);
