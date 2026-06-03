@@ -2,7 +2,7 @@
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
 **  
-** This program is TGDSARM9Free software; you can redistribute it and/or modify
+** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
@@ -33,6 +33,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "mp4ffint.h"
+
+static uint32_t mp4ff_normalize_flawed_sample_rate (uint16_t samplerate);
 
 mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f)
 {
@@ -172,7 +174,7 @@ int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size,int meta_only)
         {
             parse_sub_atoms(f, size-header_size,meta_only);
         } else {
-            mp4ff_atom_read(f, (unsigned int)size, atom_type);
+            mp4ff_atom_read(f, (uint32_t)size, atom_type);
         }
     }
 
@@ -197,7 +199,7 @@ int32_t parse_atoms(mp4ff_t *f,int meta_only)
         {
             /* moov atom is before mdat, we can stop reading when mdat is encountered */
             /* file position will stay at beginning of mdat data */
-//            break;
+            /* break; */
         }
 
         if (atom_type == ATOM_MOOV && size > header_size)
@@ -224,7 +226,7 @@ int32_t parse_atoms(mp4ff_t *f,int meta_only)
 }
 
 int32_t mp4ff_get_decoder_config(const mp4ff_t *f, const int32_t track,
-                                 uint8_t** ppBuf, unsigned int* pBufSize)
+                                 uint8_t** ppBuf, uint32_t* pBufSize)
 {
     if (track >= f->total_tracks)
     {
@@ -266,12 +268,12 @@ int32_t mp4ff_time_scale(const mp4ff_t *f, const int32_t track)
     return f->track[track]->timeScale;
 }
 
-unsigned int mp4ff_get_avg_bitrate(const mp4ff_t *f, const int32_t track)
+uint32_t mp4ff_get_avg_bitrate(const mp4ff_t *f, const int32_t track)
 {
 	return f->track[track]->avgBitrate;
 }
 
-unsigned int mp4ff_get_max_bitrate(const mp4ff_t *f, const int32_t track)
+uint32_t mp4ff_get_max_bitrate(const mp4ff_t *f, const int32_t track)
 {
 	return f->track[track]->maxBitrate;
 }
@@ -306,20 +308,47 @@ int32_t mp4ff_num_samples(const mp4ff_t *f, const int32_t track)
     return total;
 }
 
-
-
-
-unsigned int mp4ff_get_sample_rate(const mp4ff_t *f, const int32_t track)
+static uint32_t
+mp4ff_normalize_flawed_sample_rate (uint16_t samplerate)
 {
-	return f->track[track]->sampleRate;
+	/* A list of common rates can be found at
+	 * http://en.wikipedia.org/wiki/Sampling_rate */
+	uint32_t rates[] = {8000, 11025, 16000, 22050, 32000, 44056, 44100,
+	                  47250, 48000, 50000, 50400, 88200, 96000, 176400,
+	                  192000, 352800, 384000, 0};
+	uint32_t* rate;
+
+	/* First check standard rates. */
+	for (rate = rates; *rate; rate++) {
+		if (*rate == samplerate) {
+			return *rate;
+		}
+	}
+
+	/* No standard rates matching - check if sample rate got truncated when
+	 * added to MP4 container */
+	for (rate = rates; *rate; rate++) {
+		if ((*rate & 0x0000FFFF) == samplerate) {
+			return *rate;
+		}
+	}
+
+	/* Failed to find a standard rate - we give up returning the original rate */
+	return samplerate;
 }
 
-unsigned int mp4ff_get_channel_count(const mp4ff_t * f,const int32_t track)
+
+uint32_t mp4ff_get_sample_rate(const mp4ff_t *f, const int32_t track)
+{
+	return mp4ff_normalize_flawed_sample_rate (f->track[track]->sampleRate);
+}
+
+uint32_t mp4ff_get_channel_count(const mp4ff_t * f,const int32_t track)
 {
 	return f->track[track]->channelCount;
 }
 
-unsigned int mp4ff_get_audio_type(const mp4ff_t * f,const int32_t track)
+uint32_t mp4ff_get_audio_type(const mp4ff_t * f,const int32_t track)
 {
 	return f->track[track]->audioType;
 }
@@ -351,7 +380,7 @@ int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const i
     return (int32_t)(-1);
 }
 
-__attribute__((section(".itcm")))
+
 int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t i, co = 0;
@@ -374,7 +403,7 @@ int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const i
     return (int64_t)(-1);
 }
 
-__attribute__((section(".itcm")))
+
 int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t i, co = 0;
@@ -389,7 +418,7 @@ int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int
     return 0;
 }
 
-__attribute__((section(".itcm")))
+
 int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip)
 {
 	int32_t i, co = 0;
@@ -416,15 +445,15 @@ int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t o
 	return (int32_t)(-1);
 }
 
-__attribute__((section(".itcm")))
+
 int32_t mp4ff_find_sample_use_offsets(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip)
 {
 	return mp4ff_find_sample(f,track,offset + mp4ff_get_sample_offset(f,track,0),toskip);
 }
 
-__attribute__((section(".itcm")))
+
 int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
-                          uint8_t **audio_buffer,  unsigned int *bytes)
+                          uint8_t **audio_buffer,  uint32_t *bytes)
 {
     int32_t result = 0;
 
@@ -448,14 +477,14 @@ int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
 #ifdef ITUNES_DRM
     if (f->track[track]->p_drms != NULL)
     {
-        drms_decrypt(f->track[track]->p_drms, (unsigned int*)*audio_buffer, *bytes);
+        drms_decrypt(f->track[track]->p_drms, (uint32_t*)*audio_buffer, *bytes);
     }
 #endif
 
     return *bytes;
 }
 
-__attribute__((section(".itcm")))
+
 int32_t mp4ff_read_sample_v2(mp4ff_t *f, const int track, const int sample,unsigned char *buffer)
 {
     int32_t result = 0;
@@ -467,7 +496,7 @@ int32_t mp4ff_read_sample_v2(mp4ff_t *f, const int track, const int sample,unsig
 #ifdef ITUNES_DRM
     if (f->track[track]->p_drms != NULL)
     {
-        drms_decrypt(f->track[track]->p_drms, (unsigned int*)buffer, size);
+        drms_decrypt(f->track[track]->p_drms, (uint32_t*)buffer, size);
     }
 #endif
 

@@ -152,6 +152,11 @@ void WoopsiTemplate::startup(int argc, char **argv) {
 	//WoopsiSDK Initial state defaults
 	ReportAvailableMem();
 	
+	//WoopsiSDKDefaults
+	FileRequester * freqInst = _fileReq;
+	FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+	currentFileRequesterIndex = 0;
+
 	enableWaitForVblankC(); //Enable: Update Woopsi SDK through Vblank
 
 	enableDrawing();	// Ensure Woopsi can now draw itself
@@ -466,6 +471,7 @@ void Woopsi::ApplicationMainLoop() {
 
 				//play standalone file immediately
 				default:{
+					WoopsiTemplateProc->_stop->ClickButton();
 					soundLoaded = loadSound((char*)currentFileChosen);
 			
 					if(soundLoaded == false){

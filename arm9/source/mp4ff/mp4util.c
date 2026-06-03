@@ -2,7 +2,7 @@
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
 **  
-** This program is TGDSARM9Free software; you can redistribute it and/or modify
+** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
@@ -33,26 +33,33 @@
 #include "mp4ffint.h"
 #include <stdlib.h>
 
-__attribute__((section(".itcm")))
-int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, unsigned int size)
+
+int32_t mp4ff_read_data(mp4ff_t *f, uint8_t *data, uint32_t size)
 {
-    int32_t result = 1;
+    int32_t result;
+    uint32_t read = 0;
 
-    result = f->stream->read(f->stream->user_data, data, size);
+    while (read < size) {
+        result = f->stream->read(f->stream->user_data, data+read, size-read);
+        if (result <= 0) {
+            break;
+        }
+        read += result;
+    }
 
-    f->current_position += size;
+    f->current_position += read;
 
-    return result;
+    return read;
 }
 
-__attribute__((section(".itcm")))
+
 int32_t mp4ff_truncate(mp4ff_t * f)
 {
 	return f->stream->truncate(f->stream->user_data);
 }
 
-__attribute__((section(".itcm")))
-int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, unsigned int size)
+
+int32_t mp4ff_write_data(mp4ff_t *f, uint8_t *data, uint32_t size)
 {
     int32_t result = 1;
 
@@ -63,14 +70,14 @@ int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, unsigned int size)
     return result;
 }
 
-__attribute__((section(".itcm")))
-int32_t mp4ff_write_int32(mp4ff_t *f,const unsigned int data)
+
+int32_t mp4ff_write_int32(mp4ff_t *f,const uint32_t data)
 {
-	unsigned int result;
-    unsigned int a, b, c, d;
+	uint32_t result;
+    uint32_t a, b, c, d;
     int8_t temp[4];
     
-    *(unsigned int*)temp = data;
+    *(uint32_t*)temp = data;
     a = (uint8_t)temp[0];
     b = (uint8_t)temp[1];
     c = (uint8_t)temp[2];
@@ -81,7 +88,7 @@ int32_t mp4ff_write_int32(mp4ff_t *f,const unsigned int data)
     return mp4ff_write_data(f,(uint8_t*)&result,sizeof(result));
 }
 
-__attribute__((section(".itcm")))
+
 int32_t mp4ff_set_position(mp4ff_t *f, const int64_t position)
 {
     f->stream->seek(f->stream->user_data, position);
@@ -90,13 +97,13 @@ int32_t mp4ff_set_position(mp4ff_t *f, const int64_t position)
     return 0;
 }
 
-__attribute__((section(".itcm")))
+
 int64_t mp4ff_position(const mp4ff_t *f)
 {
     return f->current_position;
 }
 
-__attribute__((section(".itcm")))
+
 uint64_t mp4ff_read_int64(mp4ff_t *f)
 {
     uint8_t data[8];
@@ -113,61 +120,61 @@ uint64_t mp4ff_read_int64(mp4ff_t *f)
     return result;
 }
 
-__attribute__((section(".itcm")))
-unsigned int mp4ff_read_int32(mp4ff_t *f)
+
+uint32_t mp4ff_read_int32(mp4ff_t *f)
 {
-    unsigned int result;
-    unsigned int a, b, c, d;
-    int8_t data[4];
+    uint32_t result;
+    uint32_t a, b, c, d;
+    uint8_t data[4];
     
     mp4ff_read_data(f, data, 4);
-    a = (uint8_t)data[0];
-    b = (uint8_t)data[1];
-    c = (uint8_t)data[2];
-    d = (uint8_t)data[3];
+    a = data[0];
+    b = data[1];
+    c = data[2];
+    d = data[3];
 
     result = (a<<24) | (b<<16) | (c<<8) | d;
-    return (unsigned int)result;
+    return (uint32_t)result;
 }
 
-__attribute__((section(".itcm")))
-unsigned int mp4ff_read_int24(mp4ff_t *f)
+
+uint32_t mp4ff_read_int24(mp4ff_t *f)
 {
-    unsigned int result;
-    unsigned int a, b, c;
-    int8_t data[4];
+    uint32_t result;
+    uint32_t a, b, c;
+    uint8_t data[4];
     
     mp4ff_read_data(f, data, 3);
-    a = (uint8_t)data[0];
-    b = (uint8_t)data[1];
-    c = (uint8_t)data[2];
+    a = data[0];
+    b = data[1];
+    c = data[2];
 
     result = (a<<16) | (b<<8) | c;
-    return (unsigned int)result;
+    return (uint32_t)result;
 }
 
-__attribute__((section(".itcm")))
+
 uint16_t mp4ff_read_int16(mp4ff_t *f)
 {
-    unsigned int result;
-    unsigned int a, b;
-    int8_t data[2];
+    uint32_t result;
+    uint32_t a, b;
+    uint8_t data[2];
     
     mp4ff_read_data(f, data, 2);
-    a = (uint8_t)data[0];
-    b = (uint8_t)data[1];
+    a = data[0];
+    b = data[1];
 
     result = (a<<8) | b;
     return (uint16_t)result;
 }
 
-__attribute__((section(".itcm")))
-char * mp4ff_read_string(mp4ff_t * f,unsigned int length)
+
+char * mp4ff_read_string(mp4ff_t * f,uint32_t length)
 {
-	char * str = (char*)TGDSARM9Malloc(length + 1);
+	char * str = TGDSARM9Malloc(length + 1);
 	if (str!=0)
 	{
-		if ((unsigned int)mp4ff_read_data(f,str,length)!=length)
+		if ((uint32_t)mp4ff_read_data(f,(uint8_t *)str,length)!=length)
 		{
 			TGDSARM9Free(str);
 			str = 0;
@@ -180,7 +187,7 @@ char * mp4ff_read_string(mp4ff_t * f,unsigned int length)
 	return str;	
 }
 
-__attribute__((section(".itcm")))
+
 uint8_t mp4ff_read_char(mp4ff_t *f)
 {
     uint8_t output;
@@ -188,12 +195,12 @@ uint8_t mp4ff_read_char(mp4ff_t *f)
     return output;
 }
 
-__attribute__((section(".itcm")))
-unsigned int mp4ff_read_mp4_descr_length(mp4ff_t *f)
+
+uint32_t mp4ff_read_mp4_descr_length(mp4ff_t *f)
 {
     uint8_t b;
     uint8_t numBytes = 0;
-    unsigned int length = 0;
+    uint32_t length = 0;
 
     do
     {
