@@ -394,7 +394,8 @@ int main(int argc, char **argv) {
     }
 
 	// Create Woopsi UI
-	WoopsiTemplateProc = createNewWoopsiSDKInstance();
+	WoopsiTemplate woopsiTGDSProject;
+	WoopsiTemplateProc = &woopsiTGDSProject;
 	return WoopsiTemplateProc->main(argc, argv);
 }
 

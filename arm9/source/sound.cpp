@@ -276,7 +276,6 @@ void circularCopy(void *dst, void *src, int copySize, int *position, int bufferS
 }
 
 // update function
-__attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -398,71 +397,73 @@ void updateStreamCustomDecoder(u32 srcFrmt){
 		break;
 		case SRC_AAC:
 		case SRC_STREAM_AAC:{
-			bool isSeek = (seekUpdate >= 0);
-			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 	
-			TGDSIPC->soundIPC.channels = soundData.channels;			
-			swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
-			
-			if(soundData.sourceFmt == SRC_STREAM_AAC)
-			{
-				if(amountLeftOver())
-				{
-					recieveStream(-1);
-				}
+			if( ((u32*)hAACDecoder != (u32*)NULL) && ((u32*)soundData.filePointer != (u32*)NULL) ){	
+				bool isSeek = (seekUpdate >= 0);
+				struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 	
+				TGDSIPC->soundIPC.channels = soundData.channels;			
+				swapAndSend(ARM7COMMAND_SOUND_DEINTERLACE);
 				
-				isSeek = false;
-			}
-			else if(isSeek)
-			{
-				aacReadPtr = aacReadBuf;
-				aacBytesLeft = 0;
-				aacEofReached = 0;
-				
-				soundData.loc = seekUpdate;
-				seekUpdate = -1;
-				
-				if(!isRawAAC)
+				if(soundData.sourceFmt == SRC_STREAM_AAC)
 				{
-					sampleId = soundData.loc;
-				}
-			}	
-			
-			aacFillBuffer();
-			aacErr = AACDecode(hAACDecoder, &aacReadPtr, &aacBytesLeft, lBuffer);
-			
-			if(soundData.sourceFmt == SRC_STREAM_AAC)
-			{
-				if(amountLeftOver())
-				{
-					recieveStream(-1);
-				}
-			}
-			else
-			{
-				if(isRawAAC)
-					soundData.loc = ftell(soundData.filePointer);
-				else
-					soundData.loc = sampleId;
-			}
-			
-			switch (aacErr) 
-			{
-				case ERR_AAC_NONE:
-					break;
-				default:
-					if(isSeek)
+					if(amountLeftOver())
 					{
-						fseek(soundData.filePointer, 4, SEEK_CUR);
-						seekUpdate = ftell(soundData.filePointer);
-						
-						memset(lBuffer, 0, m_size * 2);
-						memset(rBuffer, 0, m_size * 2);
-						break;
+						recieveStream(-1);
 					}
 					
-					cutOff = true;
+					isSeek = false;
+				}
+				else if(isSeek)
+				{
+					aacReadPtr = aacReadBuf;
+					aacBytesLeft = 0;
+					aacEofReached = 0;
 					
-					break;
+					soundData.loc = seekUpdate;
+					seekUpdate = -1;
+					
+					if(!isRawAAC)
+					{
+						sampleId = soundData.loc;
+					}
+				}	
+				
+				aacFillBuffer();
+				aacErr = AACDecode(hAACDecoder, &aacReadPtr, &aacBytesLeft, lBuffer);
+				
+				if(soundData.sourceFmt == SRC_STREAM_AAC)
+				{
+					if(amountLeftOver())
+					{
+						recieveStream(-1);
+					}
+				}
+				else
+				{
+					if(isRawAAC)
+						soundData.loc = ftell(soundData.filePointer);
+					else
+						soundData.loc = sampleId;
+				}
+				
+				switch (aacErr) 
+				{
+					case ERR_AAC_NONE:
+						break;
+					default:
+						if(isSeek)
+						{
+							fseek(soundData.filePointer, 4, SEEK_CUR);
+							seekUpdate = ftell(soundData.filePointer);
+							
+							memset(lBuffer, 0, m_size * 2);
+							memset(rBuffer, 0, m_size * 2);
+							break;
+						}
+						
+						cutOff = true;
+						
+						break;
+				}
 			}
 		}
 		break;
@@ -2008,14 +2009,9 @@ bool initSoundStreamUser(char * fName, char * ext){
 		unsigned int aacbuf_len;
 		
 		mp4ff_get_decoder_config(mp4file, mp4track, &aacbuf, &aacbuf_len);
-		
+		aacFrameInfo.sampRateCore = aacFrameInfo.sampRateOut = mp4ff_get_sample_rate(mp4file, mp4track);
 		if(aacbuf_len == 2)
 		{
-			int sample_rates[] = {	96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000,  7350,  0,     0,     0 };
-			
-			int sampRateIndex = ((aacbuf[0] << 1) & 0xe) | ((aacbuf[1] >> 7) & 0x1);
-			
-			aacFrameInfo.sampRateCore = sample_rates[sampRateIndex];
 			aacFrameInfo.nChans = ((aacbuf[1]) >> 3) & 0xf;
 		}
 		
