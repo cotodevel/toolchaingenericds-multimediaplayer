@@ -1694,7 +1694,6 @@ __attribute__ ((optnone))
 #endif
 bool initSoundStreamUser(char * fName, char * ext){
 	
-	updateRequested = true;
 	cutOff = false;
 	
 	if(strcmp(ext, ".it") == 0  || strcmp(ext, ".mod") == 0 || strcmp(ext, ".s3m") == 0 || strcmp(ext, ".xm") == 0)
@@ -2402,19 +2401,26 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 bool loadSound(char *fName){
-	if(!(FAT_FileExists(fName) == FT_FILE)){
-		return false;
+	bool soundStreamInitialized = false;
+	if(FAT_FileExists(fName) == FT_FILE){		
+		if(playSoundStream(fName, _FileHandleVideo, _FileHandleAudio, TGDS_ARM7_AUDIOBUFFER_STREAM) == SRC_NONE){
+			char tmpName[256];
+			char ext[256];
+			strcpy(tmpName, fName);	
+			separateExtension(tmpName, ext);
+			strlwr(ext);
+			soundStreamInitialized = initSoundStreamUser(fName, ext);
+			
+			if(soundStreamInitialized == true){
+				updateRequested = true; //Custom Decoder Playback: Request buffer fetch
+			}
+		}
+		else{
+			soundStreamInitialized = true; //SRC_WAV or SRC_WAVADPCM
+		}
 	}
-	if(playSoundStream(fName, _FileHandleVideo, _FileHandleAudio, TGDS_ARM7_AUDIOBUFFER_STREAM) == SRC_NONE){
-
-		char tmpName[256];
-		char ext[256];
-		strcpy(tmpName, fName);	
-		separateExtension(tmpName, ext);
-		strlwr(ext);
-		return initSoundStreamUser(fName, ext);
-	}
-	return true;
+	
+	return soundStreamInitialized;
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))

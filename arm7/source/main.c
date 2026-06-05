@@ -123,7 +123,7 @@ bool TSCKeyActive = false;
 
 //---------------------------------------------------------------------------------
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
+__attribute__((optimize("O1")))
 #endif
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
