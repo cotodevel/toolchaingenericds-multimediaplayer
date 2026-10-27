@@ -161,6 +161,22 @@ int main(int _argc, char **_argv) {
         }
     }
 
+	//4004700h - DSi7 - SNDEXCNT (R/W): Set 48khz sound/mic frequency
+	#define REG_SNDEXTCNT	(*(vu16*)0x04004700)
+	#define REG_MICCNT		(*(vu16*)0x04004600)
+	#define REG_MICDATA		(*(vu32*)0x04004604)
+
+	#define SNDEXTCNT_RATIO(n)		((n)&0xF)
+	#define SNDEXTCNT_FREQ_32KHZ	(0<<13) // output freq 32.73kHz
+	#define SNDEXTCNT_FREQ_47KHZ	(1<<13) // output freq 47.61kHz
+	#define SNDEXTCNT_MUTE			BIT(14)
+	#define SNDEXTCNT_ENABLE		BIT(15)
+	if(__dsimode == true){
+		REG_SNDEXTCNT |= SNDEXTCNT_ENABLE;
+		if (!(REG_SNDEXTCNT & BIT(13))) {
+			*(vu16*)0x04004700 |= BIT(13);	
+		}
+	}
     SendFIFOWords(0xFF, 0xFF);
 
 	while(1){
