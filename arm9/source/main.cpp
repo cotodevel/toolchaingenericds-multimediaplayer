@@ -49,20 +49,6 @@ USA
 #include "TGDS_threads.h"
 #include "WoopsiTemplate.h"
 
-//TGDS-MB ARM7 Bootldr
-#include "arm7bootldr.h"
-#include "arm7bootldr_twl.h"
-
-u32 * getTGDSMBV3ARM7Bootloader(){	//Required by ToolchainGenericDS-multiboot v3
-	if(__dsimode == false){
-		swiDecompressLZSSWram((u8*)&arm7bootldr[0], (u8*)decompBufUncached);
-	}
-	else{
-		swiDecompressLZSSWram((u8*)&arm7bootldr_twl[0], (u8*)decompBufUncached);
-	}
-	return (u32*)decompBufUncached;
-}
-
 u32 * getDefaultARM7AudioStreamCoreSPCCore(){
 	return (u32*)savedDefaultCore;
 }
@@ -200,48 +186,7 @@ void handleInput(){
 	}
 	
 	readKeys_ = keysHeld();
-	if( 
-		(readKeys_ & KEY_SELECT)
-		&&
-		(readKeys_ & KEY_START)
-		&&
-		(readKeys_ & KEY_X)
-		&&
-		(readKeys_ & KEY_Y)
- 	){
-		//Stop playback. Launch TGDS Project again
-		BgMusicOff();
-		haltARM7(); //Required, or ARM7 IMA-ADPCM core segfaults due to interrupts working
-
-		REG_IME = 0;
-		char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-		memset(thisArgv, 0, sizeof(thisArgv));
-		strcpy(&thisArgv[0][0], "");	//Arg0:	This Binary loaded
-		strcpy(&thisArgv[1][0], "");	//Arg1:	NDS Binary to chainload through TGDS-MB
-		strcpy(&thisArgv[2][0], "");	//Arg2: NDS Binary loaded from TGDS-MB	
-		char * bootldr = NULL;
-		if(__dsimode == true){
-			bootldr = "0:/ToolchainGenericDS-multiboot.srl";
-		}
-		else{
-			bootldr = "0:/ToolchainGenericDS-multiboot.nds";
-		}
-		
-		//Execute Stage 2: VRAM ARM7 payload: NTR/TWL (0x06000000)
-		u32 * payload = getARM7TVSAudioCore(); 
-		executeARM7Payload((u32)0x02380000, 96*1024, payload);
-		REG_IME = 1;
-		
-		payload = getTGDSMBV3ARM7Bootloader();
-		
-		if(TGDSMultibootRunNDSPayload(bootldr, (u8*)payload, 0, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
-			
-		}
-		while(keysDown() & KEY_L){
-			scanKeys();
-		}
-	}
-
+	
 	//Audio track ended? Play next audio file
 	if((pendPlay == 0) && (cutOff == true)){
 		//Let decoder close context so we can start again
