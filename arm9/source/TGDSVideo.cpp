@@ -375,4 +375,10 @@ void haltTVSVideoUsermode(){
 	GUI.GBAMacroMode = false;	//GUI console at bottom screen. 
 	TGDSLCDSwap();
 	setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
+	
+	if(WoopsiTemplateProc){
+		initWoopsiGfxMode();
+		WoopsiTemplateProc->redraw();			// Redraw surface 
+	}
+	
 }
