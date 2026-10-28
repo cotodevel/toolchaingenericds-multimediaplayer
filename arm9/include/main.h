@@ -41,7 +41,6 @@ struct rgbMandel{
 extern "C" {
 #endif
 
-extern u32 * getTGDSMBV3ARM7Bootloader();
 extern u32 * getDefaultARM7AudioStreamCoreSPCCore();
 extern u32 * getARM7TVSAudioCore();
 extern int main(int argc, char **argv);

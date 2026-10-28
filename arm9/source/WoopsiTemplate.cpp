@@ -368,48 +368,61 @@ void playAudioFile(){
 		strObj.copyToCharArray(isDirTGDSProj);
 
 		//Build FileRequester here
+		FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+		FileListBox* freqListBox = freqInst->getInternalListBoxObject();	
+		char oldDir [256];
+		freqListBox->getPath()->getPath().copyToCharArray(oldDir);
+
 		if(strcmpi((char*)&isDirTGDSProj[0], "..") == 0){
-			FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
-			FileListBox* freqListBox = freqInst->getInternalListBoxObject();
 			freqListBox->removeAllOptions();
+			leaveDir((char*)&oldDir);
+			freqListBox->setPath(WoopsiString(oldDir));
 			freqListBox->readDirectory();
 			stopAudioFile();
 			pendPlay = 2; //stop filestream immediately & indefinitely
 		}
 		else{
-		
-			switch(soundData.sourceFmt){
-				case(SRC_GBS):
-				case(SRC_NSF):
-				case(SRC_SNDH):
-				case(SRC_SID):
-				{
-					FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
-					FileListBox* freqListBox = freqInst->getInternalListBoxObject();
-					int playListIndex = ((int)freqListBox->getSelectedIndex() - 1);
-					
-					if(playListIndex >= 0){
-						soundSetTrackInPayload(playListIndex); 
-						pendPlay = 1; //Play file immediately from payload + Play file from filerequester here if payload was already loaded and play button was pressed.
-					}
-
-				}break;
-
-				default:{
-					//Play WAV/ADPCM if selected from the FileRequester
-					WoopsiString strObj = WoopsiTemplateProc->_fileReq->getSelectedOption()->getText();
-					memset(currentFileChosen, 0, sizeof(currentFileChosen));
-					strObj.copyToCharArray(currentFileChosen);
-
-					if(FAT_FileExists(currentFileChosen) == FT_FILE){
-						pendPlay = 1; //play file immediately & indefinitely
-					}
-					else{
-						pendPlay = 2; //stop filestream immediately & indefinitely
-					}
-				}break;
-			}
 			
+			int ftype = FileExists((char*)&isDirTGDSProj);
+			if(ftype == FT_DIR){
+				//enter new directory by pressing (A) (through playButton)
+				freqListBox->removeAllOptions();
+				freqListBox->setPath(WoopsiString(isDirTGDSProj));
+				freqListBox->readDirectory();
+			}
+			else {
+				switch(soundData.sourceFmt){
+					case(SRC_GBS):
+					case(SRC_NSF):
+					case(SRC_SNDH):
+					case(SRC_SID):
+					{
+						FileRequester * freqInst = WoopsiTemplateProc->_fileReq;
+						FileListBox* freqListBox = freqInst->getInternalListBoxObject();
+						int playListIndex = ((int)freqListBox->getSelectedIndex() - 1);
+						
+						if(playListIndex >= 0){
+							soundSetTrackInPayload(playListIndex); 
+							pendPlay = 1; //Play file immediately from payload + Play file from filerequester here if payload was already loaded and play button was pressed.
+						}
+
+					}break;
+
+					default:{
+						//Play WAV/ADPCM if selected from the FileRequester
+						WoopsiString strObj = WoopsiTemplateProc->_fileReq->getSelectedOption()->getText();
+						memset(currentFileChosen, 0, sizeof(currentFileChosen));
+						strObj.copyToCharArray(currentFileChosen);
+
+						if(FAT_FileExists(currentFileChosen) == FT_FILE){
+							pendPlay = 1; //play file immediately & indefinitely
+						}
+						else{
+							pendPlay = 2; //stop filestream immediately & indefinitely
+						}
+					}break;
+				}
+			}
 		}
 	}
 }
